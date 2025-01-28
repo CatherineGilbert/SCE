@@ -14,8 +14,8 @@ library(parallel)  # For parallel computing
 Sys.setlocale("LC_ALL", "English_United States")
 start_time <- Sys.time() # track running time
 
-codes_dir <- "C:/Users/cmg3/Documents/GitHub/APSIMX_SeasonalCharacterization" #where the folder with the codes is
-setwd("C:/Users/cmg3/OneDrive/Documents/seedoil_output") #folder where the output goes
+codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT" #where the folder with the codes is
+setwd("C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output") #folder where the output goes
 
 crop <- "Soy" 
 trials_df <- read_csv(paste0(codes_dir,"/seed_cht.csv")) 
@@ -261,7 +261,7 @@ simdates <- left_join(simsows, simharvs)
 daily_output <- select(daily_output, -SimSowDate, -SimHarvestDate)
 
 # Trim season (daily_output) to one month before planting and one month after death / harvest
-simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% months(1), EndDate = date(SimHarvestDate) %m+% months(1)) %>%
+simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndDate = date(SimHarvestDate) %m+% weeks(2)) %>%
   select(id_trial, StartDate, SimSowDate, SimHarvestDate, EndDate)
 daily_output <- group_by(daily_output, id_trial) %>% left_join(select(simdates,id_trial, StartDate, EndDate)) %>%
   filter(Date >= StartDate & Date <= EndDate) %>% select(-StartDate,-EndDate)
@@ -332,7 +332,7 @@ write_csv(trials_x, "output/trials_x.csv")
 write_csv(charact_x, "output/charact_x.csv")
 write_csv(daily_charact_x, "output/daily_charact_x.csv")
 
-trials_charact_wide_x <- pivot_wider(charact_x, names_from = Period, values_from = Rain:End_DOY) %>% right_join(trials_x,.)
+trials_charact_wide_x <- pivot_wider(charact_x, names_from = Period, values_from = Rain:Period_End_DOY) %>% right_join(trials_x,.)
 write_csv(trials_charact_wide_x, "output/trials_charact_wide_x.csv")
 
 #calculate time duration for running the code:

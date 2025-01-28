@@ -8,14 +8,14 @@ library(apsimx)
 library(ggplot2)
 #fernando miguez for information on why APSIM soybean model may not be progressing correctly
 
-setwd("C:/Users/cmg3/Documents/GitHub/APSIMX_SeasonalCharacterization/apsimx_output")
+setwd("C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output")
 trials_x <- read_csv("output/trials_x.csv")
 charact_x <- read_csv("output/charact_x.csv")
 daily_charact_x <- read_csv("output/daily_charact_x.csv")
 
 var <- "Rain"
-matval <- "Generic_MG0"
-site_tag <- "watertown_sd"
+matval <- "early00"
+site_tag <- "urbana_il"
 
 varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(id_trial, Period)) %>% names()
 j_dt <- filter(trials_x, Mat == matval) %>% select(id_trial,Genetics, Site, Mat) %>% left_join(charact_x)
@@ -141,7 +141,7 @@ ggplot(wthn_sites) +
   geom_vline(data = means, aes(xintercept = mean_acc_precip), color = "black", linetype = "dashed") + 
   geom_hline(data = means, aes(yintercept = mean_acc_tt), color = "black", linetype = "dashed") +
   geom_label(label = wthn_sites$year, size = 3) +
-  labs(x = "Acc. Precipitation (mm)",y = "Acc. Thermal Time") +
+  labs(x = "Acc. Precipitation (mm)",y = "Acc. Thermal Time (GDD)") +
   theme_minimal() +
   theme(legend.position = "none") 
 
@@ -153,7 +153,7 @@ ggplot(plot_dt) +
   geom_hline(aes(yintercept = mean(acc_tt)), color = "black", linetype = "dashed") +
   geom_label(label = plot_dt$Site, size = 3) +
   theme_minimal() +
-  labs(x = "Acc. Precipitation (mm)",y = "Acc. Thermal Time", 
+  labs(x = "Acc. Precipitation (mm)",y = "Acc. Thermal Time (GDD)", 
        title = "10 Year Site Averages for a Typical Growing Season") +
   theme(legend.position = "none") 
 
