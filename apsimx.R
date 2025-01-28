@@ -332,6 +332,9 @@ write_csv(trials_x, "output/trials_x.csv")
 write_csv(charact_x, "output/charact_x.csv")
 write_csv(daily_charact_x, "output/daily_charact_x.csv")
 
+trials_charact_wide_x <- pivot_wider(charact_x, names_from = Period, values_from = Rain:End_DOY) %>% right_join(trials_x,.)
+write_csv(trials_charact_wide_x, "output/trials_charact_wide_x.csv")
+
 #calculate time duration for running the code:
 end_time <- Sys.time()
 duration <- end_time - start_time
