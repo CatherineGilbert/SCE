@@ -19,6 +19,7 @@ library(esquisse)
 library(tidyr)
 library(zip)
 library(bslib)
+library(here)
 
 
 # Define UI
@@ -120,10 +121,10 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   gen <- 1 # should be selectable for heatmap
-  setwd("C:/Users/sam/Documents/GitHub/APSIMX_SeasonalCharacterization/apsimx_output")
   # Path to the scripts and results
-  codesPath <- "C:/Users/sam/Documents/GitHub/APSIMX_SeasonalCharacterization"
-  resultFolderPath <- "C:/Users/sam/Documents/GitHub/APSIMX_SeasonalCharacterization/apsimx_output/output"
+  codesPath <- here()
+  setwd(paste0(codesPath,"/apsimx_output"))
+  resultFolderPath <- paste0(codesPath,"/apsimx_output/output")
   heatmap_plot <- reactiveVal(NULL)
   # Reactive values for storing the analysis state and the selected variable
   #analysisDone <- reactiveVal(FALSE)
@@ -131,7 +132,7 @@ server <- function(input, output, session) {
   analysisInProgress <- reactiveVal(FALSE)
   observe({
     req(analysisDone())
-    source("C:/Users/sam/Documents/GitHub/APSIMX_SeasonalCharacterization/visualization.R")
+    source(paste0(codesPath,"/visualization.R"))
   })
   
   
@@ -151,7 +152,7 @@ server <- function(input, output, session) {
   observe({
     
     invalidateLater(5000, session)
-    setwd("C:/Users/sam/Documents/GitHub/APSIMX_SeasonalCharacterization/apsimx_output")
+    setwd(paste0(codesPath,"/apsimx_output"))
     if (file.exists("progress.log")) {
       log_contents <- readLines("progress.log")
       # Update progress based on the log contents
@@ -196,15 +197,14 @@ server <- function(input, output, session) {
     analysisInProgress(TRUE)
     
     
-    setwd("C:/Users/sam/Documents/GitHub/APSIMX_SeasonalCharacterization/apsimx_output")
-    #setwd("C:/Users/cmg3/Box/Gilbert/apsimx_output")
+    setwd(paste0(codesPath,"/apsimx_output"))
     
     file.create("progress.log")
     
-    crop <- input$cropType #  !!! ask Sam if this can be set via a button 
+    crop <- input$cropType 
     writeLines(crop, paste0(codesPath, "/selected_crop.txt"))
     
-    source("C:/Users/sam/Documents/GitHub/APSIMX_SeasonalCharacterization/apsimximproved.R")
+    source(paste0(codesPath,"/apsimx.R"))
     
     
     #update outputs and visaluzations

@@ -20,6 +20,9 @@ site_tag <- "urbana_il"
 varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(id_trial, Period)) %>% names()
 j_dt <- filter(trials_x, Mat == matval) %>% select(id_trial,Genetics, Site, Mat) %>% left_join(charact_x)
 
+#translate
+trials_x
+
 for(var in varchoice){
   print(var)
   x <- ggplot(j_dt) +
