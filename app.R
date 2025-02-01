@@ -300,7 +300,7 @@ server <- function(input, output, session) {
   bigmet <- reactive({
     req(input$fileUpload)  # Ensure there's a file uploaded
     current_year <- as.numeric(substr(Sys.time(), 1, 4)) - 1
-    trials_df <- read_csv(input$fileUpload$datapath) %>% distinct() %>% mutate(id_trial = row_number())
+    trials_df <- read_csv(input$fileUpload$datapath) %>% distinct() %>% mutate(ID = row_number())
     bigmet <- data.frame()
     
     for(s in 1:max(trials_df$id_loc)){
@@ -349,11 +349,11 @@ server <- function(input, output, session) {
   accumulatedData <- reactive({
     req(filteredMetData())
     trials_x <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
-    startend <- select(daily_charact_x, id_trial, DOY, Stage) %>% filter(Stage != 1) %>% 
-      group_by(id_trial) %>% filter(Stage == max(Stage) | Stage == min(Stage)) %>%
+    startend <- select(daily_charact_x, ID, DOY, Stage) %>% filter(Stage != 1) %>% 
+      group_by(ID) %>% filter(Stage == max(Stage) | Stage == min(Stage)) %>%
       summarize(first_doy = DOY[1], final_doy = DOY[2]) %>% 
       mutate(final_doy = ifelse(final_doy < first_doy, final_doy + 365, final_doy)) %>%
-      left_join(select(trials_x, Site, Year, id_trial, Genetics)) %>% ungroup()
+      left_join(select(trials_x, Site, Year, ID, Genetics)) %>% ungroup()
     mean_startend <- group_by(startend, Site) %>% 
       summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T)) %>%
       mutate(final_doy = ifelse(final_doy > 365, final_doy - 365, final_doy))
@@ -525,7 +525,7 @@ server <- function(input, output, session) {
       
       if (selected_file != "trials_x.csv") {
         trials_x <- read.csv(paste0(resultFolderPath, "/trials_x.csv"))
-        data <- left_join(data, trials_x[, c("id_trial", "Site")], by = "id_trial")
+        data <- left_join(data, trials_x[, c("ID", "Site")], by = "ID")
       }
       
       data$Site <- as.factor(data$Site)  # Ensure Site is treated as a factor
@@ -613,7 +613,7 @@ server <- function(input, output, session) {
     charact_x_path <- paste0(resultFolderPath, "/daily_charact_x.csv")
     if(file.exists(charact_x_path)) {
       charact_x <- read.csv(charact_x_path)
-      varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(id_trial, Period)) %>%select(-c(DOY, Stage)) %>%  names()
+      varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>%select(-c(DOY, Stage)) %>%  names()
       print(varchoice)
       selectInput("heatmapSelect", "Select Variable for Heatmap", choices = varchoice)
       
@@ -652,12 +652,12 @@ server <- function(input, output, session) {
       charact_x <- read_csv(charact_x_path)
       daily_charact_x <- read_csv(daily_charact_x_path)
       
-      j_dt <- filter(trials_x, Genetics == gen) %>% select(id_trial,Genetics, Site) %>% left_join(charact_x)
+      j_dt <- filter(trials_x, Genetics == gen) %>% select(ID,Genetics, Site) %>% left_join(charact_x)
       
       if (file.exists(charact_x_path)) {
         var <- input$heatmapSelect
-        var_mat <- j_dt %>% select(id_trial, Site, Period, starts_with(var)) %>%
-          pivot_wider(names_from = Period, values_from = var) %>% select(-id_trial) %>%
+        var_mat <- j_dt %>% select(ID, Site, Period, starts_with(var)) %>%
+          pivot_wider(names_from = Period, values_from = var) %>% select(-ID) %>%
           group_by(Site) %>% summarize(across(where(is.numeric), function(x){mean(x,na.rm=T)})) %>%
           column_to_rownames("Site") %>%
           remove_empty(which = "rows") %>%

@@ -6,9 +6,9 @@ library(esquisse)
 library(lubridate)
 library(apsimx)
 library(ggplot2)
-#fernando miguez for information on why APSIM soybean model may not be progressing correctly
+library(here)
 
-setwd("C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output")
+setwd(paste0(here(), "/apsimx_output"))
 trials_x <- read_csv("output/trials_x.csv")
 charact_x <- read_csv("output/charact_x.csv")
 daily_charact_x <- read_csv("output/daily_charact_x.csv")
@@ -17,8 +17,8 @@ var <- "Rain"
 matval <- "early00"
 site_tag <- "urbana_il"
 
-varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(id_trial, Period)) %>% names()
-j_dt <- filter(trials_x, Mat == matval) %>% select(id_trial,Genetics, Site, Mat) %>% left_join(charact_x)
+varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>% names()
+j_dt <- filter(trials_x, Mat == matval) %>% select(ID,Genetics, Site, Mat) %>% left_join(charact_x)
 
 #translate
 trials_x
@@ -32,9 +32,13 @@ for(var in varchoice){
   plot(x)
 }
 
+pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
+palette <- rev(pal_f(50)[2:50])
+
 for(var in varchoice){
-  var_mat <- j_dt %>% select(id_trial, Site, Period, starts_with(var)) %>%
-    pivot_wider(names_from = Period, values_from = var) %>% select(-id_trial) %>%
+  print(var)
+  var_mat <- j_dt %>% select(ID, Site, Period, starts_with(var)) %>%
+    pivot_wider(names_from = Period, values_from = var) %>% select(-ID) %>%
     group_by(Site) %>% summarize(across(where(is.numeric), function(x){mean(x,na.rm=T)})) %>%
     column_to_rownames("Site") 
   var_mat <- select(var_mat, as.character(1:11)) %>%
@@ -43,39 +47,52 @@ for(var in varchoice){
   
   var_mat[is.nan(var_mat)] <- NA
   
+  if (all(var_mat == var_mat[1,1])){  #check if matrix is constant
+    pheatmap(var_mat, angle_col = 45,
+             color = palette,
+             breaks=c(var_mat[1,1]-2, var_mat[1,1]-1,var_mat[1,1]+1,var_mat[1,1]+2),
+             fontsize = 10, 
+             display_numbers = round(var_mat, 2), 
+             number_color = "grey10", 
+             number_format = "%.2f", 
+             legend = F,
+             cluster_cols = F,
+             cluster_rows = T,
+             main = paste0("Means of ",var," by Site (MG ",matval,")"))
+     } else {
   pheatmap(var_mat, angle_col = 45,
-           color=brewer.pal(11,"RdBu"),
+           color = palette,
            fontsize = 10, 
            display_numbers = round(var_mat, 2), 
-           number_color = "white", 
+           number_color = "grey10", 
            scale = "column",
            number_format = "%.2f", 
            legend = F,
            cluster_cols = F,
            cluster_rows = T,
            main = paste0("Means of ",var," by Site (MG ",matval,")"))
+  }
 }
-
 
 #get thermal time and precip for the last ten years of records
 current_year <- as.numeric(substr(Sys.time(),1,4)) - 1
 bigmet <- data.frame()
-for(s in 1:max(trials_x$id_loc)){
+for(s in 1:max(trials_x$ID_Loc)){
   lil_met <- read_apsim_met(paste0("met/loc_",s,".met"), verbose = F) %>% as_tibble() %>%
-    filter(year >= current_year - 9, year <= current_year) %>% mutate(id_loc = s)
+    filter(year >= current_year - 9, year <= current_year) %>% mutate(ID_Loc = s)
   bigmet <- rbind(bigmet, lil_met)
 }
-bigmet <- trials_x %>% select(Site, id_loc) %>% distinct() %>% left_join(bigmet) %>% group_by(Site, id_loc, year, day)
+bigmet <- trials_x %>% select(Site, ID_Loc) %>% distinct() %>% left_join(bigmet) %>% group_by(Site, ID_Loc, year, day)
 max_temp = 34 #thermal time max temp
 base_temp = 0 #thermal time base temp
 bigmet <- mutate(bigmet, tt = max((min(maxt,max_temp)+max(mint,base_temp))/2 - base_temp,0)) %>% ungroup() 
 
 #start and end of simulation as doy, going over 365 if wrapping over the new year
-startend <- select(daily_charact_x, id_trial, DOY, Stage) %>% filter(Stage != 1) %>% 
-  group_by(id_trial) %>% filter(Stage == max(Stage) | Stage == min(Stage)) %>%
+startend <- select(daily_charact_x, ID, DOY, Stage) %>% filter(Stage != 1) %>% 
+  group_by(ID) %>% filter(Stage == max(Stage) | Stage == min(Stage)) %>%
   summarize(first_doy = DOY[1], final_doy = DOY[2]) %>% 
   mutate(final_doy = ifelse(final_doy < first_doy, final_doy + 365, final_doy)) %>%
-  left_join(select(trials_x, Site, Year,id_trial,Genetics)) %>% ungroup()
+  left_join(select(trials_x, Site, Year,ID,Genetics)) %>% ungroup()
 #mean start doy and end doy for each site
 mean_startend <- group_by(startend, Site) %>% 
   summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T)) %>%
@@ -163,6 +180,6 @@ ggplot(plot_dt) +
 
 #accumulated precipitation and thermal time from time of sowing to time of harvest 
 #(or end of development for unharvested trials) for each trial/genetics/site
-# trial_comp <- select(daily_charact_x, Stage, id_trial, Rain, ThermalTime) %>% filter(Stage != 1) %>% 
-#   group_by(id_trial) %>% summarize(acc_precip = sum(Rain), acc_tt = sum(ThermalTime)) %>% 
-#   left_join(.,select(trials_x, Site, Genetics, id_trial, Year))
+# trial_comp <- select(daily_charact_x, Stage, ID, Rain, ThermalTime) %>% filter(Stage != 1) %>% 
+#   group_by(ID) %>% summarize(acc_precip = sum(Rain), acc_tt = sum(ThermalTime)) %>% 
+#   left_join(.,select(trials_x, Site, Genetics, ID, Year))
