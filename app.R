@@ -18,101 +18,201 @@ library(tidyverse)
 library(esquisse)
 library(tidyr)
 library(zip)
-library(bslib)
 library(here)
 
 
 # Define UI
-ui <- fluidPage(
-  #theme = bs_theme(bootswatch = "flatly"),  # Apply a modern theme
-  navbarPage(
+ui <- dashboardPage(
+  dashboardHeader(
     title = tags$div(
       style = "display: flex; align-items: center;",
-      tags$img(src = "aces.png", height = "40px", style = "margin-right: 10px;"),
-      tags$span("Trial Characterization Results", style = "font-size: 24px; font-weight: bold;")
+      tags$img(src = "aces.png", height = "40px", style = "margin-right: 10px;"), # Adjust the height as needed
+      tags$span("SCE", style = "font-size: 30px; font-weight: bold;")
     ),
-    
-    tabPanel(
-      title = "Description",
-      fluidPage(
-        h2("Seasonal Characterization Tool"),
-        p("Built in R and Shiny using the apsimr package."),
-        p("Purpose: To characterize the growing season at one or more sites according to the crop's response to environmental conditions at those sites."),
-        h3("Seasonal Characterization Tool Can be used to:"),
-        tags$ul(
-          tags$li("Understand the environment in terms of the conditions/stressors present at specific stages of the crop's development."),
-          tags$li("Compare seasonal conditions between sites and how those conditions have changed over time."),
-          tags$li("Predict crop phenology and performance from a cultivar's maturity, planting date, and location.")
-        ),
-        h4("Instructions"),
-        p("Use the 'Upload and Analyze' page to upload your input data and run the analysis."),
-        p("View results in the 'Visualizations and Results' page."),
-        h5("Contact"),
-        p("For questions, suggestions, or contributions, reach out to:"),
-        p("Sam Shi, mshi17@illinois.edu"),
-        p("Catherine Gilbert, cmg3@illinois.edu"),
-        p("GitHub: https://github.com/CatherineGilbert/APSIMX_SeasonalCharacterization")
-      )
+    titleWidth = 300 # Adjust this width based on your needs
+  ),
+  
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Description", tabName = "description", icon = icon("info")),
+      menuItem("Upload and Analyze", tabName = "analysis", icon = icon("upload")),
+      menuItem("View Results", tabName = "results", icon = icon("image")),
+      menuItem("View Seasonal Heatmap", tabName = "heatmap", icon = icon("fire")),
+      menuItem("Typical TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
+      menuItem("Site Yearly TT/Precip Totals", tabName = "faceted_comparison", icon = icon("chart-area")),
+      menuItem("Ten Year Site Averages", tabName = "between_sites", icon = icon("chart-bar"))
     ),
-    
-    tabPanel(
-      title = "Upload and Analyze",
-      fluidPage(
-        selectInput("cropType", "Select Crop Type", choices = c("Maize" = "Maize", "Soy" = "Soy")),
-        fileInput("fileUpload", "Upload Input File", accept = c(".csv")),
-        actionButton("runAnalysis", "Run Analysis", icon = icon("play")),
-        downloadButton("downloadData", "Download Results"),
-        br(),
-        h3("Dataset Descriptions"),
-        p(strong("charact_x:"), " Contains the environmental and developmental variables summarized for each stage of each simulation."),
-        p(strong("trials_x:"), " Contains simulation parameters, identifying information, and values which aren’t summarized by stage."),
-        p(strong("daily_charact_x:"), " Contains the recorded values of the reporting variables at each day of each simulation."),
-        uiOutput("progressBar")  # Display the progress bar here
-      )
+    width = 300
+  ),
+  dashboardBody(
+    shinyjs::useShinyjs(),
+    tags$head(
+      tags$style(HTML("
+        body, .content-wrapper, .box-body, .main-sidebar, .sidebar-menu, .content {
+          font-size: 18px; /* Increase the font size here */
+        }
+        h1, h2, h3, h4, h5, h6 {
+          font-size: 1.25em; /* Adjust the headings' size proportionally */
+        }
+        .sidebar-menu li a {
+          font-size: 18px; /* Adjust sidebar menu font size */
+        }
+        .large-text-label .control-label {
+          font-size: 24px; /* Adjust the size as needed */
+          font-weight: bold;
+        }
+      ")),
+      tags$script(HTML("
+        $(document).on('shiny:value', function(event) {
+          setTimeout(function() {
+            $(window).trigger('resize');
+          }, 1000); // Increase the delay if needed
+        });
+      ")),  # <-- Add the script here
+      tags$script(HTML("
+        $(document).on('shiny:sessioninitialized', function(event) {
+          $('.sidebar-toggle').on('click', function() {
+            setTimeout(function() {
+              $(window).trigger('resize');
+            }, 250); // Adjust timing if necessary
+          });
+        });
+
+        // Additional script to ensure plots resize correctly after rendering
+        $(document).on('shiny:value', function(event) {
+          if (event.name === 'heatmapPlot') {
+            setTimeout(function() {
+              $(window).trigger('resize');
+            }, 500);
+          }
+        });
+      "))
     ),
-    
-    tabPanel(
-      title = "Visualizations and Results",
-      fluidPage(
-        tabsetPanel(
-          tabPanel(
-            title = "Boxplot",
-            div(
-              class = "large-text-label control-label",
-              tags$label("Boxplot")
-            ),
-            uiOutput("fileSelectPlotUI"),
-            uiOutput("varSelectUI"),
-            plotOutput("boxplot"),
-            downloadButton("downloadBoxplot", "Download Boxplot")
-          ),
-          tabPanel(
-            title = "Heatmap",
-            p("This heatmap visualizes the means of the selected variable by site and genetic group."),
-            uiOutput("varHeatmapUI"),
-            uiOutput("genSelectUI"),
-            plotOutput("heatmapPlot"),
-            downloadButton("downloadHeatmap", "Download Heatmap")
-          ),
-          tabPanel(
-            title = "Daily Comparison",
-            p("Compare daily accumulated precipitation and thermal time between different sites."),
-            selectInput("comparisonType", "Select Comparison Type", choices = c(
-              "Accumulated Precipitation (Day of Year)" = "precip_doy",
-              "Accumulated Thermal Time (Day of Year)" = "tt_doy",
-              "Accumulated Precipitation (Days after Sowing)" = "precip_das",
-              "Accumulated Thermal Time (Days after Sowing)" = "tt_das"
-            )),
-            plotOutput("comparisonPlot"),
-            downloadButton("downloadComparisonPlot", "Download Plot")
-          ),
-          tabPanel(
-            title = "10-Year Averages",
-            p("Visualize the 10-year site averages for a typical growing season."),
-            plotOutput("plotBetweenSites"),
-            downloadButton("downloadBetweenSitesPlot", "Download Plot")
-          )
-        )
+    tabItems(
+      tabItem(tabName = "description",
+              fluidPage(
+                h2("Seasonal Characterization Engine"),
+                p("Built in R and Shiny using the apsimr package."),
+                p("Purpose: To characterize the growing season at one or more sites according to the crop's response to environmental conditions at those sites."),
+                h3("Seasonal Characterization Engine can be used to:"),
+                tags$ul(
+                  tags$li("Understand environment in terms of the conditions / stressors present at specific stages of the crop's development."),
+                  tags$li("Compare seasonal conditions between sites and how those conditions have changed over time."),
+                  tags$li("Predict crop phenology and performance from a cultivar's maturity, planting date, and location.")
+                ),
+                h4("Instructions"),
+                p("You can use Upload and Analysis page to upload your input data and run analysis, and download result"),
+                p("You can use view result page to view boxplot of each column of final dataset"),
+                p("You can use visualizations pages to view aggregated plots and download them"),
+                h5("Contact"),
+                p("Feel free to reach out if you have any questions, suggestions, or contributions!"),
+                p("Sam Shi, mshi17@illinois.edu "),
+                p("Catherine Gilbert, cmg3@illinois.edu"),
+                p("github page: https://github.com/CatherineGilbert/APSIMX_SeasonalCharacterization")
+                
+                
+              )
+      ),
+      tabItem(tabName = "analysis",
+              fluidPage(
+                selectInput("cropType", "Select Crop Type", choices = c("Maize" = "Maize", "Soy" = "Soy")),
+                fileInput("fileUpload", "Upload Input File", accept = c(".csv")),
+                actionButton("runAnalysis", "Run Analysis", icon = icon("play")),
+                downloadButton("downloadData", "Download Results"),
+                br(),
+                h3("Dataset Descriptions"),
+                p(strong("trials_x:"), " aligns with the input file and contains sim parameters, identifying information, and values which would be inappropriate to summarize by period. 
+"),
+                
+                p(strong("daily_charact_x:"), " is the combined total output of the APSIM simulations and contains the recorded values of the reporting variables for each day of each simulation. This data is available to the user if they wish to work with the raw outputs of the tool.
+ 
+"),
+                p(strong("charact_x:"), " contains parameters specific to each developmental period. These are the environmental and biological parameters summarized by period, and the parameters which describe the periods themselves, such as starting and end date. This data is in long format by ID and period. 
+"),
+                
+                p(strong("final_x:"), " joins the contents of trials_x and charact_x, and contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is “Variable_Period”, e.g., “Rain_5” is the mean rainfall within the fifth period of development. 
+ 
+"),
+                fluidRow(
+                  column(12,
+                         progressBar(id = "progressBar", value = 0, display_pct = TRUE)
+                  )
+                )
+              )
+      ),
+      tabItem(tabName = "results",
+              fluidPage(
+                div(
+                  class = "large-text-label control-label",  # Add this div for the "Boxplot" label
+                  tags$label("Boxplot")  # The large, bold text for "Boxplot"
+                ),
+                uiOutput("fileSelectPlotUI"),
+                uiOutput("varSelectUI"),
+                plotOutput("boxplot"),
+                downloadButton("downloadBoxplot", "Download Boxplot"),  
+                div(
+                  class = "large-text-label",
+                  selectInput("fileToView", "View Result files", choices = c("trials_x.csv", "daily_charact_x.csv", "charact_x.csv", "final_x.csv"))
+                ),
+                DTOutput("viewData")
+              )
+      ),
+      tabItem(tabName = "heatmap",
+              fluidPage(
+                p("This heatmap visualizes the means of the selected variable by site and genetic group. 
+              Use the dropdown menus to select the variable and genetic group for analysis."),
+                uiOutput("varHeatmapUI"),
+                uiOutput("genSelectUI"),
+                uiOutput("heatmapPlotUI"),  # Use uiOutput to render the heatmap plot
+                downloadButton("downloadHeatmap", "Download Heatmap") 
+              )
+      ),
+      tabItem(tabName = "daily_between_sites",
+              fluidPage(p("This section allows you to compare daily accumulated precipitation and thermal time between different sites. Select the comparison type and sites for analysis."),
+                        fluidRow(
+                          column(width = 10,  # Adjust the width as needed
+                                 selectInput("comparisonType", "Select Comparison Type", choices = c(
+                                   "Acc. Precip. (Day of Year)" = "precip_doy",
+                                   "Acc. Precip. (Days after Sowing)" = "precip_das",
+                                   "Acc. Thermal Time (Day of Year)" = "tt_doy",
+                                   "Acc. Thermal Time (Days after Sowing)" = "tt_das"
+                                 )),
+                                 plotOutput("comparisonPlot"),
+                                 downloadButton("downloadComparisonPlot", "Download Plot")
+                          ),
+                          column(width = 3,  # Adjust the width as needed
+                                 uiOutput("siteSelectionUI")
+                          )
+                        )
+              )
+      ),
+      tabItem(tabName = "between_sites",
+              fluidPage(
+                p("This section visualizes the 10-year site averages for a typical growing season, comparing accumulated precipitation and thermal time between selected sites."),
+                fluidRow(
+                  column(width = 3,
+                         uiOutput("siteSelectionUI_between")
+                  ),
+                  column(width = 9,
+                         plotOutput("plotBetweenSites"),
+                         downloadButton("downloadBetweenSitesPlot", "Download Plot")
+                  )
+                )
+              )
+      ),
+      tabItem(tabName = "faceted_comparison",
+              fluidPage(
+                p("This section provides a faceted comparison of accumulated precipitation and thermal time for different sites. Select the sites to visualize the comparison."),
+                fluidRow(
+                  column(width = 3,
+                         uiOutput("siteSelectionUI_faceted")
+                  ),
+                  column(width = 9,
+                         plotOutput("facetedComparisonPlot"),
+                         downloadButton("downloadFacetedComparisonPlot", "Download Plot")
+                  )
+                )
+              )
       )
     )
   )
@@ -122,7 +222,8 @@ server <- function(input, output, session) {
   
   gen <- 1 # should be selectable for heatmap
   # Path to the scripts and results
-  codesPath <- here()
+  #codesPath <- here()
+  codesPath <- "C:/Users/cmg3/Documents/GitHub/SCT"
   setwd(paste0(codesPath,"/apsimx_output"))
   resultFolderPath <- paste0(codesPath,"/apsimx_output/output")
   heatmap_plot <- reactiveVal(NULL)
@@ -132,7 +233,13 @@ server <- function(input, output, session) {
   analysisInProgress <- reactiveVal(FALSE)
   observe({
     req(analysisDone())
-    source(paste0(codesPath,"/visualization.R"))
+    tryCatch({
+      source(paste0(codesPath,"/visualization.R"))
+    }, error = function(e) {
+      # Handle the error here
+      cat("An error occurred while sourcing the file:", e$message, "\n")
+    })
+    
   })
   
   
@@ -205,20 +312,7 @@ server <- function(input, output, session) {
     writeLines(crop, paste0(codesPath, "/selected_crop.txt"))
     
     source(paste0(codesPath,"/apsimx.R"))
-    
-    
-    #update outputs and visaluzations
-    #think about future labs and also company opportunities after i graduate next year
-    
-    #get feedback from breeders on what they think is valuable and what kind of outputs they value
-    #for over-performance / under-performance can use maturity checks as yield checks 
-    #check that the actual maturity (DtM) and simulated maturities (stage DOYs) are accurate
-    #investigate structural equation modeling
-    
-    #build a machine learning model directly off the seasonal parameters instead of just using the apsim yield output
-    
-    #which of the seasonal variables are affecting the performance of the varieties
-    
+
     # Start, set up trials_df -----
     assign("trials_df", trials_df, envir = .GlobalEnv)
     assign("locs_df", locs_df, envir = .GlobalEnv)
@@ -303,18 +397,18 @@ server <- function(input, output, session) {
     trials_df <- read_csv(input$fileUpload$datapath) %>% distinct() %>% mutate(ID = row_number())
     bigmet <- data.frame()
     
-    for(s in 1:max(trials_df$id_loc)){
+    for(s in 1:max(trials_df$ID_Loc)){
       lil_met <- read_apsim_met(paste0("met/loc_", s, ".met"), verbose = F) %>% 
         as_tibble() %>%
         filter(year >= current_year - 9, year <= current_year) %>% 
-        mutate(id_loc = s)
+        mutate(ID_Loc = s)
       bigmet <- rbind(bigmet, lil_met)
     }
     bigmet <- trials_df %>% 
-      select(Site, id_loc) %>% 
+      select(Site, ID_Loc) %>% 
       distinct() %>% 
       left_join(bigmet) %>% 
-      group_by(Site, id_loc, year, day) %>%
+      group_by(Site, ID_Loc, year, day) %>%
       mutate(tt = max((min(maxt, 34) + max(mint, 0)) / 2 - 0, 0)) %>%
       ungroup()
     filter(bigmet, day >= 200, day <= 300)
@@ -327,18 +421,18 @@ server <- function(input, output, session) {
     trials_x <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
     current_year <- as.numeric(substr(Sys.time(), 1, 4)) - 1
     bigmet <- data.frame()
-    for(s in 1:max(trials_x$id_loc)){
+    for(s in 1:max(trials_x$ID_Loc)){
       lil_met <- read_apsim_met(paste0("met/loc_", s, ".met"), verbose = F) %>% 
         as_tibble() %>%
         filter(year >= current_year - 9, year <= current_year) %>% 
-        mutate(id_loc = s)
+        mutate(ID_Loc = s)
       bigmet <- rbind(bigmet, lil_met)
     }
     bigmet <- trials_x %>% 
-      select(Site, id_loc) %>% 
+      select(Site, ID_Loc) %>% 
       distinct() %>% 
       left_join(bigmet) %>% 
-      group_by(Site, id_loc, year, day) %>%
+      group_by(Site, ID_Loc, year, day) %>%
       mutate(tt = max((min(maxt, 34) + max(mint, 0)) / 2 - 0, 0)) %>%
       ungroup()
     bigmet <- filter(bigmet, Site %in% input$selectedSites)
@@ -492,8 +586,8 @@ server <- function(input, output, session) {
   #first select file for boxplot
   output$fileSelectPlotUI <- renderUI({
     req(analysisDone())
-    files <- c("trials_x.csv", "charact_x.csv", "daily_charact_x.csv")
-    selectInput("fileSelectPlot", "Select File to Plot", choices = files, selected = "trials_x.csv")
+    files <- c("trials_x.csv", "daily_charact_x.csv", "charact_x.csv", "final_x.csv")
+    selectInput("fileSelectPlot", "Select File to Plot", choices = files, selected = "charact_x.csv")
   })
   
   #second select var for UI
@@ -504,7 +598,7 @@ server <- function(input, output, session) {
     
     if (file.exists(file_path)) {
       data <- read.csv(file_path)
-      selectInput("varSelect_boxplot", "Select Variable", choices = names(data)[-1])
+      selectInput("varSelect_boxplot", "Select Variable", choices = names(data)[-1], selected = "Rain")
     }
   })
   
@@ -538,7 +632,8 @@ server <- function(input, output, session) {
         p <- ggplot(data, aes(x = Site, y = .data[[selected_var]], fill = Site)) +
           geom_boxplot() +  # Use geom_boxplot to create a box plot
           labs(x = "Site", y = selected_var) +
-          theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+          theme(axis.text.x = element_text(angle = 45, hjust = 1),
+                legend.position = "none")
         
         boxplot_data(p)  # Store the plot in a reactive value
         print(p)  # Render the plot
@@ -600,11 +695,11 @@ server <- function(input, output, session) {
   
   output$genSelectUI <- renderUI({
     req(analysisDone())
-    input_path <- paste0(resultFolderPath, "/input.csv")
+    input_path <- paste0(resultFolderPath, "/trials_x.csv")
     if(file.exists(input_path)) {
       input<- read.csv(input_path)
-      gen_choices <- unique(input$Genetics)
-      selectInput("genSelect", "Select Gen for Heatmap", choices = gen_choices, selected = gen_choices[1])
+      gen_choices <- unique(input$Mat)
+      selectInput(inputId = "genSelect", label = "Select Maturity for Heatmap", choices = gen_choices, selected = gen_choices[1])
     }
   })
   
@@ -623,7 +718,7 @@ server <- function(input, output, session) {
   observe({
     output$heatmapPlotUI <- renderUI({
       updateSiteSelectionFacetdUI()
-      #graphics.off()
+      graphics.off()
       req(input$heatmapSelect)  # Ensure there's a selected value
       plotOutput("heatmapPlot", height = "600px", width = "90%")
       
@@ -640,20 +735,23 @@ server <- function(input, output, session) {
     {
       req(input$heatmapSelect)  # Ensure a variable is selected
       req(analysisDone())
-      gen <- input$genSelect 
-      print("genSelect ==",gen)
+      matsel <- input$genSelect 
       var <- input$heatmapSelect
+      
       # Logic to prepare the heatmap matrix
       charact_x_path <- paste0(resultFolderPath, "/charact_x.csv")
       trials_x_path <-paste0(resultFolderPath,"/trials_x.csv")
       daily_charact_x_path <- paste0(resultFolderPath,"/daily_charact_x.csv")
       
-      
       trials_x <- read_csv(trials_x_path)
       charact_x <- read_csv(charact_x_path)
       daily_charact_x <- read_csv(daily_charact_x_path)
       
-      j_dt <- filter(trials_x, Genetics == gen) %>% select(ID,Genetics,Site) %>% left_join(charact_x)
+      j_dt <- filter(trials_x, Mat == matsel) %>% select(ID, Mat, Site) %>% left_join(charact_x)
+      
+      #set palette
+      pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
+      palette <- rev(pal_f(50)[2:50])
       
       if (file.exists(charact_x_path)) {
         var <- input$heatmapSelect
@@ -665,19 +763,38 @@ server <- function(input, output, session) {
           as.matrix()
         sorted_colnames <- as.character(sort(as.numeric(colnames(var_mat))))
         var_mat <- var_mat[, sorted_colnames]
+        var_mat[is.nan(var_mat)] <- NA
         print(head(var_mat))
         print(dim(var_mat))
-        heatmap <- pheatmap(var_mat, angle_col = 0,
-                            
+        
+        var_vals <- c(var_mat)[!is.na(c(var_mat))]
+        
+        if (all(var_vals == var_vals[1])){  #check if matrix is constant
+          heatmap <- pheatmap(var_mat, angle_col = 45,
+                   color = palette,
+                   breaks=c(var_mat[1,1]-2,var_mat[1,1]-1,var_mat[1,1]+1,var_mat[1,1]+2),
+                   fontsize = 16, 
+                   display_numbers = round(var_mat, 2), 
+                   number_color = "grey10", 
+                   number_format = "%.2f", 
+                   legend = F,
+                   cluster_cols = F,
+                   cluster_rows = T,
+                   main = paste0("Means of ",var," by Site (Maturity: ",matsel,")"))
+        } else {
+          heatmap <- pheatmap(var_mat, angle_col = 45,
                             fontsize = 16, 
+                            color = palette,
                             display_numbers = round(var_mat, 2), 
-                            number_color = "black", 
-                            #scale = "column",
+                            number_color = "grey10", 
+                            scale = "column",
                             number_format = "%.2f", 
                             legend = F,
                             cluster_cols = F,
                             cluster_rows = T,
-                            main = paste0("Means of ",var," by Site (MG ",gen,")"))
+                            main = paste0("Means of ",var," by Site (Maturity: ",matsel,")"))
+        }
+        
         heatmap_plot(heatmap)
         
         
@@ -701,7 +818,6 @@ server <- function(input, output, session) {
       dev.off()
     }
   )
-  
   
   
   updateSiteSelectionBetweenUI <- function() {
