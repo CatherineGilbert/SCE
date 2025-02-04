@@ -24,7 +24,7 @@ library(here)
 
 # Define UI
 ui <- fluidPage(
-  theme = bs_theme(bootswatch = "flatly"),  # Apply a modern theme
+  #theme = bs_theme(bootswatch = "flatly"),  # Apply a modern theme
   navbarPage(
     title = tags$div(
       style = "display: flex; align-items: center;",
@@ -538,7 +538,7 @@ server <- function(input, output, session) {
         p <- ggplot(data, aes(x = Site, y = .data[[selected_var]], fill = Site)) +
           geom_boxplot() +  # Use geom_boxplot to create a box plot
           labs(x = "Site", y = selected_var) +
-          theme(axis.text.x = element_text(angle = 45, hjust = 1))
+          theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
         
         boxplot_data(p)  # Store the plot in a reactive value
         print(p)  # Render the plot
@@ -641,6 +641,7 @@ server <- function(input, output, session) {
       req(input$heatmapSelect)  # Ensure a variable is selected
       req(analysisDone())
       gen <- input$genSelect 
+      print("genSelect ==",gen)
       var <- input$heatmapSelect
       # Logic to prepare the heatmap matrix
       charact_x_path <- paste0(resultFolderPath, "/charact_x.csv")
@@ -652,7 +653,7 @@ server <- function(input, output, session) {
       charact_x <- read_csv(charact_x_path)
       daily_charact_x <- read_csv(daily_charact_x_path)
       
-      j_dt <- filter(trials_x, Genetics == gen) %>% select(ID,Genetics, Site) %>% left_join(charact_x)
+      j_dt <- filter(trials_x, Genetics == gen) %>% select(ID,Genetics,Site) %>% left_join(charact_x)
       
       if (file.exists(charact_x_path)) {
         var <- input$heatmapSelect
