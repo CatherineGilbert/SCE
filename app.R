@@ -40,7 +40,7 @@ ui <- dashboardPage(
       menuItem("View Seasonal Heatmap", tabName = "heatmap", icon = icon("fire")),
       menuItem("Typical TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
       menuItem("Site Yearly TT/Precip Totals", tabName = "faceted_comparison", icon = icon("chart-area")),
-      menuItem("Ten Year Site Averages", tabName = "between_sites", icon = icon("chart-bar"))
+      menuItem("Ten Year Site TT/Precip Means", tabName = "between_sites", icon = icon("chart-bar"))
     ),
     width = 300
   ),
@@ -303,6 +303,7 @@ server <- function(input, output, session) {
     req(input$fileUpload)
     analysisInProgress(TRUE)
     
+    input <- read_csv(paste0(resultFolderPath, "/input.csv"))
     
     setwd(paste0(codesPath,"/apsimx_output"))
     
@@ -617,7 +618,7 @@ server <- function(input, output, session) {
     if (file.exists(file_path)) {
       data <- read.csv(file_path)
       
-      if (selected_file != "trials_x.csv") {
+      if (!selected_file %in% c("trials_x.csv","final_x.csv")) {
         trials_x <- read.csv(paste0(resultFolderPath, "/trials_x.csv"))
         data <- left_join(data, trials_x[, c("ID", "Site")], by = "ID")
       }

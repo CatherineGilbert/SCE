@@ -58,7 +58,7 @@ for(var in varchoice){
              legend = F,
              cluster_cols = F,
              cluster_rows = T,
-             main = paste0("Means of ",var," by Site (MG ",matval,")"))
+             main = paste0("Means of ",var," by Site (Maturity: ",matval,")"))
      } else {
   pheatmap(var_mat, angle_col = 45,
            color = palette,
@@ -70,7 +70,7 @@ for(var in varchoice){
            legend = F,
            cluster_cols = F,
            cluster_rows = T,
-           main = paste0("Means of ",var," by Site (MG ",matval,")"))
+           main = paste0("Means of ",var," by Site (Maturity: ",matval,")"))
   }
 }
 

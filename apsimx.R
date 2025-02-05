@@ -1,5 +1,3 @@
-#include an ID with the raw character inputs
-#include trial_ID 
 
 
 # Start, set up trials_df -----
@@ -16,16 +14,25 @@ Sys.setlocale("LC_ALL", "English_United States")
 start_time <- Sys.time() # track running time
 
 codes_dir <- here() #where the folder with the codes is
+#codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
 setwd(paste0(codes_dir,"/apsimx_output")) #folder where the output goes
 #setwd("C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output") 
 
-crop <- "Soy" 
-trials_df <- read_csv(paste0(codes_dir,"/example_input_files/soy_example_input.csv")) 
+crop <- readLines("C:/Users/cmg3/Documents/GitHub/SCT/selected_crop.txt")
+#crop <- "Soy" 
+
+trials_df <- read_csv(paste0(codes_dir,"/apsimx_output/output/input.csv")) 
 trials_df <- mutate(trials_df, ID = row_number()) %>% rename(X = Longitude, Y = Latitude)
 locs_df <- select(trials_df, X, Y) %>% distinct() %>% mutate(ID_Loc = row_number())
 trials_df <- left_join(trials_df, locs_df)
 
+#set up progress log
+writeLines("Progress Log:", "progress.log") #Create file
+CON <- file("progress.log", "a")    #Open connection to append
+
 #require year as part of the input
+writeLines("Parse dates", CON)
+
 prev_year <- as.numeric(substr(Sys.time(),1,4)) - 1
 trials_df <- suppressWarnings(mutate(trials_df, Year = as.numeric(str_extract(Planting, "\\b\\d{4}\\b"))))
 trials_df <- suppressWarnings(mutate(trials_df, PlantingDate = as_date(Planting)))
@@ -37,6 +44,8 @@ trials_df <- mutate(trials_df,
   sim_end = if_else(is.na(PlantingDate), as_date(paste0(as.character(Year),"-12-31")), as_date(PlantingDate %m+% months(10))))
 
 # Get what maturities of cultivar we'll use
+writeLines("Set maturities", CON)
+
 if (crop == "Soy"){
   trials_df <- trials_df %>% mutate(gen1 = floor(Genetics), gen2 = Genetics - gen1) %>%
     mutate(gen1 = case_when( 
@@ -344,3 +353,4 @@ end_time <- Sys.time()
 duration <- end_time - start_time
 print(duration)
 
+close(CON)      
