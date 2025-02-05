@@ -8,6 +8,8 @@ library(apsimx)
 library(ggplot2)
 library(here)
 
+plotting <- FALSE
+
 setwd(paste0(here(), "/apsimx_output"))
 trials_x <- read_csv("output/trials_x.csv")
 charact_x <- read_csv("output/charact_x.csv")
@@ -23,6 +25,7 @@ j_dt <- filter(trials_x, Mat == matval) %>% select(ID,Genetics, Site, Mat) %>% l
 #translate
 trials_x
 
+if (plotting){
 for(var in varchoice){
   print(var)
   x <- ggplot(j_dt) +
@@ -73,6 +76,7 @@ for(var in varchoice){
            main = paste0("Means of ",var," by Site (Maturity: ",matval,")"))
   }
 }
+}
 
 #get thermal time and precip for the last ten years of records
 current_year <- as.numeric(substr(Sys.time(),1,4)) - 1
@@ -107,6 +111,8 @@ dbtw_sites <- filtmet %>% group_by(Site, year) %>%
   mutate(acc_precip = cumsum(rain), acc_tt = cumsum(tt)) %>%
   ungroup() %>% group_by(Site, day) %>% 
   summarize(acc_precip= mean(acc_precip, na.rm = T), acc_tt = mean(acc_tt, na.rm = T))
+
+if (plotting) {
 ggplot(dbtw_sites) + 
   aes(x = day, y = acc_precip, colour = Site) +
   geom_line() +
@@ -133,13 +139,14 @@ ggplot(sdbtw_sites) +
   scale_color_hue(direction = 1) +
   labs(x = "Days after Sowing", y = "Acc. Thermal Time") +
   theme_minimal()
-
+}
 
 #cross charts comparing accumulated precip/thermal time
 
 wthn_sites <- filtmet %>% ungroup() %>% group_by(Site, year) %>% 
   summarize(acc_precip = sum(rain), acc_tt = sum(tt)) 
 
+if (plotting) {
 #comparing conditions over the last ten years at the same site
 plot_dt <- filter(wthn_sites, Site == site_tag)
 ggplot(plot_dt) +
@@ -150,11 +157,13 @@ ggplot(plot_dt) +
   labs(x = "Acc. Precipitation (mm)",y = "Acc. Thermal Time", 
        title = paste0("Conditions at [",site_tag,"]")) +
   theme_minimal()
+}
 
 #comparing conditions over the last ten years, faceted for several sites
 means <- wthn_sites %>% group_by(Site) %>%
   summarise(mean_acc_precip = mean(acc_precip),
             mean_acc_tt = mean(acc_tt))
+if (plotting) {
 ggplot(wthn_sites) +
   aes(x = acc_precip, y = acc_tt) +
   facet_wrap(vars(Site), scales = "free") +
@@ -176,7 +185,7 @@ ggplot(plot_dt) +
   labs(x = "Acc. Precipitation (mm)",y = "Acc. Thermal Time (GDD)", 
        title = "10 Year Site Averages for a Typical Growing Season") +
   theme(legend.position = "none") 
-
+}
 
 #accumulated precipitation and thermal time from time of sowing to time of harvest 
 #(or end of development for unharvested trials) for each trial/genetics/site

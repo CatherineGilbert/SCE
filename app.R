@@ -152,7 +152,7 @@ ui <- dashboardPage(
                 downloadButton("downloadBoxplot", "Download Boxplot"),  
                 div(
                   class = "large-text-label",
-                  selectInput("fileToView", "View Result files", choices = c("trials_x.csv", "daily_charact_x.csv", "charact_x.csv", "final_x.csv"))
+                  selectInput("fileToView", "View Result Files", choices = c("trials_x.csv", "daily_charact_x.csv", "charact_x.csv", "final_x.csv"))
                 ),
                 DTOutput("viewData")
               )
@@ -486,19 +486,19 @@ server <- function(input, output, session) {
         theme_minimal()
     } else if (input$comparisonType == "precip_das") {
       sdbtw_sites <- data %>% mutate(day = day - min(day) + 1)
-      p <- p + 
+      p <- ggplot(sdbtw_sites) + 
         aes(x = day, y = acc_precip, colour = Site) +
         geom_line() +
         scale_color_hue(direction = 1) +
-        labs(x = "Days after Sowing", y = "Acc. Precipitation (mm)") +
+        labs(x = "Days after Sowing", y = "Accumulated Precipitation (mm)") +
         theme_minimal()
     } else if (input$comparisonType == "tt_das") {
       sdbtw_sites <- data %>% mutate(day = day - min(day) + 1)
-      p <- p + 
+      p <- ggplot(sdbtw_sites) + 
         aes(x = day, y = acc_tt, colour = Site) +
         geom_line() +
         scale_color_hue(direction = 1) +
-        labs(x = "Days after Sowing", y = "Acc. Thermal Time") +
+        labs(x = "Days after Sowing", y = "Accumulated Thermal Time") +
         theme_minimal()
     }
     
@@ -740,38 +740,33 @@ server <- function(input, output, session) {
       var <- input$heatmapSelect
       
       # Logic to prepare the heatmap matrix
-      charact_x_path <- paste0(resultFolderPath, "/charact_x.csv")
-      trials_x_path <-paste0(resultFolderPath,"/trials_x.csv")
-      daily_charact_x_path <- paste0(resultFolderPath,"/daily_charact_x.csv")
-      
-      trials_x <- read_csv(trials_x_path)
-      charact_x <- read_csv(charact_x_path)
-      daily_charact_x <- read_csv(daily_charact_x_path)
-      
-      j_dt <- filter(trials_x, Mat == matsel) %>% select(ID, Mat, Site) %>% left_join(charact_x)
+      final_x_path <- paste0(resultFolderPath, "/final_x.csv")
+      final_x <- read_csv(final_x_path)
       
       #set palette
       pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
       palette <- rev(pal_f(50)[2:50])
       
-      if (file.exists(charact_x_path)) {
+      if (file.exists(final_x_path)) {
         var <- input$heatmapSelect
-        var_mat <- j_dt %>% select(ID, Site, Period, starts_with(var)) %>%
-          pivot_wider(names_from = Period, values_from = var) %>% select(-ID) %>%
+        var_mat <- final_x %>% filter(Mat == matsel) %>% select(ID, Site, starts_with(var)) %>% select(-ID) %>%
           group_by(Site) %>% summarize(across(where(is.numeric), function(x){mean(x,na.rm=T)})) %>%
           column_to_rownames("Site") %>%
           remove_empty(which = "rows") %>%
           as.matrix()
+        number_names <- sub(".*_(\\d+)$", "\\1", colnames(var_mat))
+        colnames(var_mat) <- number_names
         sorted_colnames <- as.character(sort(as.numeric(colnames(var_mat))))
         var_mat <- var_mat[, sorted_colnames]
+        
         var_mat[is.nan(var_mat)] <- NA
+        var_vals <- c(var_mat)[!is.na(c(var_mat))]
+        
         print(head(var_mat))
         print(dim(var_mat))
         
-        var_vals <- c(var_mat)[!is.na(c(var_mat))]
-        
         if (all(var_vals == var_vals[1])){  #check if matrix is constant
-          heatmap <- pheatmap(var_mat, angle_col = 45,
+          heatmap <- pheatmap(var_mat, angle_col = 0,
                    color = palette,
                    breaks=c(var_mat[1,1]-2,var_mat[1,1]-1,var_mat[1,1]+1,var_mat[1,1]+2),
                    fontsize = 16, 
@@ -783,7 +778,7 @@ server <- function(input, output, session) {
                    cluster_rows = T,
                    main = paste0("Means of ",var," by Site (Maturity: ",matsel,")"))
         } else {
-          heatmap <- pheatmap(var_mat, angle_col = 45,
+          heatmap <- pheatmap(var_mat,angle_col = 0,
                             fontsize = 16, 
                             color = palette,
                             display_numbers = round(var_mat, 2), 
