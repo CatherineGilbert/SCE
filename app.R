@@ -21,7 +21,7 @@ library(zip)
 library(here)
 
 
-# Define UI
+# Define UI ----
 ui <- dashboardPage(
   dashboardHeader(
     title = tags$div(
@@ -68,8 +68,6 @@ ui <- dashboardPage(
             $(window).trigger('resize');
           }, 1000); // Increase the delay if needed
         });
-      ")),  # <-- Add the script here
-      tags$script(HTML("
         $(document).on('shiny:sessioninitialized', function(event) {
           $('.sidebar-toggle').on('click', function() {
             setTimeout(function() {
@@ -77,8 +75,7 @@ ui <- dashboardPage(
             }, 250); // Adjust timing if necessary
           });
         });
-
-        // Additional script to ensure plots resize correctly after rendering
+        // Additional script to ensure heatmap plots resize correctly after rendering
         $(document).on('shiny:value', function(event) {
           if (event.name === 'heatmapPlot') {
             setTimeout(function() {
@@ -120,18 +117,15 @@ ui <- dashboardPage(
                 actionButton("runAnalysis", "Run Analysis", icon = icon("play")),
                 downloadButton("downloadData", "Download Results"),
                 br(),
+                
                 h3("Dataset Descriptions"),
                 p(strong("trials_x:"), " aligns with the input file and contains sim parameters, identifying information, and values which would be inappropriate to summarize by period. 
 "),
-                
                 p(strong("daily_charact_x:"), " is the combined total output of the APSIM simulations and contains the recorded values of the reporting variables for each day of each simulation. This data is available to the user if they wish to work with the raw outputs of the tool.
- 
 "),
                 p(strong("charact_x:"), " contains parameters specific to each developmental period. These are the environmental and biological parameters summarized by period, and the parameters which describe the periods themselves, such as starting and end date. This data is in long format by ID and period. 
 "),
-                
                 p(strong("final_x:"), " joins the contents of trials_x and charact_x, and contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is “Variable_Period”, e.g., “Rain_5” is the mean rainfall within the fifth period of development. 
- 
 "),
                 fluidRow(
                   column(12,
@@ -143,8 +137,8 @@ ui <- dashboardPage(
       tabItem(tabName = "results",
               fluidPage(
                 div(
-                  class = "large-text-label control-label",  # Add this div for the "Boxplot" label
-                  tags$label("Boxplot")  # The large, bold text for "Boxplot"
+                  class = "large-text-label control-label",  
+                  tags$label("Boxplot")  
                 ),
                 uiOutput("fileSelectPlotUI"),
                 uiOutput("varSelectUI"),
@@ -186,20 +180,6 @@ ui <- dashboardPage(
                         )
               )
       ),
-      tabItem(tabName = "between_sites",
-              fluidPage(
-                p("This section visualizes the 10-year site averages for a typical growing season, comparing accumulated precipitation and thermal time between selected sites."),
-                fluidRow(
-                  column(width = 3,
-                         uiOutput("siteSelectionUI_between")
-                  ),
-                  column(width = 9,
-                         plotOutput("plotBetweenSites"),
-                         downloadButton("downloadBetweenSitesPlot", "Download Plot")
-                  )
-                )
-              )
-      ),
       tabItem(tabName = "faceted_comparison",
               fluidPage(
                 p("This section provides a faceted comparison of accumulated precipitation and thermal time for different sites. Select the sites to visualize the comparison."),
@@ -213,24 +193,42 @@ ui <- dashboardPage(
                   )
                 )
               )
+      ),
+      tabItem(tabName = "between_sites",
+              fluidPage(
+                p("This section visualizes the 10-year site averages for a typical growing season, comparing accumulated precipitation and thermal time between selected sites."),
+                fluidRow(
+                  column(width = 3,
+                         uiOutput("siteSelectionUI_between")
+                  ),
+                  column(width = 9,
+                         plotOutput("plotBetweenSites"),
+                         downloadButton("downloadBetweenSitesPlot", "Download Plot")
+                  )
+                )
+              )
       )
     )
   )
 )
-# Define server logic
+
+# Define server logic ----
 server <- function(input, output, session) {
   
-  gen <- 1 # should be selectable for heatmap
   # Path to the scripts and results
   #codesPath <- here()
   codesPath <- "C:/Users/cmg3/Documents/GitHub/SCT"
   setwd(paste0(codesPath,"/apsimx_output"))
   resultFolderPath <- paste0(codesPath,"/apsimx_output/output")
-  heatmap_plot <- reactiveVal(NULL)
+  
   # Reactive values for storing the analysis state and the selected variable
   #analysisDone <- reactiveVal(FALSE)
   analysisDone <- reactiveVal(TRUE)
   analysisInProgress <- reactiveVal(FALSE)
+  
+  heatmap_plot <- reactiveVal(NULL)
+
+# things to do immediately after analysis finishes ----
   observe({
     req(analysisDone())
     tryCatch({
@@ -239,12 +237,11 @@ server <- function(input, output, session) {
       # Handle the error here
       cat("An error occurred while sourcing the file:", e$message, "\n")
     })
-    
+    trials_x <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
   })
+ 
   
-  
-  
-  
+# disable run analysis if analysis is currently in progress ---- 
   observe({
     if (analysisInProgress()) {
       shinyjs::disable("runAnalysis")
@@ -257,7 +254,6 @@ server <- function(input, output, session) {
   progress <- reactiveVal(0)
   
   observe({
-    
     invalidateLater(5000, session)
     setwd(paste0(codesPath,"/apsimx_output"))
     if (file.exists("progress.log")) {
@@ -275,15 +271,13 @@ server <- function(input, output, session) {
     progressBar(id = "progressBar", value = progress(), display_pct = TRUE)
   })
   
-  
-  #----------------#
   selectedVariable <- reactiveVal()
   trials_df <- reactiveVal()
+  
   observeEvent(input$fileUpload, {
     if (!dir.exists(resultFolderPath)) {
       dir.create(resultFolderPath, recursive = TRUE)
     }
-    
     tryCatch({
       file.copy(input$fileUpload$datapath, paste0(resultFolderPath, "/input.csv"), overwrite = TRUE)
       if (file.exists(paste0(resultFolderPath, "/input.csv"))) {
@@ -294,12 +288,11 @@ server <- function(input, output, session) {
     }, error = function(e) {
       cat("An error occurred during file copy: ", e$message, "\n")
     })
-    
     updateSiteSelectionUI()
   })
   
   observeEvent(input$runAnalysis, {
-    
+  
     req(input$fileUpload)
     analysisInProgress(TRUE)
     
@@ -314,7 +307,7 @@ server <- function(input, output, session) {
     
     source(paste0(codesPath,"/apsimx.R"))
 
-    # Start, set up trials_df -----
+    # Start, set up trials_df 
     assign("trials_df", trials_df, envir = .GlobalEnv)
     assign("locs_df", locs_df, envir = .GlobalEnv)
     assign("soil_profile_list", soil_profile_list, envir = .GlobalEnv)
@@ -325,18 +318,19 @@ server <- function(input, output, session) {
     assign("charact_x", charact_x, envir = .GlobalEnv)
     assign("daily_charact_x", daily_charact_x, envir = .GlobalEnv)
     assign("bigmet", bigmet, envir = .GlobalEnv)
+    
     analysisDone(TRUE)
     analysisInProgress(FALSE)
+    
     updateSiteSelectionUI()
     updateSiteSelectionFacetdUI()
     updateSiteSelectionBetweenUI()
   })
   
-  
-  
   updateSiteSelectionUI <- function() {
     req(analysisDone())
     trials_df <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
+    print("337")
     sites <- sort(unique(trials_df$Site))  # Sort site names alphabetically
     output$siteSelectionUI <- renderUI({
       fluidRow(
@@ -351,11 +345,11 @@ server <- function(input, output, session) {
     })
   }
   
-  
-  
   updateSiteSelectionFacetdUI <- function() {
     req(analysisDone())
-    trials_df <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
+    #trials_df <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
+    #print("357")
+    trials_df <- trials_x
     sites <- sort(unique(trials_df$Site))
     output$siteSelectionUI_faceted <- renderUI({
       fluidRow(
@@ -372,6 +366,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$selectAllSites, {
     trials_df <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
+    print("374")
     sites <- sort(unique(trials_df$Site))
     updateCheckboxGroupInput(session, "selectedSites", selected = sites)
   })
@@ -382,6 +377,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$selectAllSites_faceted, {
     trials_df <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
+    print("384")
     sites <- sort(unique(trials_df$Site))
     updateCheckboxGroupInput(session, "selectedSites_faceted", selected = sites)
   })
@@ -390,36 +386,9 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, "selectedSites_faceted", selected = character(0))
   })
   
-  
-  # Reactive for handling the processed data
-  bigmet <- reactive({
-    req(input$fileUpload)  # Ensure there's a file uploaded
-    current_year <- as.numeric(substr(Sys.time(), 1, 4)) - 1
-    trials_df <- read_csv(input$fileUpload$datapath) %>% distinct() %>% mutate(ID = row_number())
-    bigmet <- data.frame()
-    
-    for(s in 1:max(trials_df$ID_Loc)){
-      lil_met <- read_apsim_met(paste0("met/loc_", s, ".met"), verbose = F) %>% 
-        as_tibble() %>%
-        filter(year >= current_year - 9, year <= current_year) %>% 
-        mutate(ID_Loc = s)
-      bigmet <- rbind(bigmet, lil_met)
-    }
-    bigmet <- trials_df %>% 
-      select(Site, ID_Loc) %>% 
-      distinct() %>% 
-      left_join(bigmet) %>% 
-      group_by(Site, ID_Loc, year, day) %>%
-      mutate(tt = max((min(maxt, 34) + max(mint, 0)) / 2 - 0, 0)) %>%
-      ungroup()
-    filter(bigmet, day >= 200, day <= 300)
-  })
-  
-  
   # Reactive expression to filter the meteorological data based on selected sites
   filteredMetData <- reactive({
     req(input$selectedSites)
-    trials_x <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
     current_year <- as.numeric(substr(Sys.time(), 1, 4)) - 1
     bigmet <- data.frame()
     for(s in 1:max(trials_x$ID_Loc)){
@@ -427,7 +396,7 @@ server <- function(input, output, session) {
         as_tibble() %>%
         filter(year >= current_year - 9, year <= current_year) %>% 
         mutate(ID_Loc = s)
-      bigmet <- rbind(bigmet, lil_met)
+      bigmet <- bind_rows(bigmet, lil_met)
     }
     bigmet <- trials_x %>% 
       select(Site, ID_Loc) %>% 
@@ -443,15 +412,14 @@ server <- function(input, output, session) {
   # Reactive expression to generate the filtered and accumulated data
   accumulatedData <- reactive({
     req(filteredMetData())
-    trials_x <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
-    startend <- select(daily_charact_x, ID, DOY, Stage) %>% filter(Stage != 1) %>% 
-      group_by(ID) %>% filter(Stage == max(Stage) | Stage == min(Stage)) %>%
-      summarize(first_doy = DOY[1], final_doy = DOY[2]) %>% 
-      mutate(final_doy = ifelse(final_doy < first_doy, final_doy + 365, final_doy)) %>%
-      left_join(select(trials_x, Site, Year, ID, Genetics)) %>% ungroup()
+    #trials_x <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
+    #print("448")
+    startend <- select(trials_x, Site, Year, ID, Mat, PlantingDate_Sim, HarvestDate_Sim) %>%
+      mutate(first_doy = yday(PlantingDate_Sim), 
+             until_final =  as.numeric(HarvestDate_Sim - PlantingDate_Sim),
+             final_doy = first_doy + until_final) #done this way because final_doy can go over 365
     mean_startend <- group_by(startend, Site) %>% 
-      summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T)) %>%
-      mutate(final_doy = ifelse(final_doy > 365, final_doy - 365, final_doy))
+      summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T))
     filtmet <- filteredMetData() %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
     dbtw_sites <- filtmet %>% group_by(Site, year) %>% 
       mutate(acc_precip = cumsum(rain), acc_tt = cumsum(tt)) %>%
@@ -461,7 +429,8 @@ server <- function(input, output, session) {
   })
   
   
-  # Store the generated plot for download
+  
+  # Store the generated daily TT/Precip plot for download ----
   comparison_plot_data <- reactiveVal()
   
   output$comparisonPlot <- renderPlot({
@@ -506,7 +475,7 @@ server <- function(input, output, session) {
     print(p)  # Render the plot
   })
   
-  # Download handler for the daily between sites plot
+  # Download handler for the daily TT/Precip plot ----
   output$downloadComparisonPlot <- downloadHandler(
     filename = function() {
       paste0("comparison_plot-", input$comparisonType, "-", Sys.Date(), ".png")
@@ -518,14 +487,13 @@ server <- function(input, output, session) {
     }
   )
   
-  
-  # Store the generated plot for download
+  # Store the generated TT/Precip 2 plot for download ----
   faceted_comparison_plot_data <- reactiveVal()
   
   output$facetedComparisonPlot <- renderPlot({
     req(input$selectedSites_faceted)
     selected_sites <- input$selectedSites_faceted
-    print(selected_sites)
+    #print(selected_sites)
     
     plot_dt <- wthn_sites %>% filter(Site %in% selected_sites)
     means <- plot_dt %>% group_by(Site) %>%
@@ -533,7 +501,7 @@ server <- function(input, output, session) {
                 mean_acc_tt = mean(acc_tt, na.rm = TRUE))
     
     p <- ggplot(plot_dt, aes(x = acc_precip, y = acc_tt)) +
-      facet_wrap(vars(Site), scales = "free") +
+      facet_wrap(vars(Site)) +
       geom_vline(data = means, aes(xintercept = mean_acc_precip), color = "black", linetype = "dashed") +
       geom_hline(data = means, aes(yintercept = mean_acc_tt), color = "black", linetype = "dashed") +
       geom_label(aes(label = plot_dt$year), size = 3) +
@@ -545,7 +513,7 @@ server <- function(input, output, session) {
     print(p)  # Render the plot
   })
   
-  # Download handler for the faceted comparison plot
+  # Download handler for TT/Precip 2 plot ----
   output$downloadFacetedComparisonPlot <- downloadHandler(
     filename = function() {
       paste0("faceted_comparison_plot-", Sys.Date(), ".png")
@@ -556,8 +524,6 @@ server <- function(input, output, session) {
       dev.off()
     }
   )  
-  
-  
   
   output$viewData <- renderDT({
     req(analysisDone())
@@ -572,7 +538,7 @@ server <- function(input, output, session) {
       # Round all numeric columns to 2 decimal places
       data <- data %>% mutate(across(where(is.numeric), round, 2))
       # Debugging print statements
-      print(dim(data))  # Print the dimensions of the data
+      #print(dim(data))  # Print the dimensions of the data
       datatable(data, extensions = 'Buttons', options = list(
         dom = 'Bfrtip',
         buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
@@ -607,7 +573,7 @@ server <- function(input, output, session) {
     selectedVariable(input$varSelect_boxplot)
   }, ignoreInit = TRUE)
   
-  # Store the generated plot for download
+  # Store the generated boxplot for download
   boxplot_data <- reactiveVal()
   
   output$boxplot <- renderPlot({
@@ -668,7 +634,6 @@ server <- function(input, output, session) {
     }
   })
   
-  
   output$downloadData <- downloadHandler(
     filename = function() {
       paste0("results_", Sys.Date(), ".zip")  # Name the zip file
@@ -693,24 +658,19 @@ server <- function(input, output, session) {
     selectInput("fileSelect", "Select File to Download", choices = files)
   })
   
-  
   output$genSelectUI <- renderUI({
     req(analysisDone())
-    input_path <- paste0(resultFolderPath, "/trials_x.csv")
-    if(file.exists(input_path)) {
-      input<- read.csv(input_path)
-      gen_choices <- unique(input$Mat)
-      selectInput(inputId = "genSelect", label = "Select Maturity for Heatmap", choices = gen_choices, selected = gen_choices[1])
-    }
+    gen_choices <- unique(trials_x$Mat)
+    selectInput(inputId = "genSelect", label = "Select Maturity for Heatmap", choices = gen_choices, selected = gen_choices[1])
   })
   
   output$varHeatmapUI <- renderUI({
     req(analysisDone())
-    charact_x_path <- paste0(resultFolderPath, "/daily_charact_x.csv")
+    charact_x_path <- paste0(resultFolderPath, "/charact_x.csv")
     if(file.exists(charact_x_path)) {
       charact_x <- read.csv(charact_x_path)
-      varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>%select(-c(DOY, Stage)) %>%  names()
-      print(varchoice)
+      varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>% names()
+      #print(varchoice)
       selectInput("heatmapSelect", "Select Variable for Heatmap", choices = varchoice)
       
     }
@@ -726,13 +686,7 @@ server <- function(input, output, session) {
     })
   })
   
-  
-  
-  
-  
-  
   output$heatmapPlot <- renderPlot(
-    
     {
       req(input$heatmapSelect)  # Ensure a variable is selected
       req(analysisDone())
@@ -762,8 +716,8 @@ server <- function(input, output, session) {
         var_mat[is.nan(var_mat)] <- NA
         var_vals <- c(var_mat)[!is.na(c(var_mat))]
         
-        print(head(var_mat))
-        print(dim(var_mat))
+        #print(head(var_mat))
+        #print(dim(var_mat))
         
         if (all(var_vals == var_vals[1])){  #check if matrix is constant
           heatmap <- pheatmap(var_mat, angle_col = 0,
@@ -800,9 +754,8 @@ server <- function(input, output, session) {
       list(var_mat = var_mat, var = var)
       
     })
-  
-  
-  # Add the download handler here
+
+  # Heatmap download handler
   output$downloadHeatmap <- downloadHandler(
     filename = function() {
       paste0("heatmap-", input$heatmapSelect, "-", Sys.Date(), ".png")
@@ -815,10 +768,11 @@ server <- function(input, output, session) {
     }
   )
   
+# Update TT/Precip 3 UI : SiteSelectionBetweenUI -----
   
   updateSiteSelectionBetweenUI <- function() {
     req(analysisDone())
-    trials_df <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
+    trials_df <- trials_x
     sites <- sort(unique(trials_df$Site))
     output$siteSelectionUI_between <- renderUI({
       fluidRow(
@@ -832,11 +786,12 @@ server <- function(input, output, session) {
       )
     })
   }
+
+  # Update TT/Precip 3 UI : 
   
   observeEvent(input$selectAllSites_between, {
     trials_df <- read_csv(paste0(resultFolderPath, "/trials_x.csv"))
-    trials_x_path <-paste0(resultFolderPath,"/trials_x.csv")
-    trials_x <- read_csv(trials_x_path)
+    print("806")
     sites <- sort(unique(trials_df$Site))
     updateCheckboxGroupInput(session, "selectedSites_between", selected = sites)
   })
@@ -845,10 +800,7 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, "selectedSites_between", selected = character(0))
   })
   
-  
-  
-  
-  # Store the generated plot for download
+  # Store the generated TT/Precip 3 plot for download ----
   between_sites_plot_data <- reactiveVal()
   
   output$plotBetweenSites <- renderPlot({
@@ -875,7 +827,7 @@ server <- function(input, output, session) {
     print(p)  # Render the plot
   })
   
-  # Download handler for the between sites plot
+  # Download handler for TT/Precip 3 plot -----
   output$downloadBetweenSitesPlot <- downloadHandler(
     filename = function() {
       paste0("between_sites_plot-", Sys.Date(), ".png")
@@ -887,39 +839,11 @@ server <- function(input, output, session) {
     }
   )
   
-  
-  
   output$selectSite <- renderUI({
-    req(bigmet())
-    selectInput("selectSite", "Select Site", choices = unique(bigmet()$Site))
+    selectInput("selectSite", "Select Site", choices = unique(trials_x$Site))
   })
   
-  
-  
-  
-  
-  # 
-  # # Adjust this part within your existing server function
-  # data_for_esquisse <- reactive({
-  #   req(analysisDone())  # Ensure analysis is done
-  #   charact_x_path <- paste0(resultFolderPath, "/charact_x.csv")
-  #   if(file.exists(charact_x_path)) {
-  #     read.csv(charact_x_path)
-  #   } else {
-  #     NULL  # Provide a fallback or error message if the file isn't found
-  #   }
-  # })
-  # 
-  # # Implement the Esquisse module
-  # output$esquisse_ui <- renderUI({
-  #   req(data_for_esquisse())  # Ensure data is loaded
-  #   esquisserUI(id = "esquisse", data = data_for_esquisse(), header = FALSE)
-  # })
-  # 
-  # # observeEvent(input$esquisse_ui, {
-  # #   esquisse_server(input, output, session, data_rv = data_for_esquisse)
-  # # })
 }
 
-# Run the app
+# Run the app ----
 shinyApp(ui = ui, server = server)
