@@ -1,12 +1,37 @@
-Uses APSIM + the R apsimx package to produce seasonal covariates for maize/soy trials. "apsimx.R" is the script to use if you want to run the process outside of the web app. 
+# Seasonal Characterization Tool
+This project uses APSIM and the R apsimx package to produce seasonal covariates for maize or soy trials.
+#TODO: Add a section on motivation/what problem does this project solve?
 
-The input file format is a .csv with the columns "Site", "Latitude", "Longitude", "Genetics," and "PlantingDate".
-* “Site” should be the name identifier for that location. 
-* “Latitude” and “Longitude” are standard numeric WGS84 coordinates. 
-* “Genetics” refers to the cultivar maturity. 
-  * For soybean, Genetics is a numeric in the range -2 -- 10 (corresponding to maturity groups 000 -- X). There are early, standard, and late variants of each of these cultivar maturities. Adding 0 -- 0.33 to the Genetics value will classify the maturity as "early" within a maturity group, between 0.34 -- 0.66 will classify it as standard ("mid"), and between 0.67 -- 0.99 will classify it as "late." For example, an input Genetics value of 3.8 would be a late maturity III, 0.2 would be an early maturity 0, and -1.5 would be a standard maturity 000. 
-  * For maize, Genetics is a character string with the approximate number of days to maturity for the cultivar and a letter, A or B, for early or late maturing varieties respectively. The cultivar maturities available are 80, 90, 95, 100, 103, 105, 108, 110, 112, 115, 120, and 130. The input will be matched to the closest of these values and the early or late variant. Several input formats (ex: "A_100", "A100", "100a") are acceptable. 
-* “Planting” is when the trial is sown. This can be provided as a date in YYYY-MM-DD format, or as only the year. If no planting date is specified, the simulation will sow the trial on the first suitable day of the year. The parameters used to decide when to sow the crop if no date is specified can be modified in the template model's "Sowing" module.
+## Running the tool
 
-On lines 17 and 18, set codes_dir to the directory of the script, and set the working directory to the folder where the output will go.
+### Correctly formatting the input file:
+1. First, you will need a `.csv` file with columns `Site`, `Latitude`, `Longitude`, `Genetics`, and `PlantingDate`.
+   1. `Site`: human-readable identifier for the trial location. 
+   2. `Latitude`/`Longitude`: Standard numeric WGS84 coordinates.
+   3. `Genetics`: Cultivar maturity value. 
+      1. For Soybean, `Genetics` is a numeric value from `-2:10`. There are also early (`.00 - .33`), standard (`.33 - .66`), and late (`.67 - .99`) variants of each of these maturity values; denoted by the decimal value.
+      2. For Example, a Genetics value of `3.8` indicates the cultivar is a late Maturity III, `0.2` would be an early Maturity 0, and `-1.5` would be a standard Maturity 000.
+      3. For Maize, `Genetics` is a character string with the approximate number of days to maturity, and a letter. `A` for early, and `B` for late maturing varieties.
+      4. The posssible maturity values are `80, 90, 95, 100, 103, 105, 108, 110, 112, 115, 120, and 130`. The input will be matched to the closest of these values.
+      5. Valid input formats for maize genetics include: `A_100`, `A100`, `100a`.
+   4. `PlantingDate`: the date the trial is sown in `YYYY-MM-DD` format or just `YYYY`. If only the year is provided, the planting date will default to the first suitable day of that year. You can modify this default behavior in the `Sowing` module.
+2. Once your `.csv` file is prepared, go to lines 17 and 18 of `apsimx.R`. Set `codes_dir` to the full file path of the parent folder that contains `apsimx.R`, and then you may modify the output directory path on line 18.
 
+> See the example inputs in `./example_input_files` for formatting examples or testing purposes.
+
+### Running the script outside the web app:
+1. Download and extract the project, or clone from github onto your local computer.
+2. Ensure you have R [installed and set up](https://rstudio-education.github.io/hopr/starting.html)
+3. Make sure you have the following library dependencies:
+   1. ???
+4. Run(#TODO: Knit?)  `apsimx.R` using RStudio or your R interpreter of choice.
+
+### Interpreting the output:
+#TODO
+
+
+## Collaborators:
+
+#TODO: Have Sam and Catherine update their info and provide whatever links (github/social media) they want. Come up with a decent format, too.
+* Catherine Gilbert
+* Sam Shi
