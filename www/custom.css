@@ -1,0 +1,16 @@
+body, .content-wrapper, .box-body, .main-sidebar, .sidebar-menu, .content {
+    font-size: 18px; /* Increase the font size here */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-size: 1.25em; /* Adjust the headings' size proportionally */
+}
+
+.sidebar-menu li a {
+    font-size: 18px; /* Adjust sidebar menu font size */
+}
+
+.large-text-label .control-label {
+    font-size: 24px; /* Adjust the size as needed */
+    font-weight: bold;
+}
