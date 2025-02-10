@@ -307,6 +307,8 @@ server <- function(input, output, session) {
     setwd(paste0(codes_path, "/apsimx_output"))
     if (file.exists("progress.log")) { # Update progress based on log contents
       log_contents <- readLines("progress.log")
+      # TODO: total_steps etc should be set as a global var, and probably come
+      #   from apsimx.R where the progress log is updated for maintainability.
       total_steps <- 16  # Define the total number of steps in the log
       current_step <- length(log_contents)
       progress_value <- round(current_step / total_steps * 100)

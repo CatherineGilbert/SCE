@@ -25,6 +25,7 @@ setwd(paste0(codes_dir, "/apsimx_output")) #folder where the output goes
 crop <- readLines("C:/Users/cmg3/Documents/GitHub/SCT/selected_crop.txt")
 
 # TODO: why even do setwd if you are going to do this?
+# NOTE: Also that seems like a terrible place to put the input when run manually
 trials_df <- read_csv(paste0(codes_dir, "/apsimx_output/output/input.csv"))
 trials_df <- mutate(trials_df, ID = row_number()) %>%
   rename(X = Longitude, Y = Latitude)
@@ -140,7 +141,7 @@ clusterExport(cl, envir = environment(), varlist = c(
 
 
 # Ensure the directory exists for weather data
-# TODO: Should this check for existance before calling create?
+# FIXME: create is already called above after unlink?
 dir.create("met", recursive = TRUE, showWarnings = FALSE)
 
 # NOTE: Not sure what this is doing, can it be simplified?
@@ -250,7 +251,6 @@ file.copy(
 )
 
 # Prepare for parallel processing
-# NOTE: Should give each one it's own line, but no one is reading them anyway
 clusterExport(cl, c(
   "trials_df", "codes_dir", "crop", "edit_apsimx",
   "edit_apsimx_replace_soil_profile", "paste0", "dir.create",
@@ -259,7 +259,7 @@ clusterExport(cl, c(
 
 # Parallel APSIM files creation
 # TODO: Replace `1:nrow(trials_df)` with `seq_len(nrow(trials_df))`
-# TODO: This really feels like the place for a for loop
+# TODO: This really feels like the place for a for loop (for edit_apsimx calls)
 apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   trial_tmp <- trials_df[trial_n, ]
   if (!dir.exists(paste0("apsim/trial_", trial_n))) {

@@ -143,8 +143,8 @@ ggplot(sdbtw_sites) +
 
 #cross charts comparing accumulated precip/thermal time
 
-wthn_sites <- filtmet %>% ungroup() %>% group_by(Site, year) %>% 
-  summarize(acc_precip = sum(rain), acc_tt = sum(tt)) 
+wthn_sites <- filtmet %>% ungroup() %>% group_by(Site, year) %>%
+  summarize(acc_precip = sum(rain), acc_tt = sum(tt))
 
 if (plotting) {
 #comparing conditions over the last ten years at the same site

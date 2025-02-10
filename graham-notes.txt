@@ -1,0 +1,26 @@
+1. What are the library dependencies that people need to make sure they have
+in order to run apsimx.R?
+
+2. How can I fix the file path stuff (like `.env`) to make the tool easier to use?
+
+3.a Do people have to edit `selected_crop.txt` whenever they run the tool?
+3.b Should I add editing `selected_crop.txt` to the README instructions for running?
+
+4. Are there any other ways to run the tool, such as the web app, and
+should I add instructions / links to running it that way?
+
+5. How do I interpret the output? Add this to README after the run instructions.
+
+6. Add a Liscence (probably MIT)
+
+7. Do I need a .gitignore?
+
+8. Should I add a `.Rprofile` (run on project startup)?
+
+9. If I want to add helper functions, define them in ./R/ (like ./R/01-fname.R)
+
+10. Make sure there is a (well-named) top-level R script to run everything.
+
+11. Should I add an ./renv/ folder to save package versions using renv::init()?
+
+12. Should I add some `project.Rproj` file to make this a valid RStudio project?
