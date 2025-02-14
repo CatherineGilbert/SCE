@@ -11,12 +11,15 @@ library(readr)
 library(stringr)
 library(lubridate)
 
+# TODO: Rename df args
+dotenv::load_dot_env(".env")
+
 # TODO: Make these .env or args in some way.
 # Output folder (from base directory)
 output_folder <- "apsimx_output"
 # Path to input file (from base directory)
 input_path <- file.path(output_folder, "output/input.csv")
-corn_mats <- c(80, 90, 95, 100, 103, 105, 108, 110, 112, 115, 120, 130)
+apsim_batches <- 10 # You can change this to run different percentages at a time
 
 # ---- Set up files and load datasets ----
 load_files <- function(base_dir = here()) {
@@ -112,6 +115,7 @@ process_soy_maturity <- function(df) {
 }
 
 process_maize_maturity <- function(df) {
+  corn_mats <- c(80, 90, 95, 100, 103, 105, 108, 110, 112, 115, 120, 130)
   df |>
     mutate(
       lett = str_to_upper(str_extract(Genetics, "^[A-Za-z]")),
@@ -125,9 +129,7 @@ process_maize_maturity <- function(df) {
     select(-lett, -num)
 }
 
-# ---- Collect and Write Meteorological, Soil and APSIM Files ----
-# TODO: Rename this function (get -> make) or something
-get_locyear <- function(df) {
+make_locyear <- function(df) {
   df |>
     select(X, Y, ID_Loc, sim_start) |>
     mutate(first_year = year(sim_start)) |>
@@ -138,20 +140,21 @@ get_locyear <- function(df) {
     mutate(first_year = min(first_year, prev_year - 10), last_year = prev_year)
 }
 
-# TODO: Should I provide default values for some of these (dirs, cluster, crop,)
-parallel_write_met_data <- function(locyear_df, output_dir, cluster) {
+# ---- Collect and Write Meteorological, Soil and APSIM Files ----
+parallel_write_met_data <- function(locyear_df, output_dir, cl) {
   # Clear the output folder
   unlink(output_dir, recursive = TRUE)
   dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
   # Export shared vars for cluster
   # NOTE: should environment() be there at all?
-  clusterExport(cluster, envir = environment(), varlist = c(
-    "locyear_df", "getdaymet2_apsim_met", "napad_apsim_met",
+  clusterExport(cl, envir = environment(), varlist = c(
+    "locyear_df", "get_daymet2_apsim_met", "napad_apsim_met",
     "impute_apsim_met", "write_apsim_met"
   ))
 
-  parLapply(cluster, seq_len(nrow(locyear_df)), function(idx) {
+  parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
     row <- locyear_df[idx, ]
+    filename <- paste0("loc_", row$ID_Loc, ".met")
     try({
       met_tmp <- get_daymet2_apsim_met(
         lonlat = c(row$X, row$Y),
@@ -170,9 +173,7 @@ parallel_write_met_data <- function(locyear_df, output_dir, cluster) {
       attr(imp_met_tmp, "site") <- attr(met_tmp, "site")
       attr(imp_met_tmp, "latitude") <- attr(met_tmp, "latitude")
       attr(imp_met_tmp, "longitude") <- attr(met_tmp, "longitude")
-      write_apsim_met(
-        imp_met_tmp, output_dir, paste0("loc_", row$ID_Loc, ".met")
-      )
+      write_apsim_met(imp_met_tmp, output_dir, filename)
     }, error = function(e) {
       message(paste("Error processing location", row$ID_Loc, ":", e))
     })
@@ -236,21 +237,18 @@ write_soil_data <- function(locs_df, output_dir) {
   return(soil_profile_list)
 }
 
-parallel_write_apsim_files <- function(
-  trial_df, soil_profiles, crop, output_dir, met_dir, cluster
-) {
+parallel_apsim_files <- function(df, soils, crop, output_dir, met_dir, cl) {
   # Clear the output folder
   unlink(output_dir, recursive = TRUE)
   dir.create(output_dir)
   # Export shared vars for cluster
-  clusterExport(cluster, c(
-    "df", "output_dir", "met_dir", "crop", "soil_profile_list",
-    "edit_apsimx", "edit_apsimx_replace_soil_profile",
-    "paste0", "dir.create", "file.copy", "file.path", "tryCatch", "print"
+  clusterExport(cl, c(
+    "df", "soils", "crop", "output_dir", "met_dir",
+    "edit_apsimx", "edit_apsimx_replace_soil_profile"
   ))
 
-  parLapply(cluster, seq_len(nrow(trial_df)), function(trial_n) {
-    row <- trial_df[trial_n, ]
+  parLapply(cl, seq_len(nrow(df)), function(trial_n) {
+    row <- df[trial_n, ]
     trial_dir <- file.path(output_dir, paste0("trial_", trial_n))
     if (!dir.exists(trial_dir)) {
       dir.create(trial_dir)
@@ -287,12 +285,8 @@ parallel_write_apsim_files <- function(
       verbose = FALSE
     )
 
-    sow_date <- ifelse(
-      is.na(row$PlantingDate),
-      as.character(format(row$PlantingDate, "%d-%b")),
-      "NA"
-    )
-    # TODO: These are pretty similar, can I combine them?:
+    sow_date <- ifelse(is.na(row$PlantingDate), "NA",
+                       as.character(format(row$PlantingDate, "%d-%b")))
     edit_apsimx(
       file = filename,
       src.dir = trial_dir,
@@ -330,12 +324,175 @@ parallel_write_apsim_files <- function(
         src.dir = trial_dir,
         wrt.dir = trial_dir,
         overwrite = TRUE,
-        soil.profile = soil_profiles[[as.character(row$ID_Loc)]],
+        soil.profile = soils[[as.character(row$ID_Loc)]],
         verbose = FALSE
       )
     }, error = function(e) { })
     invisible()
   })
+}
+
+# ---- Run Apsim ----
+parallel_run_sim <- function(df, apsim_dir, crop, cluster, log_file) {
+  all_results <- list()
+  # Export shared vars for cluster
+  clusterExport(cluster, c(
+    "df", "apsim_dir", "crop", "apsimx", "mutate", "write_csv", "num_batches"
+  ))
+
+  # NOTE: parallelization is applied to each batch separately
+  bsize <- ceiling(nrow(df) / apsim_batches)
+  for (b_ix in 1:apsim_batches) {
+    batch <- df[((b_ix - 1) * bsize + 1):min(nrow(df), b_ix * bsize), ]
+    trial_rows <- split(batch, seq_len(nrow(batch))) # NOTE: Why seq_len(nrow)?
+
+    results <- parLapply(cluster, trial_rows, function(trial) {
+      trial_n  <- trial$ID # Assumes "ID" is the identifier
+      source_dir <- file.path(apsim_dir, paste0("trial_", trial_n))
+      filename <- paste0(crop, "_", trial_n, ".apsimx")
+      out_fp <- file.path(source_dir, paste0(crop, "_", trial_n, "_out.csv"))
+
+      # Run Simulation and catch errors:
+      tryCatch({
+        output <- apsimx(filename, src.dir = source_dir) |>
+          mutate("ID" = trial_n)
+        write_csv(output, file = out_fp)
+        return(output)
+      }, error = function(e) {
+        cat(paste("Sim for trial", trial_n, "failed. Error:", e$message, "\n"))
+        return(NULL)
+      })
+    })
+    all_results[[batch]] <- do.call(rbind, results)
+    progress_msg <- sprintf(
+      "Batch %d/%d (%.2f%%) Complete.",
+      b_ix, apsim_batches, 100 * (b_ix / apsim_batches)
+    )
+    cat(paste0(progress_msg, "\n"))
+    writeLines(log_file, log_file)
+  }
+  return(all_results)
+}
+
+# ---- Summarize Results ----
+process_results <- function(apsim_dir, crop) {
+  # NOTE: added full.names = TRUE
+  # TODO: Do I need to load all the files or could I just use the sim output?
+  # Find and load all _out files from sim
+  outfiles <- list.files(apsim_dir, "_out", recursive = TRUE, full.names = TRUE)
+  # NOTE: Add fill = TRUE if I am not 100% certain all _out files have same cols
+  sim_out <- rbindlist(lapply(outfiles, fread), use.names = TRUE) |>
+    select(-CheckpointID, -SimulationID, -SimulationName, -Zone, -Year) |>
+    arrange(ID)
+
+  # Get the Start and End Date from daily_output
+  simdates <- sim_out |>
+    select(ID, SimSowDate, SimMatDate, SimHarvestDate) |>
+    filter(rowSums(!is.na(.) > 1)) |>
+    mutate(
+      StartDate = as.Date(SimSowDate) - weeks(2),
+      EndDate = as.Date(SimHarvestDate) + weeks(2)
+    )
+
+  # Filter daily_output by StartDate <= Date <= EndDate
+  sim_out <- sim_out |>
+    left_join(select(simdates, ID, StartDate, EndDate), by = "ID") |>
+    filter(Date >= StartDate & Date <= EndDate) |>
+    select(-StartDate, -EndDate, -SimSowDate, -SimMatDate, -SimHarvestDate)
+
+  # Comment?
+  yields <- group_by(sim_out, ID) |>
+    summarize(Yield_Sim = max(Yieldkgha), MaxStage = max(Stage))
+
+  # Comment?
+  res <- group_by(sim_out, ID) |> filter(!is.na(Result)) |> select(ID, Result)
+
+  # Add Comment Here
+  trials_x <- trials_df |>
+    rename(Latitude = Y, Longitude = X) |>
+    select(-sim_start, -sim_end, -PlantingDate) |>
+    left_join(yields, by = "ID") |>
+    left_join(simdates, by = "ID") |>
+    left_join(res, by = "ID") |>
+    mutate(DTM_Sim = as.numeric(SimMatDate - SimSowDate)) |>
+    rename(
+      MatDate_Sim = SimMatDate,
+      PlantingDate_Sim = SimSowDate,
+      HarvestDate_Sim = SimHarvestDate
+    ) |>
+    relocate(ID) |>
+    relocate(DTM_Sim, .after = SimSowDate)
+
+  maxstage <- ifelse(crop %in% c("Soy", "Maize"), 11, max(sim_out$Stage))
+
+  # Add Comment Here
+  sim_out <- sim_out |>
+    left_join(select(trials_x, ID, HarvestDate_Sim, PlantingDate_Sim)) |>
+    mutate(
+      Period = case_when(
+        Stage == 1 & (as_date(Date) < PlantingDate_Sim) ~ 1,
+        Stage == 1 & (as_date(Date) >= HarvestDate_Sim) ~ maxstage,
+        .default = floor(Stage)
+      ),
+      Period = factor(Period, ordered = TRUE, levels = as.character(1:maxstage))
+    ) |>
+    select(-PlantingDate_Sim, -HarvestDate_Sim) |>
+    group_by(ID) |>
+    mutate(AccRain = cumsum(Rain), AccTT = cumsum(ThermalTime)) |>
+    ungroup() # NOTE: Should I add this ungroup()?
+
+  charact_x <- sim_out |>
+    group_by(Period, ID) |> # NOTE: Would this do anything if I didn't ungroup?
+    select(-Yieldkgha, -Stage) |>
+    summarize(
+      across(
+        where(is.numeric) & !c(DOY, AccRain, AccTT,  AccEmTT),
+        function(x) mean(x, na.omit = TRUE)
+      ),
+      AccRain = sum(Rain),
+      AccTT = sum(ThermalTime),
+      AccEmTT = max(AccEmTT),
+      Period_Start_Date = min(Date),
+      Period_End_Date = max(Date)
+    ) |>
+    mutate(
+      Duration = as.numeric(
+        as.period(Period_End_Date - Period_Start_Date, "days")
+      ) / 86400,
+      Period_Start_DOY = yday(Period_Start_Date),
+      Period_End_DOY = yday(Period_End_Date)
+    ) |>
+    relocate(ID, Period, Rain) |>
+    relocate(AccRain, .after = Rain) |>
+    relocate(AccTT, AccEmTT, .after = ThermalTime) |>
+    relocate(Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) |>
+    arrange(ID)
+
+  daily_charact_x <- sim_out
+
+  final_x <- pivot_wider(
+    charact_x,
+    names_from = Period,
+    values_from = Rain:Period_End_DOY
+  ) |> right_join(trials_x, .)
+
+  return(list(
+    trials_x = trials_x,
+    charact_x = charact_x,
+    daily_charact_x = daily_charact_x,
+    final_x = final_x
+  ))
+}
+
+save_results <- function(output_dir, output_dfs) {
+  # Clear the output folder
+  unlink(output_dir, recursive = TRUE)
+  dir.create(output_dir)
+
+  for (name in names(output_dfs)) {
+    write_csv(output_dfs[[name]], file.path(output_dir, paste0(name, ".csv")))
+  }
+
 }
 
 # ---- Driver Function ----
@@ -345,7 +502,7 @@ run_apsimx <- function() {
   files <- load_files()
   df <- files$trials_df
   locs_df <- files$locs_df
-  locyear_df <- get_locyear(df)
+  locyear_df <- make_locyear(df)
   # Create a CPU cluster (cl) for parallelization
   no_cores <- detectCores() - 2
   cl <- makeCluster(no_cores)
@@ -372,261 +529,28 @@ run_apsimx <- function() {
 
   writeLines("Create APSIM Files")
   apsim_dir <- file.path(files$output_dir, "apsim")
-  crop_template_fp <- file.path(
-    files$base_dir, "template_models", paste0(files$crop, "_Template.apsimx")
-  )
-  file.copy(
-    from = crop_template_fp,
-    to = file.path(files$output_dir, paste0(files$crop, "_.apsimx")),
-    overwrite = TRUE
-  )
-  parallel_write_apsim_files(
-    trial_df = df,
-    soil_profiles = soil_profiles,
-    crop = files$crop,
-    output_dir = apsim_dir,
-    met_dir = met_dir,
-    cluster = cl
-  )
+  # Copy crop model from template_models to output directory
+  file.copy(from = file.path(files$base_dir, "template_models",
+                             paste0(files$crop, "_Template.apsimx")),
+            to = file.path(files$output_dir, paste0(files$crop, "_.apsimx")),
+            overwrite = TRUE)
+  parallel_apsim_files(df, soil_profiles, files$crop, apsim_dir, met_dir, cl)
 
   #### Run APSIM ####
+  writeLines(paste("Running APSIM:", apsim_batches, "Batches"), files$prog_log)
+  batches_out <- parallel_run_sim(df, apsim_dir, files$crop, cl, files$prog_log)
 
   #### Summarize Results ####
+  writeLines("Summarizing Results", files$prog_log)
+  results <- process_results(apsim_dir, files$crop)
+  save_results(file.path(files$output_dir, "output"), results)
 
   #### Cleanup Step ####
   stopCluster(cl)
   end_time  <- Sys.time()
   print(paste("Runtime:", end_time - start_time))
+  writeLines(paste("Finished! Total Runtime:", end_time - start_time))
   close(files$prog_log)
 }
 
-
-
-
-
-
-
-# Run APSIM files -----
-# TODO: This also seems like a good place for the log file?
-#   Honestly, I'm not even sure what its doing at this point?
-
-# Define the number of batches
-# TODO: This should probably be defined in an easy-to-edit location
-num_batches <- 10  # You can change this to run different percentages at a time
-
-# Calculate the number of trials per batch
-batch_size <- ceiling(nrow(trials_df) / num_batches)
-
-
-clusterExport(cl, c(
-  "trials_df", "codes_dir", "crop", "edit_apsimx",
-  "edit_apsimx_replace_soil_profile", "paste0", "dir.create", "file.copy",
-  "tryCatch", "print", "apsimx", "mutate", "write_csv", "soil_profile_list"
-))
-
-# Initialize a list to hold results from all batches
-all_results <- list()
-
-# Process each batch
-for (batch in 1:num_batches) {
-  # Determine the rows for the current batch
-  # NOTE: This doesn't look the greatest, but not sure another way to shorten.
-  batch_rows <-
-    ((batch - 1) * batch_size + 1):min(nrow(trials_df), batch * batch_size)
-  batch_trials <- trials_df[batch_rows, ]
-
-  # Split trials for parallel execution
-  # TODO: Replace seq(...) with seq_len(...)
-  trial_list <- split(batch_trials, seq(nrow(batch_trials)))
-
-  # Run APSIM simulations in parallel for the current batch
-  # Run APSIM simulations in parallel
-  results <- parLapply(cl, trial_list, function(trial) {
-    trial_n <- trial$ID  # Assuming 'ID' is the identifier
-    source_dir <- paste0("apsim/trial_", trial_n)
-    filename <- paste0(crop, "_", trial_n, ".apsimx")
-    output <- data.frame()  # Initialize an empty data frame for the results
-
-    # Wrap APSIM simulation and result handling in tryCatch to handle any errors
-    tryCatch({
-      output_tmp <- apsimx(filename, src.dir = source_dir)
-      output_tmp <- mutate(output_tmp, "ID" = trial_n)
-      # Append the output of this trial to the overall results
-      output <- rbind(output, output_tmp)
-      # Save individual trial results
-      write_csv(output_tmp,
-                file = paste0(source_dir, "/", crop, "_", trial_n, "_out.csv"))
-      return(output)  # Return the output for this trial
-    }, error = function(e) {
-      cat(paste0("Simulation for trial ", trial_n,
-                 " failed with error: ", e$message, "\n"))
-      return(NULL)  # Return NULL if there was an error
-    })
-  })
-
-  # Combine the results from this batch and add to the all_results list
-  batch_results <- do.call(rbind, results)
-  all_results[[batch]] <- batch_results
-
-  # Print out the progress
-  cat(sprintf("Completed batch %d out of %d (%.2f%%)\n",
-              batch, num_batches, 100 * batch / num_batches))
-}
-
-
-# Stop the cluster
-stopCluster(cl)
-
-
-# Summarize Results -----
-
-# Merge Outputs
-outfiles <- list.files("apsim/", pattern = "_out", recursive = TRUE)
-daily_output <- data.table::rbindlist(
-  lapply(outfiles, function(x) {
-    read_csv(paste0("apsim/", x), show_col_types = FALSE)
-  }),
-  use.names = TRUE
-)
-daily_output <- select(
-  daily_output, -CheckpointID, -SimulationID, -SimulationName, -Zone, -Year
-) %>% arrange(ID)
-
-# Get simulated sowing and harvest dates
-simsows <- select(daily_output, ID, SimSowDate) %>% filter(!is.na(SimSowDate))
-simmats <- select(daily_output, ID, SimMatDate) %>% filter(!is.na(SimMatDate))
-simharvs <- select(daily_output, ID, SimHarvestDate) %>%
-  filter(!is.na(SimHarvestDate))
-simdates <- left_join(simsows, simmats) %>% left_join(simharvs)
-daily_output <- select(daily_output, -SimSowDate, -SimMatDate, -SimHarvestDate)
-
-# Trim season (daily_output) to 1 month before planting and after death/harvest
-simdates <- simdates %>%
-  mutate(
-    StartDate = date(SimSowDate) %m-% weeks(2),
-    EndDate = date(SimHarvestDate) %m+% weeks(2)
-  ) %>%
-  select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
-
-daily_output <- group_by(daily_output, ID) %>%
-  left_join(select(simdates, ID, StartDate, EndDate)) %>%
-  filter(Date >= StartDate & Date <= EndDate) %>%
-  select(-StartDate, -EndDate)
-
-# Create trials_x from trial-specific information
-# NOTE: I haven't always been the most consistent with whether to sep pipe or fn
-#   Generally decide based on which is the part that is taking up a lot of space
-yields <- group_by(daily_output, ID) %>% summarize(
-  Yield_Sim = max(Yieldkgha),
-  MaxStage = max(Stage)
-)
-res <- group_by(daily_output, ID) %>%
-  filter(!is.na(Result)) %>%
-  select(ID, Result)
-
-trials_x <- rename(trials_df, Latitude = Y, Longitude = X)
-trials_x <- trials_x %>%
-  select(-sim_start, -sim_end) %>%
-  left_join(yields) %>%
-  left_join(simdates) %>%
-  left_join(res)
-# TODO: Could all of these be part of the above pipe?:
-trials_x <- mutate(trials_x, DTM_Sim = as.numeric(SimMatDate - SimSowDate)) %>%
-  relocate(DTM_Sim, .after = SimSowDate)
-trials_x <- rename(
-  trials_x,
-  MatDate_Sim = SimMatDate,
-  PlantingDate_Sim = SimSowDate,
-  HarvestDate_Sim = SimHarvestDate
-)
-trials_x <- select(trials_x, -PlantingDate)
-trials_x <- relocate(trials_x, ID)
-
-# Periods
-if (crop %in% c("Soy", "Maize")) {
-  max_stage <- 11
-} else {
-  max_stage <- max(daily_output$Stage)
-}
-
-daily_output <- daily_output %>%
-  left_join(select(trials_x, ID, HarvestDate_Sim, PlantingDate_Sim)) %>%
-  mutate(Period = case_when(
-    Stage == 1 & (as_date(Date) < PlantingDate_Sim) ~ 1,
-    Stage == 1 & (as_date(Date) >= HarvestDate_Sim) ~ max_stage,
-    .default = floor(Stage)
-  )) %>%
-  select(-PlantingDate_Sim, -HarvestDate_Sim) %>%
-  mutate(
-    Period = factor(Period, ordered = TRUE, levels = as.character(1:max_stage))
-  )
-
-# Add cumulative precipitation and thermal time
-daily_output <- daily_output %>%
-  group_by(ID) %>%
-  mutate(AccRain = cumsum(Rain), AccTT = cumsum(ThermalTime))
-
-# daily_output <- daily_output %>%
-#   left_join(select(trials_x, ID, MatDate_Sim, Planting)) %>%
-#   mutate(Stage = case_match(
-#     Period,
-#     "1" ~ "Pre-planting", #germinating
-#     "2" ~ "VE", #emerging
-#     "3" ~ "V(n)", #vegetative
-#     "4" ~ "R1", #early flowering
-#     "5" ~ "R3", #early pod development
-#     "6" ~ "R5 early", #early grain filling
-#     "7" ~ "R5 mid", #mid grain filing
-#     "8" ~ "R5 late", #late grain filling
-#     "9" ~ "R6", #maturing
-#     "10" ~ "R7", #ripening
-#     "11" ~ "R8 & Post-harvest", #harvestripe + germinating
-#   )) %>%
-#   select(-MatDate_Sim) %>%
-#   mutate(Period = factor(Period, ordered = T, levels = as.character(1:11)))
-
-charact_x <- daily_output %>%
-  group_by(Period, ID) %>%
-  select(-Yieldkgha, -Stage) %>%
-  summarize(
-    across(where(is.numeric) & !c(DOY, AccRain, AccTT, AccEmTT), function(x) {
-      mean(x, na.omit = TRUE)
-    }),
-    AccRain = sum(Rain), AccTT = sum(ThermalTime), AccEmTT = max(AccEmTT),
-    Period_Start_Date = min(Date), Period_End_Date = max(Date)
-  ) %>%
-  mutate(
-    Duration = as.numeric(
-      as.period(Period_End_Date - Period_Start_Date, "days")
-    ) / 86400,
-    Period_Start_DOY = yday(Period_Start_Date),
-    Period_End_DOY = yday(Period_End_Date)
-  ) %>%
-  relocate(ID, Period, Rain) %>%
-  relocate(AccRain, .after = Rain) %>%
-  relocate(AccTT, AccEmTT, .after = ThermalTime) %>%
-  relocate(Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
-  arrange(ID)
-
-daily_charact_x <- daily_output
-
-# TODO: Why use ; instead of  newline?
-unlink("output",recursive = TRUE) ; dir.create("output")
-write_csv(trials_x, "output/trials_x.csv")
-write_csv(charact_x, "output/charact_x.csv")
-write_csv(daily_charact_x, "output/daily_charact_x.csv")
-
-final_x <- pivot_wider(
-  charact_x,
-  names_from = Period,
-  values_from = Rain:Period_End_DOY
-) %>% right_join(trials_x, .)
-
-write_csv(final_x, "output/final_x.csv")
-
-#calculate time duration for running the code:
-end_time <- Sys.time()
-duration <- end_time - start_time
-print(duration)
-
-close(prog_log)
+run_apsimx()
