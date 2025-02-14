@@ -338,6 +338,16 @@ charact_x <- daily_output %>%
   relocate(Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
   arrange(ID) 
 
+#empty data for missing periods 
+idp <- expand(charact_x, ID, Period) #full list of ID/Period combinations
+idp <- anti_join(idp, charact_x) #which ID/Period combinations are absent in charact_x
+col_names <- names(charact_x)[3:length(names(charact_x))]
+for (col in col_names) {
+  idp[[col]] <- NA
+}
+idp <- mutate(idp, Duration = 0) #set duration of nonexistant periods to zero
+charact_x <- bind_rows(charact_x, idp) %>% arrange(ID, Period)
+
 daily_charact_x <- daily_output
 
 unlink("output",recursive = T) ; dir.create("output")

@@ -13,18 +13,17 @@ plotting <- FALSE
 trials_x <- read_csv("./output/trials_x.csv")
 charact_x <- read_csv("./output/charact_x.csv")
 daily_charact_x <- read_csv("./output/daily_charact_x.csv")
-
-var <- "Rain"
-matval <- "early00"
-site_tag <- "urbana_il"
-
-varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>% names()
-j_dt <- filter(trials_x, Mat == matval) %>% select(ID,Genetics, Site, Mat) %>% left_join(charact_x)
-
-#translate
-trials_x
+final_x <- read_csv("./output/final_x.csv")
 
 if (plotting){
+  
+  var <- "Rain"
+  matval <- "early00"
+  site_tag <- "urbana_il"
+  varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>% names()
+
+  j_dt <- filter(trials_x, Mat == matval) %>% select(ID,Genetics, Site, Mat) %>% left_join(charact_x)
+  
 for(var in varchoice){
   print(var)
   x <- ggplot(j_dt) +
@@ -34,9 +33,9 @@ for(var in varchoice){
   plot(x)
 }
 
-pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
-palette <- rev(pal_f(50)[2:50])
-
+  pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
+  palette <- rev(pal_f(50)[2:50])
+  
 for(var in varchoice){
   print(var)
   var_mat <- j_dt %>% select(ID, Site, Period, starts_with(var)) %>%
@@ -89,7 +88,6 @@ bigmet <- trials_x %>% select(Site, ID_Loc) %>% distinct() %>% left_join(bigmet)
 max_temp = 34 #thermal time max temp
 base_temp = 0 #thermal time base temp
 bigmet <- mutate(bigmet, tt = max((min(maxt,max_temp)+max(mint,base_temp))/2 - base_temp,0)) %>% ungroup() 
-
 
 #start and end of simulation as doy, going over 365 if wrapping over the new year
 startend <- select(trials_x, Site, Year, ID, Mat, PlantingDate_Sim, HarvestDate_Sim) %>%
@@ -184,6 +182,80 @@ ggplot(plot_dt) +
        title = "10 Year Site Averages for a Typical Growing Season") +
   theme(legend.position = "none") 
 }
+
+
+
+
+#generic remove periods that don't have enough data to be used (remove 6 in this case)
+#filter to trials that ended successfully
+full_run_IDs <- select(trials_x, ID, MaxStage) %>% filter(MaxStage == max(MaxStage)) %>% pull(ID)
+#find, of successful trials, periods where the mean duration < 1
+period_durs <- select(charact_x, ID, Period, Duration) %>% filter(ID %in% full_run_IDs) %>% 
+  group_by(Period) %>% summarise(Duration = mean(Duration)) 
+if(any(period_durs$Duration < 1)) {
+  badp <- filter(period_durs, Duration < 1) %>% pull(Period) #define discarded periods as periods with mean duration < 1
+}
+badp <- c(min(period_durs$Period), badp, max(period_durs$Period))
+
+
+#create color palette for heatmaps
+pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
+palette <- rev(pal_f(50)[1:50])
+
+
+#create a trial comparison heatmap for each maturity used
+matvals <- unique(trials_x$Mat)
+for(matval in matvals){
+  final_dt <- filter(final_x, Mat == matval) %>% 
+    select(ID, Rain_2:WaterStress_11) %>% #needs to be genericized 
+    select(where(is.numeric)) %>%  #grab only numeric variables (no dates)
+    remove_constant(na.rm = TRUE)  #remove constant parameters
+  
+  #remove parameters that intersect with discarded periods
+  final_dt <- select(final_dt, !ends_with(paste0("_",badp)))
+  
+  #remove parameters with near zero variance
+  nzv_check <- sapply(final_dt, function(x){var(x, na.rm = TRUE)})
+  nzv <- names(nzv_check)[nzv_check < 1e-6]
+  final_dt <- select(final_dt, !any_of(nzv))
+  
+  #remove parameters which are autocorrelated, based on the full runs 
+  final_full <- filter(final_dt, ID %in% full_run_IDs) %>%
+    column_to_rownames("ID") #subset the data to successful runs
+  var_cor <- cor(final_full, use = "pairwise.complete.obs")
+  
+  correlated <- caret::findCorrelation(var_cor, cutoff = 0.95, names = T)
+  correlated
+  
+  final_dt2 <- final_dt %>%
+    column_to_rownames("ID") %>%
+    select(!any_of(correlated)) %>% #remove autocorrelated variables
+    scale() %>% as.data.frame() #scale variables
+  
+  #var_cor2 <- cor(final_dt2, use = "pairwise.complete.obs")
+  #pheatmap(var_cor2, main = paste("Variable Correlations for Mat", matval))
+  
+  id_cor <- cor(t(final_dt2), use = "pairwise.complete.obs")
+  colnames(id_cor)
+  
+  nametag <- filter(trials_x, ID %in% colnames(id_cor)) %>% 
+    select(ID, Site, Planting) %>%
+    mutate(Planting = format(Planting, "%j/%Y"),
+           tag = paste0(ID,": ", Site, " ", Planting)) 
+  
+  p <- pheatmap(id_cor, main = paste("Seasonal Correlations for Mat", matval),
+           labels_row = nametag$tag, color = palette, breaks = seq(from = -1, to = 1, length.out = 50))
+
+}
+
+# #with a quantile color scale
+# vallist <- id_cor %>% as.vector() %>% sort() %>% unique()
+# break_places <- round(seq(from = 1, to = length(vallist), length.out = 51),0)
+# new_breaks <- vallist[break_places]
+# pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
+# palette <- rev(pal_f(50)[1:50])
+# pheatmap(id_cor, color = palette, breaks = new_breaks) 
+# 
 
 #accumulated precipitation and thermal time from time of sowing to time of harvest 
 #(or end of development for unharvested trials) for each trial/genetics/site

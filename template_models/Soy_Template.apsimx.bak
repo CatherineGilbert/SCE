@@ -1579,7 +1579,7 @@
                   "LineThickness": 0,
                   "TableName": "Report",
                   "XFieldName": "Date",
-                  "YFieldName": "Stage",
+                  "YFieldName": "SimMatDate",
                   "X2FieldName": null,
                   "Y2FieldName": null,
                   "ShowInLegend": false,
