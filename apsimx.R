@@ -339,7 +339,7 @@ charact_x <- daily_output %>%
   arrange(ID) 
 
 #empty data for missing periods 
-idp <- expand(charact_x, ID, Period) #full list of ID/Period combinations
+idp <- tidyr::expand(tibble(charact_x), ID, Period) #full list of ID/Period combinations
 idp <- anti_join(idp, charact_x) #which ID/Period combinations are absent in charact_x
 col_names <- names(charact_x)[3:length(names(charact_x))]
 for (col in col_names) {

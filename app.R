@@ -112,7 +112,7 @@ ui <- dashboardPage(
       ),
       tabItem(tabName = "analysis",
               fluidPage(
-                selectInput("cropType", "Select Crop Type", choices = c("Maize" = "Maize", "Soy" = "Soy")),
+                selectInput("cropType", "Select Crop Type", choices = c("Maize" = "Maize", "Soy" = "Soy"), selected = "Maize"),
                 fileInput("fileUpload", "Upload Input File", accept = c(".csv")),
                 actionButton("runAnalysis", "Run Analysis", icon = icon("play")),
                 downloadButton("downloadData", "Download Results"),
@@ -222,8 +222,8 @@ server <- function(input, output, session) {
   resultFolderPath <- paste0(codesPath,"/apsimx_output/output")
   
   # Reactive values for storing the analysis state and the selected variable
-  #analysisDone <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
+  analysisDone <- reactiveVal(FALSE)
+  #analysisDone <- reactiveVal(TRUE)
   analysisInProgress <- reactiveVal(FALSE)
   
   heatmap_plot <- reactiveVal(NULL)
@@ -270,6 +270,11 @@ server <- function(input, output, session) {
     progressBar(id = "progressBar", value = progress(), display_pct = TRUE)
   })
   
+  cropType <- reactiveVal("Maize")
+  observeEvent(input$cropType, {
+    cropType(input$cropType)
+  })
+  
   selectedVariable <- reactiveVal()
 
 
@@ -291,6 +296,7 @@ server <- function(input, output, session) {
     updateSiteSelectionUI()
   })
   
+  
 # run analysis ----
   observeEvent(input$runAnalysis, {
   
@@ -303,7 +309,7 @@ server <- function(input, output, session) {
     
     file.create("progress.log")
     
-    crop <- input$cropType 
+    crop <- cropType()
     writeLines(crop, paste0(codesPath, "/selected_crop.txt"))
     
     source(paste0(codesPath,"/apsimx.R"))
