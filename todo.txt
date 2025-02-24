@@ -1,6 +1,6 @@
 - Get the ability to select a custom crop model. 
 - Get the progress bar working, or get the console outputs as a progress indicator. ("What is the tool currently doing?")
-- Refactor the app code to remove redunancies. We do not need to be continually recalculating bigmet. 
+- Refactor the app code to remove redunancies. 
 - Rewrite the visualization code to take advantage of the start/end dates and thermal times as recorded variables when possible. This should simplify some of the calculations. 
 - Get all the TT/Precip analysis as subheadings under one tab. 
 - Change the size of the top bars so they match. Change the size of the app window when it opens. 

@@ -1,7 +1,4 @@
-
-
 # Start, set up trials_df -----
-
 library(apsimx)
 library(tidyverse)
 library(daymetr)
@@ -15,8 +12,9 @@ start_time <- Sys.time() # track running time
 
 codes_dir <- here() #where the folder with the codes is
 #codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
-setwd(paste0(codes_dir,"/apsimx_output")) #folder where the output goes
-#setwd("C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output") 
+results_dir <- paste0(codes_dir,"/apsimx_output") #folder where the output goes
+#results_dir <- ("C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output") 
+setwd(results_dir) 
 
 crop <- readLines("C:/Users/cmg3/Documents/GitHub/SCT/selected_crop.txt")
 #crop <- "Soy" 
@@ -34,8 +32,10 @@ CON <- file("progress.log", "a")    #Open connection to append
 writeLines("Parse dates", CON)
 
 prev_year <- as.numeric(substr(Sys.time(),1,4)) - 1
+yesterday <- as.character(today() - days(1))
+
 trials_df <- suppressWarnings(mutate(trials_df, Year = as.numeric(str_extract(Planting, "\\b\\d{4}\\b"))))
-trials_df <- suppressWarnings(mutate(trials_df, PlantingDate = as_date(Planting)))
+trials_df <- suppressWarnings(mutate(trials_df, PlantingDate = as_date(as.character(trials_df$Planting), format = "%Y-%m-%d")))
 trials_df <- mutate(trials_df, 
   Year = ifelse(is.na(PlantingDate), Year, format(PlantingDate,"%Y")), 
   Year = ifelse(is.na(Year), prev_year, Year), #if no year, use last year with full data
@@ -88,7 +88,8 @@ unlink("met",recursive = T) ; dir.create("met")
 # Setup for parallel processing
 no_cores <- detectCores() - 2  # Reserve 2 cores for the system
 cl <- makeCluster(no_cores)
-clusterExport(cl, varlist = c("locyear_df","get_daymet2_apsim_met", "napad_apsim_met", "impute_apsim_met", "write_apsim_met"), envir = environment())
+clusterExport(cl, varlist = c("locyear_df","yesterday","get_daymet2_apsim_met","get_power_apsim_met",
+                              "napad_apsim_met", "impute_apsim_met", "write_apsim_met"), envir = environment())
 
 
 # Ensure the directory exists for weather data
@@ -97,9 +98,12 @@ dir.create("met", recursive = TRUE, showWarnings = FALSE)
 parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
   locyear_tmp <- locyear_df[idx, ]
   try({
-    met_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
-                                     years = c(as.integer(locyear_tmp$first_year), as.integer(locyear_tmp$last_year)), 
-                                     silent = TRUE)
+    #met_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
+    #                                 years = c(as.integer(locyear_tmp$first_year), as.integer(locyear_tmp$last_year)), 
+    #                                 silent = TRUE)
+    met_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+                        dates = c(paste0(locyear_tmp$first_year,"-01-01"), yesterday))
+  
     na_met_tmp <- tryCatch(napad_apsim_met(met_tmp), error = function(e) met_tmp)
     imp_met_tmp <- tryCatch(impute_apsim_met(na_met_tmp), warning = function(w) na_met_tmp)
     attr(imp_met_tmp, "site") <- attr(met_tmp, "site")
@@ -364,3 +368,4 @@ duration <- end_time - start_time
 print(duration)
 
 close(CON)      
+

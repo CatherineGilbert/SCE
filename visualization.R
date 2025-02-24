@@ -7,6 +7,10 @@ library(lubridate)
 library(apsimx)
 library(ggplot2)
 library(here)
+library(viridisLite)
+library(dendextend)
+
+select <- dplyr::select
 
 plotting <- FALSE
 
@@ -184,11 +188,18 @@ ggplot(plot_dt) +
 }
 
 
+#hierarchical clustering weights based on variable importance to a trait
+#site performance stability
+#refine how crop type is handled for custom models, ex: _template files, croptype, creating and copying files, specifying custom files
+
+if (plotting) {
 
 
 #generic remove periods that don't have enough data to be used (remove 6 in this case)
 #filter to trials that ended successfully
-full_run_IDs <- select(trials_x, ID, MaxStage) %>% filter(MaxStage == max(MaxStage)) %>% pull(ID)
+full_run_IDs <- select(final_x, ID, MaxStage) %>% 
+  filter(!is.na(MaxStage)) %>%
+  filter(MaxStage == max(MaxStage)) %>% pull(ID)
 #find, of successful trials, periods where the mean duration < 1
 period_durs <- select(charact_x, ID, Period, Duration) %>% filter(ID %in% full_run_IDs) %>% 
   group_by(Period) %>% summarise(Duration = mean(Duration)) 
@@ -203,49 +214,125 @@ pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
 palette <- rev(pal_f(50)[1:50])
 
 
-#create a trial comparison heatmap for each maturity used
+#compare seasonal characteristics of trials, by maturity
 matvals <- unique(trials_x$Mat)
-for(matval in matvals){
+
+ID_corr <- function(matval, final_x) {
   final_dt <- filter(final_x, Mat == matval) %>% 
     select(ID, Rain_2:WaterStress_11) %>% #needs to be genericized 
-    select(where(is.numeric)) %>%  #grab only numeric variables (no dates)
-    remove_constant(na.rm = TRUE)  #remove constant parameters
+    
+    #grab only numeric variables (no dates)
+    select(where(is.numeric)) %>%  
+    
+    #remove constant parameters
+    remove_constant(na.rm = TRUE)  
   
-  #remove parameters that intersect with discarded periods
-  final_dt <- select(final_dt, !ends_with(paste0("_",badp)))
+    #remove acc_emerged_tt because it's redundant
+    #final_dt <- select(final_dt, !starts_with("AccEmTT"))
   
-  #remove parameters with near zero variance
-  nzv_check <- sapply(final_dt, function(x){var(x, na.rm = TRUE)})
-  nzv <- names(nzv_check)[nzv_check < 1e-6]
-  final_dt <- select(final_dt, !any_of(nzv))
+    #remove parameters that intersect with discarded periods
+    final_dt <- select(final_dt, !ends_with(paste0("_",badp)))
   
-  #remove parameters which are autocorrelated, based on the full runs 
-  final_full <- filter(final_dt, ID %in% full_run_IDs) %>%
-    column_to_rownames("ID") #subset the data to successful runs
-  var_cor <- cor(final_full, use = "pairwise.complete.obs")
-  
-  correlated <- caret::findCorrelation(var_cor, cutoff = 0.95, names = T)
-  correlated
-  
-  final_dt2 <- final_dt %>%
+    #remove parameters with near zero variance
+    nzv_check <- sapply(final_dt, function(x){var(x, na.rm = TRUE)})
+    nzv <- names(nzv_check)[nzv_check < 1e-5]
+    final_dt <- select(final_dt, !any_of(nzv))
+    
+    #remove parameters which are autocorrelated, based on the full runs 
+    final_full <- filter(final_dt, ID %in% full_run_IDs) %>% column_to_rownames("ID") #subset the data to successful runs
+    var_cor <- cor(final_full)
+    correlated <- caret::findCorrelation(var_cor, cutoff = 0.90, names = T)
+    final_dt <- select(final_dt, !any_of(correlated)) #remove autocorrelated variables
+    
+    #plot removed autocorrelated variables
+    row_annotation <- data.frame(
+      Autocorrelation = ifelse(rownames(var_cor) %in% correlated, "Will Be Removed", "Not Removed"))
+    rownames(row_annotation) <- rownames(var_cor)
+    p1 <- pheatmap(var_cor, annotation_row = row_annotation, cex = 0.75, 
+             annotation_colors = list(
+               Autocorrelation = c("Will Be Removed" = "red", "Not Removed" = "black")), 
+             color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
+             silent = T)
+
+  #scale the final parameters used for comparison
+  scfinal_dt <- final_dt %>%
     column_to_rownames("ID") %>%
-    select(!any_of(correlated)) %>% #remove autocorrelated variables
     scale() %>% as.data.frame() #scale variables
   
-  #var_cor2 <- cor(final_dt2, use = "pairwise.complete.obs")
-  #pheatmap(var_cor2, main = paste("Variable Correlations for Mat", matval))
+  #plot heatmap of correlation of final parameters
+  var_cor2 <- cor(scfinal_dt)
+  p2 <- pheatmap(var_cor2, main = paste("Parameter Correlations for Mat", matval),
+           color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
+           silent = T)
   
-  id_cor <- cor(t(final_dt2), use = "pairwise.complete.obs")
-  colnames(id_cor)
+  id_cor <- cor(t(scfinal_dt), use = "pairwise.complete.obs")
   
-  nametag <- filter(trials_x, ID %in% colnames(id_cor)) %>% 
+  nametag <- filter(final_x, ID %in% colnames(id_cor)) %>% 
     select(ID, Site, Planting) %>%
     mutate(Planting = format(Planting, "%j/%Y"),
            tag = paste0(ID,": ", Site, " ", Planting)) 
   
-  p <- pheatmap(id_cor, main = paste("Seasonal Correlations for Mat", matval),
-           labels_row = nametag$tag, color = palette, breaks = seq(from = -1, to = 1, length.out = 50))
+  p3 <- pheatmap(id_cor, main = paste("Seasonal Correlations for Mat", matval),
+           labels_row = nametag$tag, cex = 0.5,
+           color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
+           silent = T)
 
+  #dendrograms
+  pdend <- as.dendrogram(p3$tree_row)
+  dend_decoration <- tibble(order = 1:length(labels(pdend)), 
+                            ID = as.numeric(labels(pdend))) %>% 
+    left_join(select(final_x, ID:Mat))
+  pdend <- place_labels(pdend, nametag$tag)
+  labels_cex(pdend) <- 0.5
+  
+  #dendrogram label colors
+  unique_sites <- arrange(dend_decoration, Latitude) %>% pull(Site) %>% unique() # Get unique levels of "Site"
+  n_sites <- length(unique_sites) # Number of unique sites
+  # Generate a color palette (e.g., using RColorBrewer)
+  color_palette <- mako(n_sites) 
+  # Create a named vector for the color mapping
+  color_mapping <- setNames(color_palette, unique_sites)
+  # Add a new column with hex color values
+  dend_decoration <- dend_decoration %>% mutate(Color = color_mapping[as.character(Site)])
+  labels_colors(pdend) <- dend_decoration$Color
+  
+  par(mai = c(0.5,0,0,1))
+  #plot_horiz.dendrogram(pdend, xlim = c(6,0), side = TRUE, horiz = TRUE, center = F)
+  p4 <- plot(pdend, horiz = TRUE, center = T)
+  par(mai = c(1,1,0,1))
+  
+  
+  return(list(
+    "IDs" = colnames(id_cor), #trial IDs
+    "nametag" = nametag, #used for labels. it's ID/Site/Planting DOY/Year
+    "used_params" = colnames(scfinal_dt),
+    "final_dt" = final_dt, #unscaled parameters used for seasonal correlations
+    "scfinal_dt" = scfinal_dt, #scaled parameters used for seasonal correlations
+    "autocorr_pheatmap" = p1$gtable,
+    "used_params_corr_pheatmap" = p2$gtable,
+    "id_corr_pheatmap" = p3$gtable,
+    "id_dend_obj" = pdend
+  ))
+}
+
+mid1res <- ID_corr("mid1", final_x)
+
+
+
+#CUT THE TREE
+
+
+
+
+
+#site distances??
+sitedistances_dt <- read_csv("C:/Users/cmg3/Box/Gilbert/material/sitedistances_dt.csv")
+sitedistances_dt <- filter(sitedistances_dt, Location1 %in% unique_sites, Location2 %in% unique_sites)
+dist_dt <- sitedistances_dt %>% select(Location1, Location2, Distance) %>% pivot_wider(names_from = Location2, values_from = Distance)
+dist_mx <- as.matrix(data.table(dist_dt), rownames = "Location1")
+distance_tree <- hclust(as.dist(dist_mx))
+par(mai = c(1,1,1,1))
+plot(distance_tree)
 }
 
 # #with a quantile color scale
@@ -257,8 +344,39 @@ for(matval in matvals){
 # pheatmap(id_cor, color = palette, breaks = new_breaks) 
 # 
 
+
+
 #accumulated precipitation and thermal time from time of sowing to time of harvest 
 #(or end of development for unharvested trials) for each trial/genetics/site
-# trial_comp <- select(daily_charact_x, Stage, ID, Rain, ThermalTime) %>% filter(Stage != 1) %>% 
+# trial_comp <- select(daily_charact_x, Stage, ID, Rain, ThermalTime) %>% filter(!Stage %in% (c(1, max(Stage)))) %>% 
 #   group_by(ID) %>% summarize(acc_precip = sum(Rain), acc_tt = sum(ThermalTime)) %>% 
 #   left_join(.,select(trials_x, Site, Genetics, ID, Year))
+ 
+
+if (plotting){
+ 
+huh <- daily_charact_x %>% select(Stage, ID, Rain, ThermalTime, Date, DOY) %>%
+  filter(!Stage %in% (c(1, max(Stage)))) %>% group_by(ID) %>% 
+  mutate(AccRain = cumsum(Rain), AccTT = cumsum(ThermalTime), days_after_sowing = DOY - min(DOY)) %>%
+  select(ID, Date, DOY, days_after_sowing, AccRain, AccTT)
+
+trial_key <- select(trials_x, ID, Site, Genetics, Mat, PlantingDate_Sim, Year)
+huh <- left_join(huh, trial_key) 
+esquisser(huh) 
+
+ggplot(huh) +
+  aes(x = DOY, y = AccTT, group = ID) +
+  geom_line(colour = "#112446") +
+  theme_minimal() +
+  facet_wrap(vars(Mat))
+
+ 
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

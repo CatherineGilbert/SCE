@@ -222,8 +222,8 @@ server <- function(input, output, session) {
   resultFolderPath <- paste0(codesPath,"/apsimx_output/output")
   
   # Reactive values for storing the analysis state and the selected variable
-  analysisDone <- reactiveVal(FALSE)
-  #analysisDone <- reactiveVal(TRUE)
+  #analysisDone <- reactiveVal(FALSE)
+  analysisDone <- reactiveVal(TRUE)
   analysisInProgress <- reactiveVal(FALSE)
   
   heatmap_plot <- reactiveVal(NULL)
