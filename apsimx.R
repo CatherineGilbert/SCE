@@ -247,7 +247,8 @@ for (batch in 1:num_batches) {
       # output <- rbind(output, output_tmp)
       # Save individual trial results
       write_csv(output_tmp, file = paste0(source_dir, "/", crop, "_", trial_n, "_out.csv"))
-      return(output)  # Return the output for this trial
+      #return(output)
+      return()  
     }, error = function(e){
       cat(paste0("Simulation for trial ", trial_n, " failed with error: ", e$message, "\n"))
       return(NULL)  # Return NULL if there was an error
@@ -255,8 +256,8 @@ for (batch in 1:num_batches) {
   })
   
   # Combine the results from this batch and add to the all_results list
-  batch_results <- do.call(rbind, results)
-  all_results[[batch]] <- batch_results
+  #batch_results <- do.call(rbind, results)
+  #all_results[[batch]] <- batch_results
   
   # Print out the progress
   cat(sprintf("Completed batch %d out of %d (%.2f%%)\n", batch, num_batches, 100 * batch / num_batches))
@@ -274,25 +275,27 @@ outfiles <- list.files("apsim/", pattern = "_out", recursive = T)
 daily_output <- data.table::rbindlist(lapply(outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}),use.names = T)
 daily_output <- select(daily_output, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
 
-
 # Get simulated sowing and harvest dates
 simsows <- select(daily_output, ID, SimSowDate) %>% filter(!is.na(SimSowDate)) 
 simmats <- select(daily_output, ID, SimMatDate) %>% filter(!is.na(SimMatDate)) 
 simharvs <- select(daily_output, ID, SimHarvestDate) %>% filter(!is.na(SimHarvestDate)) 
-simdates <- left_join(simsows, simmats) %>% left_join(simharvs)
+simdates <- left_join(simsows, simmats, by = join_by(ID)) %>% left_join(simharvs, by = join_by(ID))
 daily_output <- select(daily_output, -SimSowDate, -SimMatDate, -SimHarvestDate)
 
 # Trim season (daily_output) to one month before planting and one month after death / harvest
 simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndDate = date(SimHarvestDate) %m+% weeks(2)) %>%
   select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
-daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, StartDate, EndDate)) %>%
+daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, StartDate, EndDate), by = join_by(ID)) %>%
   filter(Date >= StartDate & Date <= EndDate) %>% select(-StartDate,-EndDate)
 
 # Create trials_x from trial-specific information
 yields <- group_by(daily_output, ID) %>% summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
 res <- group_by(daily_output, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
 trials_x <- rename(trials_df, Latitude = Y, Longitude = X)
-trials_x <- trials_x %>% select(-sim_start, -sim_end) %>% left_join(yields) %>% left_join(simdates) %>% left_join(res) 
+trials_x <- trials_x %>% select(-sim_start, -sim_end) %>% 
+  left_join(yields, by = join_by(ID)) %>% 
+  left_join(simdates, by = join_by(ID)) %>% 
+  left_join(res, by = join_by(ID)) 
 trials_x <- mutate(trials_x, DTM_Sim = as.numeric(SimMatDate - SimSowDate)) %>%
   relocate(DTM_Sim, .after = SimSowDate)
 trials_x <- rename(trials_x, MatDate_Sim = SimMatDate, PlantingDate_Sim = SimSowDate, HarvestDate_Sim = SimHarvestDate) 
@@ -373,4 +376,3 @@ duration <- end_time - start_time
 print(duration)
 
 close(CON)      
-
