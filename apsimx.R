@@ -205,13 +205,17 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
 # Run APSIM files -----
 
 # Define the number of batches
-num_batches <- 10  # You can change this to run different percentages at a time
+if (nrow(trials_df) <= 10) {
+  num_batches <- 1 # If there are few trials, only run one batch. 
+} else {num_batches <- 10} # You can change this to run different percentages at a time
 
 # Calculate the number of trials per batch
 batch_size <- ceiling(nrow(trials_df) / num_batches)
 
 
-clusterExport(cl, c("trials_df", "codes_dir", "crop", "edit_apsimx", "edit_apsimx_replace_soil_profile", "paste0", "dir.create", "file.copy", "tryCatch", "print", "apsimx", "mutate", "write_csv", "soil_profile_list"))
+clusterExport(cl, c("trials_df", "codes_dir", "crop", "edit_apsimx", "edit_apsimx_replace_soil_profile", 
+                    "paste0", "dir.create", "file.copy", "tryCatch", "print", "apsimx", "mutate", 
+                    "write_csv", "soil_profile_list"))
 
 
 # Initialize a list to hold results from all batches
@@ -240,7 +244,7 @@ for (batch in 1:num_batches) {
       output_tmp <- apsimx(filename, src.dir = source_dir)
       output_tmp <- mutate(output_tmp, "ID" = trial_n) 
       # Append the output of this trial to the overall results
-      output <- rbind(output, output_tmp)
+      # output <- rbind(output, output_tmp)
       # Save individual trial results
       write_csv(output_tmp, file = paste0(source_dir, "/", crop, "_", trial_n, "_out.csv"))
       return(output)  # Return the output for this trial
@@ -268,7 +272,8 @@ stopCluster(cl)
 # Merge Outputs
 outfiles <- list.files("apsim/", pattern = "_out", recursive = T)
 daily_output <- data.table::rbindlist(lapply(outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}),use.names = T)
-daily_output <- select(daily_output, -CheckpointID,-SimulationID,-SimulationName,-Zone,-Year) %>% arrange(ID)
+daily_output <- select(daily_output, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
+
 
 # Get simulated sowing and harvest dates
 simsows <- select(daily_output, ID, SimSowDate) %>% filter(!is.na(SimSowDate)) 
