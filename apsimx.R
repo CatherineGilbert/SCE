@@ -376,3 +376,4 @@ duration <- end_time - start_time
 print(duration)
 
 close(CON)      
+

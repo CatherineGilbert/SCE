@@ -22,8 +22,8 @@ final_x <- read_csv("./output/final_x.csv")
 if (plotting){
   
   var <- "Rain"
-  matval <- "early00"
-  site_tag <- "urbana_il"
+  matval <- "mid1"
+  site_tag <- "ames_ia"
   varchoice <- charact_x %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>% names()
 
   j_dt <- filter(trials_x, Mat == matval) %>% select(ID,Genetics, Site, Mat) %>% left_join(charact_x)
@@ -110,6 +110,7 @@ dbtw_sites <- filtmet %>% group_by(Site, year) %>%
   mutate(acc_precip = cumsum(rain), acc_tt = cumsum(tt)) %>%
   ungroup() %>% group_by(Site, day) %>% 
   summarize(acc_precip= mean(acc_precip, na.rm = T), acc_tt = mean(acc_tt, na.rm = T))
+sdbtw_sites <- dbtw_sites %>% mutate(day = day-min(day)+1)
 
 if (plotting) {
 ggplot(dbtw_sites) + 
@@ -125,7 +126,6 @@ ggplot(dbtw_sites) +
   labs(x = "Day of Year", y = "Accumulated Thermal Time") +
   theme_minimal()
 #days after sowing
-sdbtw_sites <- dbtw_sites %>% mutate(day = day-min(day)+1)
 ggplot(sdbtw_sites) + 
   aes(x = day, y = acc_precip, colour = Site) +
   geom_line() +
@@ -227,6 +227,9 @@ ID_corr <- function(matval, final_x) {
     #remove constant parameters
     remove_constant(na.rm = TRUE)  
   
+    #remove trials where no data was collected
+  final_dt <- remove_empty(final_dt, which = c("rows"), cutoff = 0.9)
+  
     #remove acc_emerged_tt because it's redundant
     #final_dt <- select(final_dt, !starts_with("AccEmTT"))
   
@@ -251,8 +254,7 @@ ID_corr <- function(matval, final_x) {
     p1 <- pheatmap(var_cor, annotation_row = row_annotation, cex = 0.75, 
              annotation_colors = list(
                Autocorrelation = c("Will Be Removed" = "red", "Not Removed" = "black")), 
-             color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
-             silent = T)
+             color = palette, breaks = seq(from = -1, to = 1, length.out = 50))
 
   #scale the final parameters used for comparison
   scfinal_dt <- final_dt %>%
@@ -260,22 +262,20 @@ ID_corr <- function(matval, final_x) {
     scale() %>% as.data.frame() #scale variables
   
   #plot heatmap of correlation of final parameters
-  var_cor2 <- cor(scfinal_dt)
+  var_cor2 <- cor(scfinal_dt, use = "pairwise.complete.obs")
   p2 <- pheatmap(var_cor2, main = paste("Parameter Correlations for Mat", matval),
-           color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
-           silent = T)
+           color = palette, breaks = seq(from = -1, to = 1, length.out = 50))
   
   id_cor <- cor(t(scfinal_dt), use = "pairwise.complete.obs")
   
   nametag <- filter(final_x, ID %in% colnames(id_cor)) %>% 
-    select(ID, Site, Planting) %>%
-    mutate(Planting = format(Planting, "%j/%Y"),
+    select(ID, Site, PlantingDate_Sim) %>%
+    mutate(Planting = format(PlantingDate_Sim, "%j/%Y"),
            tag = paste0(ID,": ", Site, " ", Planting)) 
   
   p3 <- pheatmap(id_cor, main = paste("Seasonal Correlations for Mat", matval),
            labels_row = nametag$tag, cex = 0.5,
-           color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
-           silent = T)
+           color = palette, breaks = seq(from = -1, to = 1, length.out = 50))
 
   #dendrograms
   pdend <- as.dendrogram(p3$tree_row)
@@ -316,8 +316,7 @@ ID_corr <- function(matval, final_x) {
 }
 
 mid1res <- ID_corr("mid1", final_x)
-
-
+mid00res <- ID_corr("mid00", final_x)
 
 #CUT THE TREE
 
