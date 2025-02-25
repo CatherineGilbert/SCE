@@ -23,4 +23,6 @@ should I add instructions / links to running it that way?
 
 11. Should I add an ./renv/ folder to save package versions using renv::init()?
 
-12. Should I add some `project.Rproj` file to make this a valid RStudio project?
+
+13. What are the packages I need?
+ * 

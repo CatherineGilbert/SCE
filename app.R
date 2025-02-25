@@ -21,6 +21,8 @@ library(zip)
 library(here)
 library(ggplot2)
 
+# NOTE: Here is a guide to building {shiny} projects:
+#   https://engineering-shiny.org/structuring-project.html
 # NOTE: General style guideline recommends using |> pipe instead of %>%
 # NOTE: This project uses the file system a LOT. Can I reduce the reliance?
 # NOTE: Can I make it so more of these variables are reused instead of load file
@@ -31,14 +33,12 @@ header_height <- "40px" # Adjust the height as needed
 title_width <- 300 # Adjust this width based on your needs
 sidebar_width <- 300 # NOTE: Is this the same as title_width for a reason?
 
-# TODO: consider "cogs" icon for "analysis"
-# TODO: consider "chart-pie" for "results"
 # TODO: consider "cloud-showers-heavy" for "daily"
 # TODO: Consider making the last four sub menu items from View Results.
 sidebar_content <- list(
   menuItem("Description", tabName = "description", icon = icon("info")),
-  menuItem("Upload & Analyze", tabName = "analysis", icon = icon("upload")),
-  menuItem("View Results", tabName = "results", icon = icon("image")),
+  menuItem("Upload & Analyze", tabName = "analysis", icon = icon("cogs")),
+  menuItem("View Results", tabName = "results", icon = icon("chart-pie")),
   menuItem("Seasonal Heatmap", tabName = "heatmap", icon = icon("fire")),
   menuItem("Daily Accumulation", tabName = "daily", icon = icon("chart-line")),
   menuItem(
