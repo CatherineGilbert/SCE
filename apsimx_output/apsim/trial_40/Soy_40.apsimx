@@ -1,6 +1,6 @@
 {
   "$type": "Models.Core.Simulations, Models",
-  "Version": 183,
+  "Version": 186,
   "Name": "Simulations",
   "ResourceName": null,
   "Children": [
@@ -12,8 +12,8 @@
       "Children": [
         {
           "$type": "Models.Clock, Models",
-          "Start": "2017-01-01T00:00:00",
-          "End": "2017-12-31T00:00:00",
+          "Start": "2019-05-05T00:00:00",
+          "End": "2020-04-05T00:00:00",
           "Name": "Clock",
           "ResourceName": null,
           "Children": [],
@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output/met/loc_2.met",
+          "FileName": "C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output/met/loc_27.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -86,150 +86,96 @@
             },
             {
               "$type": "Models.Soils.Soil, Models",
-              "RecordNumber": 0,
-              "ASCOrder": null,
-              "ASCSubOrder": null,
-              "SoilType": "Yutan:1691452",
+              "RecordNumber": 104,
+              "ASCOrder": "Vertosol",
+              "ASCSubOrder": "Black",
+              "SoilType": "Clay",
               "LocalName": null,
-              "Site": null,
-              "NearestTown": null,
-              "Region": null,
-              "State": "NE",
-              "Country": "USA",
-              "NaturalVegetation": null,
-              "ApsoilNumber": 0,
-              "Latitude": 41.15785,
-              "Longitude": -96.42075,
-              "LocationAccuracy": null,
-              "YearOfSampling": null,
-              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-02-24 14:25:49.418986",
-              "Comments": "cokey = 25348483 - acres percent = 92 - component percent = 92 - taxonomic classification name = Fine-silty, mixed, superactive, mesic Mollic Hapludalfs - drainage class = Well drained - elevation = 400 - slope = 4 - geomdesc = Tread",
-              "Name": "Yutan:1691452",
+              "Site": "Norwin",
+              "NearestTown": "Norwin",
+              "Region": "Darling Downs and Granite Belt",
+              "State": "Queensland",
+              "Country": "Australia",
+              "NaturalVegetation": "Qld. Bluegrass, possible Qld. Blue gum",
+              "ApsoilNumber": "900",
+              "Latitude": -27.581836,
+              "Longitude": 151.320206,
+              "LocationAccuracy": " +/- 20m",
+              "YearOfSampling": "0",
+              "DataSource": "CSIRO Sustainable Ecosystems, Toowoomba; Characteriesd as part of the GRDC funded project\"Doing it better, doing it smarter, managing soil water in Australian agriculture' 2011",
+              "Comments": "Clay - OC, CLL for all crops estimated-based on Bongeen Mywybilla Soil No1",
+              "Name": "Soil",
               "ResourceName": null,
               "Children": [
                 {
                   "$type": "Models.Soils.Physical, Models",
                   "Thickness": [
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200
+                    150,
+                    150,
+                    300,
+                    300,
+                    300,
+                    300,
+                    300
                   ],
-                  "ParticleSizeSand": [
-                    7,
-                    7,
-                    9,
-                    8,
-                    8,
-                    15,
-                    15,
-                    20,
-                    20,
-                    20
-                  ],
-                  "ParticleSizeSilt": [
-                    57,
-                    57,
-                    57,
-                    58,
-                    58,
-                    64,
-                    64,
-                    59,
-                    59,
-                    59
-                  ],
-                  "ParticleSizeClay": [
-                    36,
-                    36,
-                    34,
-                    34,
-                    34,
-                    21,
-                    21,
-                    21,
-                    21,
-                    21
-                  ],
+                  "ParticleSizeSand": null,
+                  "ParticleSizeSilt": null,
+                  "ParticleSizeClay": null,
                   "Rocks": null,
                   "Texture": null,
                   "BD": [
-                    1.41459551538893,
-                    1.41459551538893,
-                    1.43909987688714,
-                    1.4361390182077,
-                    1.4361390182077,
-                    1.56190922930608,
-                    1.56190922930608,
-                    1.57062397583683,
-                    1.57062397583683,
-                    1.57062397583683
+                    1.011,
+                    1.071,
+                    1.094,
+                    1.159,
+                    1.173,
+                    1.163,
+                    1.187
                   ],
                   "AirDry": [
-                    0.10770014075,
-                    0.10770014075,
-                    0.2041038505,
-                    0.204082618,
-                    0.204082618,
-                    0.1302764872,
-                    0.1302764872,
-                    0.1297227322,
-                    0.1297227322,
-                    0.1297227322
+                    0.13,
+                    0.199,
+                    0.28,
+                    0.28,
+                    0.28,
+                    0.28,
+                    0.28
                   ],
                   "LL15": [
-                    0.2154002815,
-                    0.2154002815,
-                    0.2041038505,
-                    0.204082618,
-                    0.204082618,
-                    0.1302764872,
-                    0.1302764872,
-                    0.1297227322,
-                    0.1297227322,
-                    0.1297227322
+                    0.261,
+                    0.248,
+                    0.28,
+                    0.28,
+                    0.28,
+                    0.28,
+                    0.28
                   ],
                   "DUL": [
-                    0.381362497351349,
-                    0.381362497351349,
-                    0.371319113084096,
-                    0.372810392246149,
-                    0.372810392246149,
-                    0.311713608147894,
-                    0.311713608147894,
-                    0.300568048951386,
-                    0.300568048951386,
-                    0.300568048951386
+                    0.521,
+                    0.497,
+                    0.488,
+                    0.48,
+                    0.472,
+                    0.457,
+                    0.452
                   ],
                   "SAT": [
-                    0.465190371551349,
-                    0.465190371551349,
-                    0.455943442684096,
-                    0.457060747846149,
-                    0.457060747846149,
-                    0.409600290827894,
-                    0.409600290827894,
-                    0.406311707231386,
-                    0.406311707231386,
-                    0.406311707231386
+                    0.589,
+                    0.566,
+                    0.557,
+                    0.533,
+                    0.527,
+                    0.531,
+                    0.522
                   ],
                   "KS": [
-                    233.28,
-                    233.28,
-                    78.624,
-                    233.28,
-                    233.28,
-                    233.28,
-                    233.28,
-                    233.28,
-                    233.28,
-                    233.28
+                    20,
+                    20,
+                    20,
+                    20,
+                    20,
+                    20,
+                    20
                   ],
                   "BDMetadata": null,
                   "AirDryMetadata": null,
@@ -248,80 +194,24 @@
                     {
                       "$type": "Models.Soils.SoilCrop, Models",
                       "LL": [
-                        0.2154002815,
-                        0.2154002815,
-                        0.2041038505,
-                        0.204082618,
-                        0.204082618,
-                        0.1302764872,
-                        0.1302764872,
-                        0.1297227322,
-                        0.1297227322,
-                        0.1297227322
+                        0.261,
+                        0.248,
+                        0.28,
+                        0.306,
+                        0.36,
+                        0.392,
+                        0.446
                       ],
                       "KL": [
                         0.06,
-                        0.0491238451846789,
-                        0.0402192027621384,
-                        0.0329286981656416,
-                        0.0269597378470333,
-                        0.0220727664702865,
-                        0.0180716527147321,
-                        0.0147958178364964,
-                        0.0121137910796793,
-                        0.00991793329329519
-                      ],
-                      "XF": [
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1
-                      ],
-                      "LLMetadata": null,
-                      "KLMetadata": null,
-                      "XFMetadata": null,
-                      "Name": "MaizeSoil",
-                      "ResourceName": null,
-                      "Children": [],
-                      "Enabled": true,
-                      "ReadOnly": false
-                    },
-                    {
-                      "$type": "Models.Soils.SoilCrop, Models",
-                      "LL": [
-                        0.2154002815,
-                        0.2154002815,
-                        0.2041038505,
-                        0.204082618,
-                        0.204082618,
-                        0.1302764872,
-                        0.1302764872,
-                        0.1297227322,
-                        0.1297227322,
-                        0.1297227322
-                      ],
-                      "KL": [
                         0.06,
-                        0.0491238451846789,
-                        0.0402192027621384,
-                        0.0329286981656416,
-                        0.0269597378470333,
-                        0.0220727664702865,
-                        0.0180716527147321,
-                        0.0147958178364964,
-                        0.0121137910796793,
-                        0.00991793329329519
+                        0.06,
+                        0.04,
+                        0.04,
+                        0.02,
+                        0.01
                       ],
                       "XF": [
-                        1,
-                        1,
-                        1,
                         1,
                         1,
                         1,
@@ -338,69 +228,10 @@
                       "Children": [],
                       "Enabled": true,
                       "ReadOnly": false
-                    },
-                    {
-                      "$type": "Models.Soils.SoilCrop, Models",
-                      "LL": [
-                        0.2154002815,
-                        0.2154002815,
-                        0.2041038505,
-                        0.204082618,
-                        0.204082618,
-                        0.1302764872,
-                        0.1302764872,
-                        0.1297227322,
-                        0.1297227322,
-                        0.1297227322
-                      ],
-                      "KL": [
-                        0.06,
-                        0.0491238451846789,
-                        0.0402192027621384,
-                        0.0329286981656416,
-                        0.0269597378470333,
-                        0.0220727664702865,
-                        0.0180716527147321,
-                        0.0147958178364964,
-                        0.0121137910796793,
-                        0.00991793329329519
-                      ],
-                      "XF": [
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1
-                      ],
-                      "LLMetadata": null,
-                      "KLMetadata": null,
-                      "XFMetadata": null,
-                      "Name": "WheatSoil",
-                      "ResourceName": null,
-                      "Children": [],
-                      "Enabled": true,
-                      "ReadOnly": false
                     }
                   ],
                   "Enabled": true,
-                  "ReadOnly": false,
-                  "Depth": [
-                    "0-20",
-                    "20-40",
-                    "40-60",
-                    "60-80",
-                    "80-100",
-                    "100-120",
-                    "120-140",
-                    "140-160",
-                    "160-180",
-                    "180-200"
-                  ]
+                  "ReadOnly": false
                 },
                 {
                   "$type": "Models.WaterModel.WaterBalance, Models",
@@ -419,8 +250,24 @@
                   "DischargeWidth": "NaN",
                   "CatchmentArea": "NaN",
                   "PSIDul": -100,
-                  "Thickness": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
-                  "SWCON": [0.181959730137105, 0.181959730137105, 0.187384961904783, 0.186111462291533, 0.186111462291533, 0.240834419480353, 0.240834419480353, 0.262068721288586, 0.262068721288586, 0.262068721288586],
+                  "Thickness": [
+                    150,
+                    150,
+                    300,
+                    300,
+                    300,
+                    300,
+                    300
+                  ],
+                  "SWCON": [
+                    0.3,
+                    0.3,
+                    0.3,
+                    0.3,
+                    0.3,
+                    0.3,
+                    0.3
+                  ],
                   "KLAT": null,
                   "Name": "SoilWater",
                   "ResourceName": "WaterBalance",
@@ -432,34 +279,25 @@
                   "$type": "Models.Soils.Organic, Models",
                   "FOMCNRatio": 40,
                   "Thickness": [
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200
+                    150,
+                    150,
+                    300,
+                    300,
+                    300,
+                    300,
+                    300
                   ],
                   "Carbon": [
-                    0.726744186046512,
-                    0.726744186046512,
-                    0.436046511627907,
-                    0.290697674418605,
-                    0.290697674418605,
-                    0.0581395348837209,
-                    0.0581395348837209,
-                    0.0581395348837209,
-                    0.0581395348837209,
-                    0.0581395348837209
+                    1.2,
+                    0.96,
+                    0.6,
+                    0.3,
+                    0.18,
+                    0.12,
+                    0.12
                   ],
                   "CarbonUnits": 0,
                   "SoilCNRatio": [
-                    12,
-                    12,
-                    12,
                     12,
                     12,
                     12,
@@ -470,39 +308,30 @@
                   ],
                   "FBiom": [
                     0.04,
-                    0.0327492301231193,
-                    0.0268128018414256,
-                    0.0219524654437611,
-                    0.0179731585646889,
-                    0.0147151776468577,
-                    0.0120477684764881,
-                    0.00986387855766426,
-                    0.00807586071978622,
-                    0.00661195552886346
+                    0.02,
+                    0.02,
+                    0.02,
+                    0.01,
+                    0.01,
+                    0.01
                   ],
                   "FInert": [
+                    0.4,
+                    0.6,
                     0.8,
-                    0.808040133667335,
-                    0.816161072021405,
-                    0.824363627162814,
-                    0.832648619353911,
-                    0.841016877100819,
-                    0.849469237236288,
-                    0.858006545003373,
-                    0.866629654139967,
-                    0.875339426964169
+                    1,
+                    1,
+                    1,
+                    1
                   ],
                   "FOM": [
-                    150,
-                    122.809612961697,
-                    100.548006905346,
-                    82.321745414104,
-                    67.3993446175832,
-                    55.1819161757163,
-                    45.1791317868303,
-                    36.989544591241,
-                    30.2844776991983,
-                    24.794833233238
+                    347.129,
+                    270.344,
+                    163.972,
+                    99.454,
+                    60.322,
+                    36.587,
+                    22.191
                   ],
                   "CarbonMetadata": null,
                   "FOMMetadata": null,
@@ -510,45 +339,27 @@
                   "ResourceName": null,
                   "Children": [],
                   "Enabled": true,
-                  "ReadOnly": false,
-                  "Depth": [
-                    "0-20",
-                    "20-40",
-                    "40-60",
-                    "60-80",
-                    "80-100",
-                    "100-120",
-                    "120-140",
-                    "140-160",
-                    "160-180",
-                    "180-200"
-                  ]
+                  "ReadOnly": false
                 },
                 {
                   "$type": "Models.Soils.Chemical, Models",
                   "Thickness": [
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200,
-                    200
+                    150,
+                    150,
+                    300,
+                    300,
+                    300,
+                    300,
+                    300
                   ],
                   "PH": [
-                    6.5,
-                    6.5,
-                    6.5,
-                    6.5,
-                    6.5,
-                    6.5,
-                    6.5,
-                    6.5,
-                    6.5,
-                    6.5
+                    8,
+                    8,
+                    8,
+                    8,
+                    8,
+                    8,
+                    8
                   ],
                   "PHUnits": 0,
                   "EC": null,
@@ -562,24 +373,28 @@
                   "ResourceName": null,
                   "Children": [],
                   "Enabled": true,
-                  "ReadOnly": false,
-                  "Depth": [
-                    "0-20",
-                    "20-40",
-                    "40-60",
-                    "60-80",
-                    "80-100",
-                    "100-120",
-                    "120-140",
-                    "140-160",
-                    "160-180",
-                    "180-200"
-                  ]
+                  "ReadOnly": false
                 },
                 {
                   "$type": "Models.Soils.Water, Models",
-                  "Thickness": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
-                  "InitialValues": [0.381362497351349, 0.381362497351349, 0.371319113084096, 0.372810392246149, 0.372810392246149, 0.311713608147894, 0.311713608147894, 0.300568048951386, 0.300568048951386, 0.300568048951386],
+                  "Thickness": [
+                    150,
+                    150,
+                    300,
+                    300,
+                    300,
+                    300,
+                    300
+                  ],
+                  "InitialValues": [
+                    0.521,
+                    0.497,
+                    0.488,
+                    0.48,
+                    0.472,
+                    0.457,
+                    0.452
+                  ],
                   "InitialPAWmm": 361.05,
                   "RelativeTo": "LL15",
                   "FilledFromTop": false,
@@ -607,18 +422,23 @@
                 },
                 {
                   "$type": "Models.Soils.Solute, Models",
-                  "Thickness": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
+                  "Thickness": [
+                    150,
+                    150,
+                    300,
+                    300,
+                    300,
+                    300,
+                    300
+                  ],
                   "InitialValues": [
-                    0.5,
-                    0.495024916874584,
-                    0.490099336653378,
-                    0.485222766774254,
-                    0.480394719576162,
-                    0.475614712250357,
-                    0.470882266792124,
-                    0.466196909952974,
-                    0.461558173193318,
-                    0.456965592635614
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1
                   ],
                   "InitialValuesUnits": 0,
                   "WaterTableConcentration": 0,
@@ -637,18 +457,23 @@
                 },
                 {
                   "$type": "Models.Soils.Solute, Models",
-                  "Thickness": [200, 200, 200, 200, 200, 200, 200, 200, 200, 200],
+                  "Thickness": [
+                    150,
+                    150,
+                    300,
+                    300,
+                    300,
+                    300,
+                    300
+                  ],
                   "InitialValues": [
-                    0.05,
-                    0.0495024916874584,
-                    0.0490099336653378,
-                    0.0485222766774254,
-                    0.0480394719576162,
-                    0.0475614712250357,
-                    0.0470882266792124,
-                    0.0466196909952974,
-                    0.0461558173193318,
-                    0.0456965592635614
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
                   ],
                   "InitialValuesUnits": 0,
                   "WaterTableConcentration": 0,
@@ -712,14 +537,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 289",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 171",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 210",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 173",
-                    "[Phenology].Maturing.Target.FixedValue = 158",
-                    "[Phenology].Ripening.Target.FixedValue = 42",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.57, 22.31",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.57, 22.31"
+                    "[Phenology].Vegetative.Target.FixedValue = 108",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 280",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 217",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 107",
+                    "[Phenology].Maturing.Target.FixedValue = 91",
+                    "[Phenology].Ripening.Target.FixedValue = 90",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.69, 23.08",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.69, 23.08"
                   ],
                   "Name": "early000",
                   "ResourceName": null,
@@ -730,14 +555,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = -384",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 165",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 205",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 171",
-                    "[Phenology].Maturing.Target.FixedValue = 156",
-                    "[Phenology].Ripening.Target.FixedValue = 40",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.48, 21.82",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.48, 21.82"
+                    "[Phenology].Vegetative.Target.FixedValue = 133",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 271",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 214",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 109",
+                    "[Phenology].Maturing.Target.FixedValue = 88",
+                    "[Phenology].Ripening.Target.FixedValue = 88",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.61, 22.57",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.61, 22.57"
                   ],
                   "Name": "mid000",
                   "ResourceName": null,
@@ -748,14 +573,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 288",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 187",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 227",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 181",
-                    "[Phenology].Maturing.Target.FixedValue = 166",
-                    "[Phenology].Ripening.Target.FixedValue = 51",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.4, 21.35",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.4, 21.35"
+                    "[Phenology].Vegetative.Target.FixedValue = 159",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 258",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 212",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 113",
+                    "[Phenology].Maturing.Target.FixedValue = 85",
+                    "[Phenology].Ripening.Target.FixedValue = 86",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.52, 22.07",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.52, 22.07"
                   ],
                   "Name": "late000",
                   "ResourceName": null,
@@ -766,14 +591,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 284",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 167",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 206",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 171",
-                    "[Phenology].Maturing.Target.FixedValue = 156",
-                    "[Phenology].Ripening.Target.FixedValue = 40",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.31, 20.9",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.31, 20.9"
+                    "[Phenology].Vegetative.Target.FixedValue = 187",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 242",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 211",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 118",
+                    "[Phenology].Maturing.Target.FixedValue = 82",
+                    "[Phenology].Ripening.Target.FixedValue = 84",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.44, 21.59",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.44, 21.59"
                   ],
                   "Name": "early00",
                   "ResourceName": null,
@@ -784,14 +609,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 301",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 162",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 202",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 169",
-                    "[Phenology].Maturing.Target.FixedValue = 154",
-                    "[Phenology].Ripening.Target.FixedValue = 38",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.23, 20.46",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.23, 20.46"
+                    "[Phenology].Vegetative.Target.FixedValue = 215",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 222",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 212",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 125",
+                    "[Phenology].Maturing.Target.FixedValue = 78",
+                    "[Phenology].Ripening.Target.FixedValue = 84",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.36, 21.12",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.36, 21.12"
                   ],
                   "Name": "mid00",
                   "ResourceName": null,
@@ -802,14 +627,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 286",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 155",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 195",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 165",
-                    "[Phenology].Maturing.Target.FixedValue = 150",
-                    "[Phenology].Ripening.Target.FixedValue = 35",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.15, 20.05",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.15, 20.05"
+                    "[Phenology].Vegetative.Target.FixedValue = 243",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 202",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 213",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 134",
+                    "[Phenology].Maturing.Target.FixedValue = 77",
+                    "[Phenology].Ripening.Target.FixedValue = 85",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.27, 20.68",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.27, 20.68"
                   ],
                   "Name": "late00",
                   "ResourceName": null,
@@ -820,14 +645,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 283",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 153",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 193",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 164",
-                    "[Phenology].Maturing.Target.FixedValue = 150",
-                    "[Phenology].Ripening.Target.FixedValue = 34",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.06, 19.65",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.06, 19.65"
+                    "[Phenology].Vegetative.Target.FixedValue = 267",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 183",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 213",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 142",
+                    "[Phenology].Maturing.Target.FixedValue = 78",
+                    "[Phenology].Ripening.Target.FixedValue = 88",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.19, 20.25",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.19, 20.25"
                   ],
                   "Name": "early0",
                   "ResourceName": null,
@@ -838,14 +663,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 292",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 159",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 198",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 167",
-                    "[Phenology].Maturing.Target.FixedValue = 152",
-                    "[Phenology].Ripening.Target.FixedValue = 36",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.98, 19.27",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.98, 19.27"
+                    "[Phenology].Vegetative.Target.FixedValue = 284",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 173",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 211",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 150",
+                    "[Phenology].Maturing.Target.FixedValue = 87",
+                    "[Phenology].Ripening.Target.FixedValue = 91",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.1, 19.85",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.1, 19.85"
                   ],
                   "Name": "mid0",
                   "ResourceName": null,
@@ -856,14 +681,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 311",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 174",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 214",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 175",
-                    "[Phenology].Maturing.Target.FixedValue = 160",
-                    "[Phenology].Ripening.Target.FixedValue = 44",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.89, 18.91",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.89, 18.91"
+                    "[Phenology].Vegetative.Target.FixedValue = 291",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 175",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 206",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 155",
+                    "[Phenology].Maturing.Target.FixedValue = 102",
+                    "[Phenology].Ripening.Target.FixedValue = 93",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.02, 19.46",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.02, 19.46"
                   ],
                   "Name": "late0",
                   "ResourceName": null,
@@ -874,14 +699,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 297",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 173",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 212",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 174",
-                    "[Phenology].Maturing.Target.FixedValue = 159",
-                    "[Phenology].Ripening.Target.FixedValue = 43",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.81, 18.57",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.81, 18.57"
+                    "[Phenology].Vegetative.Target.FixedValue = 288",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 190",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 197",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 158",
+                    "[Phenology].Maturing.Target.FixedValue = 123",
+                    "[Phenology].Ripening.Target.FixedValue = 92",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.94, 19.09",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.94, 19.09"
                   ],
                   "Name": "early1",
                   "ResourceName": null,
@@ -892,14 +717,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 309",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 181",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 221",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 178",
-                    "[Phenology].Maturing.Target.FixedValue = 163",
-                    "[Phenology].Ripening.Target.FixedValue = 48",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.73, 18.25",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.73, 18.25"
+                    "[Phenology].Vegetative.Target.FixedValue = 278",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 212",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 189",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 160",
+                    "[Phenology].Maturing.Target.FixedValue = 143",
+                    "[Phenology].Ripening.Target.FixedValue = 89",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.85, 18.74",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.85, 18.74"
                   ],
                   "Name": "mid1",
                   "ResourceName": null,
@@ -910,14 +735,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 315",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 196",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 235",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 186",
-                    "[Phenology].Maturing.Target.FixedValue = 171",
-                    "[Phenology].Ripening.Target.FixedValue = 55",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.64, 17.94",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.64, 17.94"
+                    "[Phenology].Vegetative.Target.FixedValue = 264",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 233",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 181",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 164",
+                    "[Phenology].Maturing.Target.FixedValue = 162",
+                    "[Phenology].Ripening.Target.FixedValue = 84",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.77, 18.41",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.77, 18.41"
                   ],
                   "Name": "late1",
                   "ResourceName": null,
@@ -928,14 +753,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 293",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 181",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 221",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 178",
-                    "[Phenology].Maturing.Target.FixedValue = 163",
-                    "[Phenology].Ripening.Target.FixedValue = 48",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.56, 17.66",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.56, 17.66"
+                    "[Phenology].Vegetative.Target.FixedValue = 250",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 245",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 176",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 171",
+                    "[Phenology].Maturing.Target.FixedValue = 176",
+                    "[Phenology].Ripening.Target.FixedValue = 79",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.68, 18.09",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.68, 18.09"
                   ],
                   "Name": "early2",
                   "ResourceName": null,
@@ -946,14 +771,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 299",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 191",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 230",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 183",
-                    "[Phenology].Maturing.Target.FixedValue = 168",
-                    "[Phenology].Ripening.Target.FixedValue = 53",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.47, 17.39",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.47, 17.39"
+                    "[Phenology].Vegetative.Target.FixedValue = 240",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 244",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 175",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 184",
+                    "[Phenology].Maturing.Target.FixedValue = 188",
+                    "[Phenology].Ripening.Target.FixedValue = 74",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.6, 17.8",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.6, 17.8"
                   ],
                   "Name": "mid2",
                   "ResourceName": null,
@@ -964,14 +789,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 314",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 207",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 246",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 191",
-                    "[Phenology].Maturing.Target.FixedValue = 176",
-                    "[Phenology].Ripening.Target.FixedValue = 60",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.39, 17.14",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.39, 17.14"
+                    "[Phenology].Vegetative.Target.FixedValue = 237",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 232",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 179",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 202",
+                    "[Phenology].Maturing.Target.FixedValue = 199",
+                    "[Phenology].Ripening.Target.FixedValue = 69",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.51, 17.52",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.51, 17.52"
                   ],
                   "Name": "late2",
                   "ResourceName": null,
@@ -982,14 +807,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 294",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 198",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 237",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 187",
-                    "[Phenology].Maturing.Target.FixedValue = 172",
-                    "[Phenology].Ripening.Target.FixedValue = 56",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.3, 16.91",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.3, 16.91"
+                    "[Phenology].Vegetative.Target.FixedValue = 241",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 214",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 187",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 225",
+                    "[Phenology].Maturing.Target.FixedValue = 210",
+                    "[Phenology].Ripening.Target.FixedValue = 62",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.43, 17.26",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.43, 17.26"
                   ],
                   "Name": "early3",
                   "ResourceName": null,
@@ -1000,14 +825,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 301",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 216",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 256",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 196",
-                    "[Phenology].Maturing.Target.FixedValue = 181",
-                    "[Phenology].Ripening.Target.FixedValue = 65",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.22, 16.7",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.22, 16.7"
+                    "[Phenology].Vegetative.Target.FixedValue = 250",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 200",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 201",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 247",
+                    "[Phenology].Maturing.Target.FixedValue = 222",
+                    "[Phenology].Ripening.Target.FixedValue = 54",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.35, 17.02",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.35, 17.02"
                   ],
                   "Name": "mid3",
                   "ResourceName": null,
@@ -1018,14 +843,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 317",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 229",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 268",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 202",
-                    "[Phenology].Maturing.Target.FixedValue = 187",
-                    "[Phenology].Ripening.Target.FixedValue = 72",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.14, 16.51",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.14, 16.51"
+                    "[Phenology].Vegetative.Target.FixedValue = 260",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 197",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 218",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 264",
+                    "[Phenology].Maturing.Target.FixedValue = 234",
+                    "[Phenology].Ripening.Target.FixedValue = 47",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.26, 16.8",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.26, 16.8"
                   ],
                   "Name": "late3",
                   "ResourceName": null,
@@ -1036,14 +861,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 311",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 220",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 260",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 198",
-                    "[Phenology].Maturing.Target.FixedValue = 183",
-                    "[Phenology].Ripening.Target.FixedValue = 67",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.05, 16.33",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.05, 16.33"
+                    "[Phenology].Vegetative.Target.FixedValue = 266",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 211",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 237",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 271",
+                    "[Phenology].Maturing.Target.FixedValue = 242",
+                    "[Phenology].Ripening.Target.FixedValue = 41",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.18, 16.6",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.18, 16.6"
                   ],
                   "Name": "early4",
                   "ResourceName": null,
@@ -1054,14 +879,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 326",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 242",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 281",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 209",
-                    "[Phenology].Maturing.Target.FixedValue = 194",
-                    "[Phenology].Ripening.Target.FixedValue = 78",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.97, 16.18",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.97, 16.18"
+                    "[Phenology].Vegetative.Target.FixedValue = 267",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 240",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 254",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 266",
+                    "[Phenology].Maturing.Target.FixedValue = 244",
+                    "[Phenology].Ripening.Target.FixedValue = 41",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.09, 16.42",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.09, 16.42"
                   ],
                   "Name": "mid4",
                   "ResourceName": null,
@@ -1072,14 +897,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 346",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 250",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 289",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 213",
-                    "[Phenology].Maturing.Target.FixedValue = 198",
-                    "[Phenology].Ripening.Target.FixedValue = 82",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.88, 16.04",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.88, 16.04"
+                    "[Phenology].Vegetative.Target.FixedValue = 261",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 277",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 265",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 250",
+                    "[Phenology].Maturing.Target.FixedValue = 238",
+                    "[Phenology].Ripening.Target.FixedValue = 48",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.01, 16.25",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.01, 16.25"
                   ],
                   "Name": "late4",
                   "ResourceName": null,
@@ -1090,14 +915,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 331",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 246",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 285",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 211",
-                    "[Phenology].Maturing.Target.FixedValue = 196",
-                    "[Phenology].Ripening.Target.FixedValue = 80",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.8, 15.92",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.8, 15.92"
+                    "[Phenology].Vegetative.Target.FixedValue = 251",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 317",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 270",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 228",
+                    "[Phenology].Maturing.Target.FixedValue = 223",
+                    "[Phenology].Ripening.Target.FixedValue = 60",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.93, 16.11",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.93, 16.11"
                   ],
                   "Name": "early5",
                   "ResourceName": null,
@@ -1108,14 +933,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 372",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 246",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 285",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 211",
-                    "[Phenology].Maturing.Target.FixedValue = 196",
-                    "[Phenology].Ripening.Target.FixedValue = 80",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.72, 15.82",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.72, 15.82"
+                    "[Phenology].Vegetative.Target.FixedValue = 239",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 351",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 269",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 203",
+                    "[Phenology].Maturing.Target.FixedValue = 204",
+                    "[Phenology].Ripening.Target.FixedValue = 72",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.84, 15.98",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.84, 15.98"
                   ],
                   "Name": "mid5",
                   "ResourceName": null,
@@ -1126,14 +951,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 373",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 235",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 274",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 205",
-                    "[Phenology].Maturing.Target.FixedValue = 190",
-                    "[Phenology].Ripening.Target.FixedValue = 75",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.63, 15.74",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.63, 15.74"
+                    "[Phenology].Vegetative.Target.FixedValue = 227",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 376",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 267",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 181",
+                    "[Phenology].Maturing.Target.FixedValue = 185",
+                    "[Phenology].Ripening.Target.FixedValue = 81",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.76, 15.87",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.76, 15.87"
                   ],
                   "Name": "late5",
                   "ResourceName": null,
@@ -1144,14 +969,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 340",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 215",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 255",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 195",
-                    "[Phenology].Maturing.Target.FixedValue = 180",
-                    "[Phenology].Ripening.Target.FixedValue = 65",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.55, 15.67",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.55, 15.67"
+                    "[Phenology].Vegetative.Target.FixedValue = 216",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 391",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 265",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 162",
+                    "[Phenology].Maturing.Target.FixedValue = 166",
+                    "[Phenology].Ripening.Target.FixedValue = 88",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.67, 15.78",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.67, 15.78"
                   ],
                   "Name": "early6",
                   "ResourceName": null,
@@ -1162,14 +987,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 317",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 209",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 248",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 192",
-                    "[Phenology].Maturing.Target.FixedValue = 177",
-                    "[Phenology].Ripening.Target.FixedValue = 61",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.46, 15.63",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.46, 15.63"
+                    "[Phenology].Vegetative.Target.FixedValue = 205",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 398",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 263",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 148",
+                    "[Phenology].Maturing.Target.FixedValue = 151",
+                    "[Phenology].Ripening.Target.FixedValue = 92",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.59, 15.7",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.59, 15.7"
                   ],
                   "Name": "mid6",
                   "ResourceName": null,
@@ -1180,14 +1005,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 335",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 214",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 253",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 195",
-                    "[Phenology].Maturing.Target.FixedValue = 180",
-                    "[Phenology].Ripening.Target.FixedValue = 64",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.38, 15.6",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.38, 15.6"
+                    "[Phenology].Vegetative.Target.FixedValue = 195",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 399",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 263",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 137",
+                    "[Phenology].Maturing.Target.FixedValue = 139",
+                    "[Phenology].Ripening.Target.FixedValue = 95",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.5, 15.65",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.5, 15.65"
                   ],
                   "Name": "late6",
                   "ResourceName": null,
@@ -1198,14 +1023,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 270",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 123",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 163",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 150",
-                    "[Phenology].Maturing.Target.FixedValue = 135",
-                    "[Phenology].Ripening.Target.FixedValue = 19",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.29, 15.6",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.29, 15.6"
+                    "[Phenology].Vegetative.Target.FixedValue = 184",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 397",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 264",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 130",
+                    "[Phenology].Maturing.Target.FixedValue = 130",
+                    "[Phenology].Ripening.Target.FixedValue = 99",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.42, 15.61",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.42, 15.61"
                   ],
                   "Name": "early7",
                   "ResourceName": null,
@@ -1216,14 +1041,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 186",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 94",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 133",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 135",
-                    "[Phenology].Maturing.Target.FixedValue = 120",
-                    "[Phenology].Ripening.Target.FixedValue = 4",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.21, 15.61",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.21, 15.61"
+                    "[Phenology].Vegetative.Target.FixedValue = 174",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 392",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 267",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 125",
+                    "[Phenology].Maturing.Target.FixedValue = 123",
+                    "[Phenology].Ripening.Target.FixedValue = 103",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.34, 15.6",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.34, 15.6"
                   ],
                   "Name": "mid7",
                   "ResourceName": null,
@@ -1234,14 +1059,14 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 177",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 84",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 123",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 130",
-                    "[Phenology].Maturing.Target.FixedValue = 115",
-                    "[Phenology].Ripening.Target.FixedValue = 1",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.13, 15.64",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.13, 15.64"
+                    "[Phenology].Vegetative.Target.FixedValue = 163",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 387",
+                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 271",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 122",
+                    "[Phenology].Maturing.Target.FixedValue = 119",
+                    "[Phenology].Ripening.Target.FixedValue = 106",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.25, 15.6",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.25, 15.6"
                   ],
                   "Name": "late7",
                   "ResourceName": null,
@@ -1398,7 +1223,7 @@
                 },
                 {
                   "Key": "SowDate",
-                  "Value": "NA"
+                  "Value": "05-Jun"
                 },
                 {
                   "Key": "StartDate",
@@ -1425,8 +1250,12 @@
                   "Value": "13"
                 },
                 {
+                  "Key": "ForceSow",
+                  "Value": "True"
+                },
+                {
                   "Key": "CultivarName",
-                  "Value": "mid2"
+                  "Value": "mid4"
                 },
                 {
                   "Key": "SowingDepth",
@@ -1439,10 +1268,6 @@
                 {
                   "Key": "Population",
                   "Value": "6"
-                },
-                {
-                  "Key": "ForceSow",
-                  "Value": "True"
                 }
               ],
               "Name": "Sowing",

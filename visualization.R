@@ -320,7 +320,7 @@ mid00res <- ID_corr("mid00", final_x)
 
 #CUT THE TREE
 
-
+mid00res$id_dend_obj %>% circlize_dendrogram()
 
 
 

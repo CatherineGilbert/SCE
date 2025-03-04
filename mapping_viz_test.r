@@ -1,9 +1,9 @@
 library(reshape2)
+library(igraph)
 
-final_dt
-final_dt2
+mid00res$scfinal_dt
 
-id_cor <- cor(t(final_dt2), use = "pairwise.complete.obs") 
+id_cor <- cor(t(mid00res$scfinal_dt), use = "pairwise.complete.obs") 
 id_cor[lower.tri(id_cor)] <- NA
 IDs <- colnames(id_cor)
 
@@ -21,6 +21,8 @@ latlong <- select(id_verts, Longitude, Latitude) %>%
          Latitude = jitter(.$Latitude, factor = jitter_factor)) %>% # add jitter for overlaps
   as.matrix() %>% unname() ; head(latlong)
 
+latlong <- select(id_verts, Longitude, Latitude) %>% as.matrix() %>% unname()
+
 library(paletteer)
 library(pals)
 plasma(10)
@@ -28,12 +30,27 @@ library(RColorBrewer)
 
 # Map the scaled values to colors
 # Create 100 colors in the palette, and map the scaled values to these colors
-hex_colors <- paletteer_c("ggthemes::Classic Orange-Blue", 100)[as.numeric(cut(E(site_net)$Corr, breaks = seq(-1, 1, length.out = 100)))]
+hex_colors <- paletteer_c("ggthemes::Classic Red-Blue", 100)[as.numeric(cut(E(site_net)$Corr, breaks = seq(-1, 1, length.out = 100)))]
 
 par(mai = c(0,0,0,0))
+
+library(geodata)
+library(raster)
+
+usa <- ggplot(map_data("usa"), aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group),
+               color = "grey65",
+               fill = "#f9f9f9", linewidth = 0.2
+  )
+plot(usa)
+
 plot(site_net, layout = latlong, asp = 0, 
      vertex.label.color = "black", vertex.size = 5, 
      vertex.label.cex = 0.5, vertex.color = NA, 
      vertex.frame.color = NA,
-     edge.color = hex_colors
+     edge.color = hex_colors,
+     add = TRUE, rescale = FALSE
 )
+
+library(GGally)
+ggnetworkmap(usa, net = site_net)

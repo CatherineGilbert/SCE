@@ -66,7 +66,7 @@ if (crop == "Soy"){
 if (crop == "Maize"){
   trials_df <- trials_df %>% mutate(lett = str_to_upper(str_extract(Genetics,"^[A-Za-z]")), 
                                     num = as.numeric(str_extract(Genetics,"\\d+")))
-  trials_df <- trials_df %>% mutate(ifelse(is.na(lett), "B", lett))
+  trials_df <- trials_df %>% mutate(lett = ifelse(is.na(lett), "B", lett))
   corn_mats <- c(80,90,95,100,103,105,108,110,112,115,120,130)
   trials_df <- trials_df %>% rowwise() %>%
     mutate(num = corn_mats[which.min(abs(corn_mats - num))[1]]) %>%
@@ -342,7 +342,7 @@ charact_x <- daily_output %>%
   summarize(across(where(is.numeric) & !c(DOY,AccRain,AccTT,AccEmTT), function(x){mean(x,na.omit=T)}), 
             AccRain = sum(Rain), AccTT = sum(ThermalTime), AccEmTT = max(AccEmTT),
             Period_Start_Date = min(Date), Period_End_Date = max(Date)) %>% 
-  mutate(Duration = as.numeric(as.period(Period_End_Date - Period_Start_Date, "days"))/86400, 
+  mutate(Duration = as.numeric(as.period(Period_End_Date - Period_Start_Date, "days"))/86400 + 1, 
          Period_Start_DOY = yday(Period_Start_Date), 
          Period_End_DOY = yday(Period_End_Date)) %>%
   relocate(ID, Period, Rain) %>% 
