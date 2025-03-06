@@ -6,20 +6,25 @@ library(data.table)
 library(soilDB)
 library(spData)
 library(here)
+library(tools)
 library(parallel)  # For parallel computing
-Sys.setlocale("LC_ALL", "English_United States")
+#Sys.setlocale("LC_ALL", "English_United States")
 start_time <- Sys.time() # track running time
 
 codes_dir <- here() #where the folder with the codes is
 #codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
 results_dir <- paste0(codes_dir,"/apsimx_output") #folder where the output goes
-#results_dir <- ("C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output") 
+#results_dir <- "C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output"
 setwd(results_dir) 
 
-crop <- readLines("C:/Users/cmg3/Documents/GitHub/SCT/selected_crop.txt")
-#crop <- "Soy" 
+mat_handling <- readLines("C:/Users/cmg3/Documents/GitHub/SCT/input/selections.txt")
+#mat_handling <- "Soy" 
 
-trials_df <- read_csv(paste0(codes_dir,"/apsimx_output/output/input.csv")) 
+templ_model_path <- list.files(paste0(codes_dir,"/input"), pattern = ".apsimx", full.names = TRUE)[1]
+#templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCT/template_models/Soy_Template.apsimx"
+templ_model <- file_path_sans_ext(basename(templ_model_path))
+trials_df <- read_csv(list.files(paste0(codes_dir,"/input"), pattern = ".csv", full.names = TRUE)[1]) 
+#trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCT/example_input_files/date_test.csv") 
 trials_df <- mutate(trials_df, ID = row_number()) %>% rename(X = Longitude, Y = Latitude)
 locs_df <- select(trials_df, X, Y) %>% distinct() %>% mutate(ID_Loc = row_number())
 trials_df <- left_join(trials_df, locs_df)
@@ -46,7 +51,7 @@ trials_df <- mutate(trials_df,
 # Get what maturities of cultivar we'll use
 writeLines("Set maturities", CON)
 
-if (crop == "Soy"){
+if (mat_handling == "Soy"){
   trials_df <- trials_df %>% mutate(gen1 = floor(Genetics), gen2 = Genetics - gen1) %>%
     mutate(gen1 = case_when( 
       gen1 >= 10 ~ "10",
@@ -63,7 +68,7 @@ if (crop == "Soy"){
     select(-gen1, -gen2)
 }
 
-if (crop == "Maize"){
+if (mat_handling == "Maize"){
   trials_df <- trials_df %>% mutate(lett = str_to_upper(str_extract(Genetics,"^[A-Za-z]")), 
                                     num = as.numeric(str_extract(Genetics,"\\d+")))
   trials_df <- trials_df %>% mutate(lett = ifelse(is.na(lett), "B", lett))
@@ -72,6 +77,10 @@ if (crop == "Maize"){
     mutate(num = corn_mats[which.min(abs(corn_mats - num))[1]]) %>%
     mutate(Mat = paste0(lett,"_",as.character(num)))
   trials_df <- select(trials_df, -lett, -num)
+}
+
+if (mat_handling == "Direct"){
+  trials_df <- mutate(trials_df, Mat = Genetics)
 }
 
 # Get weather, make met files -----
@@ -159,13 +168,16 @@ write_rds(soil_profile_list, "soils/soil_profile_list.rds")
 # Create APSIM files -----
 unlink("apsim", recursive = TRUE)
 dir.create("apsim")
-file.copy(from = paste0(codes_dir, "/template_models/", crop, "_Template.apsimx"),
-          to = paste0(crop, "_.apsimx"), overwrite = TRUE)
+#if the template model isn't already in the inputs folder:
+if (paste0(templ_model_path) != paste0(codes_dir,"/input/", templ_model, ".apsimx")) {
+  file.copy(from = paste0(templ_model_path),
+          to = paste0(codes_dir,"/input/", templ_model, ".apsimx"), overwrite = TRUE)
+}
 
 # Prepare for parallel processing
 
-clusterExport(cl, c("trials_df", "codes_dir", "crop", "edit_apsimx", "edit_apsimx_replace_soil_profile", 
-                    "paste0", "dir.create", "file.copy", "tryCatch", "print"))
+clusterExport(cl, c("trials_df", "codes_dir", "mat_handling", "templ_model", "edit_apsimx", "results_dir",
+                    "edit_apsimx_replace_soil_profile", "paste0", "dir.create", "file.copy", "tryCatch", "print"))
 
 # Parallel APSIM files creation
 apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
@@ -173,9 +185,12 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   if(!dir.exists(paste0("apsim/trial_",trial_n))) {dir.create(paste0("apsim/trial_",trial_n))}
   source_dir <- paste0("apsim/trial_",trial_n)
   write_dir <-  paste0("apsim/trial_",trial_n)
-  filename <- paste0(crop, "_", trial_n,".apsimx")
-  edit_apsimx(file = paste0(crop,"_.apsimx"), wrt.dir = write_dir, edit.tag = trial_n,
-              node = "Clock", parm = "Start", value = paste0(trial_tmp$sim_start,"T00:00:00"), verbose = F)
+  filename <- paste0(templ_model, "_", trial_n,".apsimx")
+  edit_apsimx(file = paste0(templ_model,".apsimx"), 
+              src.dir = paste0(codes_dir,"/input/"), 
+              wrt.dir = write_dir, edit.tag = paste0("_",trial_n),
+              node = "Clock", parm = "Start", 
+              value = paste0(trial_tmp$sim_start,"T00:00:00"), verbose = F)
   edit_apsimx(file = filename,  src.dir = source_dir, wrt.dir = write_dir, overwrite = T,
               node = "Clock", parm = "End", value = paste0(trial_tmp$sim_end,"T00:00:00"), verbose = F)
   edit_apsimx(file = filename, src.dir = source_dir, wrt.dir = write_dir, overwrite = T,
@@ -213,8 +228,9 @@ if (nrow(trials_df) <= 10) {
 batch_size <- ceiling(nrow(trials_df) / num_batches)
 
 
-clusterExport(cl, c("trials_df", "codes_dir", "crop", "edit_apsimx", "edit_apsimx_replace_soil_profile", 
-                    "paste0", "dir.create", "file.copy", "tryCatch", "print", "apsimx", "mutate", 
+clusterExport(cl, c("trials_df", "codes_dir", "templ_model", "edit_apsimx", 
+                    "edit_apsimx_replace_soil_profile", "paste0", "dir.create",
+                    "file.copy", "tryCatch", "print", "apsimx", "mutate", 
                     "write_csv", "soil_profile_list"))
 
 
@@ -236,7 +252,7 @@ for (batch in 1:num_batches) {
   results <- parLapply(cl, trial_list, function(trial) {
     trial_n <- trial$ID  # Assuming 'ID' is the identifier
     source_dir <- paste0("apsim/trial_", trial_n)
-    filename <- paste0(crop, "_", trial_n, ".apsimx")
+    filename <- paste0(templ_model, "_", trial_n, ".apsimx")
     output <- data.frame()  # Initialize an empty data frame for the results
     
     # Wrap APSIM simulation and result handling in tryCatch to handle any errors
@@ -246,7 +262,7 @@ for (batch in 1:num_batches) {
       # Append the output of this trial to the overall results
       # output <- rbind(output, output_tmp)
       # Save individual trial results
-      write_csv(output_tmp, file = paste0(source_dir, "/", crop, "_", trial_n, "_out.csv"))
+      write_csv(output_tmp, file = paste0(source_dir, "/", templ_model, "_", trial_n, "_out.csv"))
       #return(output)
       return()  
     }, error = function(e){
@@ -287,6 +303,7 @@ simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndD
   select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
 daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, StartDate, EndDate), by = join_by(ID)) %>%
   filter(Date >= StartDate & Date <= EndDate) %>% select(-StartDate,-EndDate)
+daily_output <- mutate(daily_output, Date = as_date(Date))
 
 # Create trials_x from trial-specific information
 yields <- group_by(daily_output, ID) %>% summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
@@ -303,7 +320,7 @@ trials_x <- select(trials_x, -PlantingDate)
 trials_x <- relocate(trials_x, ID)
 
 # Periods
-if (crop %in% c("Soy","Maize")) {
+if (mat_handling %in% c("Soy","Maize")) {
   max_stage <- 11
 } else {
   max_stage <- max(daily_output$Stage)
@@ -311,8 +328,8 @@ if (crop %in% c("Soy","Maize")) {
 
 daily_output <- daily_output %>% left_join(select(trials_x, ID, HarvestDate_Sim, PlantingDate_Sim)) %>% 
    mutate(Period = case_when(
-   Stage == 1 & (as_date(Date) < PlantingDate_Sim) ~ 1,
-   Stage == 1 & (as_date(Date) >= HarvestDate_Sim) ~ max_stage,
+   Stage == 1 & (Date < PlantingDate_Sim) ~ 1,
+   Stage == 1 & (Date >= HarvestDate_Sim) ~ max_stage,
    .default = floor(Stage)
  )) %>% select(-PlantingDate_Sim, -HarvestDate_Sim) %>% 
    mutate(Period = factor(Period, ordered = T, levels = as.character(1:max_stage)))
