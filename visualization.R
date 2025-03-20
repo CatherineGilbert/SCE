@@ -81,11 +81,11 @@ for(var in varchoice){
 }
 
 #get thermal time and precip for the last ten years of records
-current_year <- as.numeric(substr(Sys.time(),1,4)) - 1
+prev_year <- as.numeric(substr(Sys.time(),1,4)) - 1
 bigmet <- data.frame()
 for(s in 1:max(trials_x$ID_Loc)){
   lil_met <- read_apsim_met(paste0("./met/loc_",s,".met"), verbose = F) %>% as_tibble() %>%
-    filter(year >= current_year - 9, year <= current_year) %>% mutate(ID_Loc = s)
+    filter(year >= prev_year - 9, year <= prev_year) %>% mutate(ID_Loc = s)
   bigmet <- rbind(bigmet, lil_met)
 }
 bigmet <- trials_x %>% select(Site, ID_Loc) %>% distinct() %>% left_join(bigmet) %>% group_by(Site, ID_Loc, year, day)
@@ -325,9 +325,11 @@ mid00res$id_dend_obj %>% circlize_dendrogram()
 
 
 #site distances??
-sitedistances_dt <- read_csv("C:/Users/cmg3/Box/Gilbert/material/sitedistances_dt.csv")
-sitedistances_dt <- filter(sitedistances_dt, Location1 %in% unique_sites, Location2 %in% unique_sites)
-dist_dt <- sitedistances_dt %>% select(Location1, Location2, Distance) %>% pivot_wider(names_from = Location2, values_from = Distance)
+
+library(geosphere)
+sitedistances_dt <- distm(trials_x[, c("Longitude","Latitude")],fun = distHaversine)
+
+
 dist_mx <- as.matrix(data.table(dist_dt), rownames = "Location1")
 distance_tree <- hclust(as.dist(dist_mx))
 par(mai = c(1,1,1,1))
