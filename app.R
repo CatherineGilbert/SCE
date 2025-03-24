@@ -48,44 +48,43 @@ ui <- dashboardPage(
         icon = icon("upload")
       ),
       menuItem(
-        "View Results", 
-        tabName = "results", 
-        icon = icon("image")
+          "View Results", 
+          tabName = "results", 
+          icon = icon("image")
       ),
       menuItem(
-        "View Boxplots", 
-        tabName = "view_boxplots", 
-        icon = icon("image")
+          "View Boxplots", 
+          tabName = "view_boxplots", 
+          icon = icon("image")
       ),
       menuItem(
-        "View Heatmaps",
-        tabName = "heatmap",
-        icon = icon("fire")
-      ),
-      menuItem(
-        "View Trial Similarities",
-        tabName = "trial_comp",
-        icon = icon("fire")
-      ),
-      menuItem(
-        "Typical TT/Precip Accumulation",
-        tabName = "daily_between_sites",
-        icon = icon("chart-line")
-      ),
-      menuItem(
-        "Site Yearly TT/Precip Totals",
-        tabName = "faceted_comparison",
-        icon = icon("chart-area")
-      ),
-      menuItem(
-        "Ten Year Site TT/Precip Means",
-        tabName = "between_sites",
-        icon = icon("chart-bar")
-      )
-    ),
+          "View Heatmaps",
+          tabName = "heatmap",
+          icon = icon("fire")
+        ),
+        menuItem(
+          "View Trial Similarities",
+          tabName = "trial_comp",
+          icon = icon("fire")
+        ),
+        menuItem(
+          "Typical TT/Precip Accumulation",
+          tabName = "daily_between_sites",
+          icon = icon("chart-line")
+        ),
+        menuItem(
+          "Site Yearly TT/Precip Totals",
+          tabName = "faceted_comparison",
+          icon = icon("chart-area")
+        ),
+        menuItem(
+          "Ten Year Site TT/Precip Means",
+          tabName = "between_sites",
+          icon = icon("chart-bar")
+        )),
     width = 300
   ),
-## dashbordBody ----
+## dashbordBody CSS----
   dashboardBody(
     shinyjs::useShinyjs(),
     tags$head(tags$style(
@@ -319,21 +318,18 @@ server <- function(input, output, session) {
   results_dir <- paste0(output_dir,"/output")
 
   # Reactive values for storing the analysis state and the selected variable
-  #analysisDone <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
+  analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
+  #analysisDone <- reactiveVal(TRUE)
   
   season_heatmap_plot <- reactiveVal(NULL)
   comp_heatmap_plot <- reactiveVal(NULL)
   selectedVariable <- reactiveVal()
   
-  
   #create color palette for heatmaps
   pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
   palette <- rev(pal_f(50)[1:50])
   print("palette")
-
-  
   
   #select template model ------
   observeEvent(input$modelChoice, {
@@ -392,6 +388,7 @@ server <- function(input, output, session) {
     req(input$fileUpload)
     analysisInProgress(TRUE)
     
+    
     input <- read_csv(list.files(input_dir, pattern = ".csv", full.names = TRUE))
     
     parms <- tibble(mat_handling = mat_handling(), 
@@ -411,6 +408,7 @@ server <- function(input, output, session) {
       updateSiteSelectionUI()
       updateSiteSelectionFacetedUI()
       updateSiteSelectionBetweenUI()
+    
     } %...!% {
       # Error handling
       analysisInProgress(FALSE)
@@ -714,7 +712,7 @@ server <- function(input, output, session) {
           column_to_rownames("Site") %>%
           remove_empty(which = "rows") %>%
           as.matrix()
-      paste1 <- "Means of "
+      paste1 <- "Recorded Means of "
       paste2 <- " by Site (Maturity: "
       } else {
       var_mat <- filter(final_x, Mat == matsel) %>% select(ID, starts_with(var)) %>%
@@ -869,16 +867,17 @@ server <- function(input, output, session) {
     if (nrow(id_cor) >= 2){
     p3 <- pheatmap(id_cor, main = paste("Seasonal Correlations (Maturity: ", matsel, ")"),
                    labels_row = nametag[id_list,]$tag, cex = 1,
-                   color = palette, breaks = seq(from = -1, to = 1, length.out = 50))
+                   color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
+                   angle_col = 0)
     
     #dendrograms
     pdend <- as.dendrogram(p3$tree_row)
     
     } else {
-      p3 <- pheatmap(id_cor, main = paste("Seasonal Correlations for Mat", matsel),
+      p3 <- pheatmap(id_cor, main = paste("Seasonal Correlations (Maturity: ", matsel, ")"),
                      labels_row = nametag[id_list,]$tag, cex = 1,
                      color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
-                     cluster_cols = F, cluster_rows = F)
+                     cluster_cols = F, cluster_rows = F, angle_col = 0)
       pdend <- NULL
     }
     
@@ -925,7 +924,7 @@ server <- function(input, output, session) {
     
   })
   
-  ## more heatmap rendering ----
+  ## more trial comp heatmap rendering ----
   observe({
     output$comp_heatmapPlotUI <- renderUI({
       updateSiteSelectionFacetedUI()
@@ -934,7 +933,7 @@ server <- function(input, output, session) {
     })
   })
   
-  ## render heatmap ----
+  ## render trial comp heatmap ----
   output$comp_heatmapPlot <- renderPlot(
     {
       req(analysisDone())
