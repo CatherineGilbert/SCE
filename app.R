@@ -19,6 +19,9 @@ library(esquisse)
 library(tidyr)
 library(zip)
 library(here)
+library(future)
+library(promises)
+plan(multisession) 
 
 
 # Define UI ----
@@ -164,6 +167,7 @@ ui <- dashboardPage(
               "ISRIC" = "ISRIC"
             )),
           actionButton("runAnalysis", "Run Analysis", icon = icon("play")),
+          textOutput("inProgressMessage")
         )
       ),
       tabItem(tabName = "results",
@@ -237,8 +241,10 @@ ui <- dashboardPage(
               Use the dropdown menus to select the variable and genetic group for analysis."
           ),
           uiOutput("trial_matSelectUI"),
-          uiOutput("trial_heatmapPlotUI"),
-          downloadButton("trial_downloadHeatmap", "Download Heatmap")
+          uiOutput("comp_heatmapPlotUI"),
+          downloadButton("trial_downloadHeatmap", "Download Heatmap"),
+          plotOutput("dendroPlot"),
+          downloadButton("trial_downloadDendro", "Download Dendrogram")
         )
       ),
       tabItem(tabName = "daily_between_sites",
@@ -318,7 +324,7 @@ server <- function(input, output, session) {
   analysisInProgress <- reactiveVal(FALSE)
   
   season_heatmap_plot <- reactiveVal(NULL)
-  trial_heatmap_plot <- reactiveVal(NULL)
+  comp_heatmap_plot <- reactiveVal(NULL)
   selectedVariable <- reactiveVal()
   
   
@@ -328,15 +334,7 @@ server <- function(input, output, session) {
   print("palette")
 
   
-# disable run analysis if analysis is currently in progress ---- 
-  observe({
-    if (analysisInProgress()) {
-      shinyjs::disable("runAnalysis")
-    } else {
-      shinyjs::enable("runAnalysis")
-    }
-  })
-
+  
   #select template model ------
   observeEvent(input$modelChoice, {
     tryCatch({
@@ -403,16 +401,39 @@ server <- function(input, output, session) {
     
     setwd(output_dir)
     
-    source(paste0(codes_dir,"/apsimx.R"))
- 
-    analysisDone(TRUE)
-    analysisInProgress(FALSE)
-    
-    updateSiteSelectionUI()
-    updateSiteSelectionFacetedUI()
-    updateSiteSelectionBetweenUI()
+    future({
+      source(paste0(codes_dir,"/apsimx.R"))  # Run script in the background
+    }) %...>% {
+      # This code runs AFTER source() completes
+      analysisDone(TRUE)
+      analysisInProgress(FALSE)
+
+      updateSiteSelectionUI()
+      updateSiteSelectionFacetedUI()
+      updateSiteSelectionBetweenUI()
+    } %...!% {
+      # Error handling
+      analysisInProgress(FALSE)
+      showNotification("Error in analysis!", type = "error")
+    }
   })
 
+  # disable run analysis if analysis is currently in progress ---- 
+  observe({
+    if (analysisInProgress()) {
+      shinyjs::disable("runAnalysis")
+    } else {
+      shinyjs::enable("runAnalysis")
+    }
+  })
+  
+  output$inProgressMessage <- renderText({
+    if (analysisInProgress()) {
+      "Analysis in Progress ..."
+    } else {
+      "..."
+    }
+  })
   
 # immediately after analysis ----
   observe({
@@ -846,7 +867,7 @@ server <- function(input, output, session) {
     id_cor <- cor(t(scfinal_dt), use = "pairwise.complete.obs")
     
     if (nrow(id_cor) >= 2){
-    p3 <- pheatmap(id_cor, main = paste("Seasonal Correlations for Mat", matsel),
+    p3 <- pheatmap(id_cor, main = paste("Seasonal Correlations (Maturity: ", matsel, ")"),
                    labels_row = nametag[id_list,]$tag, cex = 1,
                    color = palette, breaks = seq(from = -1, to = 1, length.out = 50))
     
@@ -874,8 +895,15 @@ server <- function(input, output, session) {
     ))
   }
   
-  out_id_corr_pheatmap <- reactiveVal(NULL)
   out_IDs <- reactiveVal(NULL)
+  out_nametag <- reactiveVal(NULL)
+  out_used_params <- reactiveVal(NULL)
+  out_final_dt <- reactiveVal(NULL)
+  out_scfinal_dt <- reactiveVal(NULL)
+  out_autocorr_pheatmap <- reactiveVal(NULL)
+  out_used_params_corr_pheatmap <- reactiveVal(NULL)
+  out_id_corr_pheatmap <- reactiveVal(NULL)
+  out_id_dend_obj <- reactiveVal(NULL)
 
   ## select maturity, run analyses -----
   
@@ -885,24 +913,29 @@ server <- function(input, output, session) {
     matsel <- input$trial_matSelect 
     outs <- ID_corr(matsel, final_x = final_x, charact_x = charact_x)
     
-    out_id_corr_pheatmap(outs$id_corr_pheatmap)
     out_IDs(outs$IDs)
-    
-    print(out_IDs)
+    out_nametag(outs$nametag)
+    out_used_params(outs$used_params)
+    out_final_dt(outs$final_dt)
+    out_scfinal_dt(outs$scfinal_dt)
+    out_autocorr_pheatmap(outs$autocorrpheatmap)
+    out_used_params_corr_pheatmap(outs$used_params_corr_pheatmap)
+    out_id_corr_pheatmap(outs$id_corr_pheatmap)
+    out_id_dend_obj(outs$id_dend_obj)
     
   })
   
   ## more heatmap rendering ----
   observe({
-    output$trial_heatmapPlotUI <- renderUI({
+    output$comp_heatmapPlotUI <- renderUI({
       updateSiteSelectionFacetedUI()
       graphics.off()
-      plotOutput("trial_heatmapPlot", height = "600px", width = "90%")
+      plotOutput("comp_heatmapPlot", height = "600px", width = "90%")
     })
   })
   
   ## render heatmap ----
-  output$trial_heatmapPlot <- renderPlot(
+  output$comp_heatmapPlot <- renderPlot(
     {
       req(analysisDone())
       req(input$trial_matSelect)
@@ -927,6 +960,26 @@ server <- function(input, output, session) {
       dev.off()
     }
   )
+  
+  ##render dendrograms -----
+  output$dendroPlot <- renderPlot({
+    p <- plot(out_id_dend_obj(), horiz = TRUE)
+    print(p)
+  })
+  
+  output$trial_downloadDendro <- downloadHandler(
+    filename = function() {
+      paste0("trial-dendrogram-", input$trial_matSelect, "-", Sys.Date(), ".png")
+    },
+    content = function(file) {
+      # Use the stored heatmap for the download
+      png(file, width = 1400, height = 1000)
+      grid::grid.draw(out_id_corr_pheatmap()$gtable)  # Draw the stored heatmap
+      dev.off()
+    }
+  )
+  
+  
   
 # Reactive to generate TT/Precip data ----
   accumulatedData <- reactive({
