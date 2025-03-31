@@ -12,8 +12,8 @@
       "Children": [
         {
           "$type": "Models.Clock, Models",
-          "Start": "2017-01-01T00:00:00",
-          "End": "2017-12-31T00:00:00",
+          "Start": "2017-04-28T00:00:00",
+          "End": "2018-03-28T00:00:00",
           "Name": "Clock",
           "ResourceName": null,
           "Children": [],
@@ -1223,7 +1223,7 @@
                 },
                 {
                   "Key": "SowDate",
-                  "Value": "NA"
+                  "Value": "28-May"
                 },
                 {
                   "Key": "StartDate",

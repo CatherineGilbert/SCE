@@ -26,6 +26,7 @@ plan(multisession)
 
 # Define UI ----
 ui <- dashboardPage(
+  skin = "black",
   dashboardHeader(
     title = tags$div(
       style = "display: flex; align-items: center;",
@@ -34,56 +35,24 @@ ui <- dashboardPage(
         height = "40px",
         style = "margin-right: 10px;"
       ),
-      # Adjust the height as needed
       tags$span("SCE", style = "font-size: 30px; font-weight: bold;")
     ),
-    titleWidth = 300 # Adjust this width based on your needs
+    titleWidth = 300 
   ),
 ## dashboardSidebar ----
-  dashboardSidebar(
+dashboardSidebar(
+  width = 300,
     sidebarMenu(
       menuItem(
         "Upload and Analyze",
         tabName = "analysis",
         icon = icon("upload")
-      ),
-      menuItem(
-          "View Results", 
-          tabName = "results", 
-          icon = icon("image")
-      ),
-      menuItem(
-          "View Boxplots", 
-          tabName = "view_boxplots", 
-          icon = icon("image")
-      ),
-      menuItem(
-          "View Heatmaps",
-          tabName = "heatmap",
-          icon = icon("fire")
-        ),
-        menuItem(
-          "View Trial Similarities",
-          tabName = "trial_comp",
-          icon = icon("fire")
-        ),
-        menuItem(
-          "Typical TT/Precip Accumulation",
-          tabName = "daily_between_sites",
-          icon = icon("chart-line")
-        ),
-        menuItem(
-          "Site Yearly TT/Precip Totals",
-          tabName = "faceted_comparison",
-          icon = icon("chart-area")
-        ),
-        menuItem(
-          "Ten Year Site TT/Precip Means",
-          tabName = "between_sites",
-          icon = icon("chart-bar")
-        )),
-    width = 300
-  ),
+      )
+    ),
+    sidebarMenuOutput("reveal_menu")
+),
+
+
 ## dashbordBody CSS----
   dashboardBody(
     shinyjs::useShinyjs(),
@@ -137,67 +106,92 @@ ui <- dashboardPage(
       tabItem(
         tabName = "analysis",
         fluidPage(
-          fileInput("fileUpload", "Upload Input File:", accept = c(".csv")),
-          fileInput(
-            "modelChoice",
-            "Select Template Crop Model:",
-            accept = c(".apsimx")
+          #h3("UPDATING"),
+          #textOutput("met_count"),
+          #textOutput("soil_count"),
+          #textOutput("sim_count"),
+          #textOutput("out_count"),
+          #br(),
+          box(
+            h3("Input Trial Data"),
+            fileInput("fileUpload", "Upload Input File:", accept = c(".csv")),
+            fileInput(
+              "modelChoice",
+              "Select Template Crop Model:",
+              accept = c(".apsimx")
+            ),
+            selectInput(
+              "matType",
+              "Select Maturity Handling:",
+              choices = c(
+                "Soy" = "Soy",
+                "Maize" = "Maize",
+                "Direct" = "Direct"
+              )),
+            selectInput(
+              "weatherAquis",
+              "Select Weather Aquisition:",
+              choices = c(
+                "DAYMET" = "DAYMET",
+                "CHIRPS" = "CHIRPS",
+                "NASAPOWER" = "NASAPOWER"
+              )),
+            selectInput(
+              "soilAquis",
+              "Select Soil Aquisition:",
+              choices = c(
+                "SSURGO" = "SSURGO",
+                "ISRIC" = "ISRIC"
+              ))
           ),
-          selectInput(
-            "matType",
-            "Select Maturity Handling:",
-            choices = c(
-              "Soy" = "Soy",
-              "Maize" = "Maize",
-              "Direct" = "Direct"
-            )),
-          selectInput(
-            "weatherAquis",
-            "Select Weather Aquisition:",
-            choices = c(
-              "DAYMET" = "DAYMET",
-              "NASAPOWER" = "NASAPOWER"
-            )),
-          selectInput(
-            "soilAquis",
-            "Select Soil Aquisition:",
-            choices = c(
-              "SSURGO" = "SSURGO",
-              "ISRIC" = "ISRIC"
-            )),
-          actionButton("runAnalysis", "Run Analysis", icon = icon("play")),
-          textOutput("inProgressMessage")
-        )
-      ),
+          box(
+            background = "green",
+            actionButton("runAnalysis", "Run Analysis", icon = icon("play")),
+          ),
+          box(
+            h3("Download Results"),
+            downloadButton("downloadData", "Download Results")
+          )
+        
+      )),
       tabItem(tabName = "results",
               fluidPage(
-                downloadButton("downloadData", "Download Results"),
-                h3("Dataset Descriptions"),
-                p(
-                  strong("trials_x:"),
-                  " aligns with the input file and contains sim parameters, identifying information, and values which would be inappropriate to summarize by period.
-"
-                ),
-                p(
-                  strong("daily_charact_x:"),
-                  " is the combined total output of the APSIM simulations and contains the recorded values of the reporting variables for each day of each simulation. This data is available to the user if they wish to work with the raw outputs of the tool.
-"
-                ),
-                p(
-                  strong("charact_x:"),
-                  " contains parameters specific to each developmental period. These are the environmental and biological parameters summarized by period, and the parameters which describe the periods themselves, such as starting and end date. This data is in long format by ID and period.
-"
-                ),
-                p(
-                  strong("final_x:"),
-                  " joins the contents of trials_x and charact_x, and contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is “Variable_Period”, e.g., “Rain_5” is the mean rainfall within the fifth period of development.
-"
-                ),
-                br(),
+                fluidRow(
+                  column(width = 5,
+                         h3("Dataset Descriptions"),
+                         p(
+                           strong("trials_x:"),
+                           " aligns with the input file; contains sim parameters, outcomes, and identifying information."
+                         ),
+                         p(
+                           strong("daily_charact_x:"),
+                           " the combined total output of the APSIM simulations; contains the recorded values of the reporting variables for each day of each simulation."
+                         ),
+                         p(
+                           strong("charact_x:"),
+                           " the seasonal profile; contains environmental and biological parameters summarized by developmental period."
+                         ),
+                         p(
+                           strong("final_x:"),
+                           " joins trials_x and charact_x; contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is “Variable_Period”, e.g., “Rain_5” is the mean rainfall within the fifth period of development."
+                         )),
+                  column(
+                    width = 7,
+                    box(
+                      width = 12,
+                      h3("Boxplot"),
+                      uiOutput("fileSelectPlotUI"),
+                      uiOutput("varSelectUI"),
+                      plotOutput("boxplot"),
+                      downloadButton("downloadBoxplot", "Download Boxplot")
+                    )
+                  ))
+                  ,
+                
                 div(
                   selectInput(
                     "fileToView",
-                    "View Result Files",
+                    label = h3("View Result Files"),
                     choices = c(
                       "trials_x.csv",
                       "daily_charact_x.csv",
@@ -209,21 +203,15 @@ ui <- dashboardPage(
                 DTOutput("viewData")
               )),
       tabItem(
-        tabName = "view_boxplots",
-        fluidPage(
-          h3("Boxplot"),
-          uiOutput("fileSelectPlotUI"),
-          uiOutput("varSelectUI"),
-          plotOutput("boxplot"),
-          downloadButton("downloadBoxplot", "Download Boxplot"),
-        )
-      ),
-      tabItem(
         tabName = "heatmap",
         fluidPage(
           p(
-            "This heatmap visualizes the means of the selected variable by site and genetic group.
-              Use the dropdown menus to select the variable and genetic group for analysis."
+            "This heatmap shows the values of an environmental parameter and its associated seasonal covariates between trials or sites. 
+            Use the dropdown menus to select which maturity group to view, the environmental parameter to inspect, 
+            and whether this parameter should be compared between individual trials or site summaries."
+          ),
+          p(
+            "The trials are labeled in the format '[Trial ID]: [Site Name] [Day of Year Planted]/[Year Planted]'."
           ),
           uiOutput("season_heatByUI"),
           uiOutput("season_varHeatmapUI"),
@@ -236,14 +224,20 @@ ui <- dashboardPage(
         tabName = "trial_comp",
         fluidPage(
           p(
-            "This heatmap visualizes the means of the selected variable by site and genetic group.
-              Use the dropdown menus to select the variable and genetic group for analysis."
+            "This plot is a heatmap representing the correlation matrix for the similarity of the seasonal profiles of trials. 
+            Use the dropdown menu to select which maturity group to view."
+          ),
+          p(
+            "The trials are labeled in the format '[Trial ID]: [Site Name] [Day of Year Planted]/[Year Planted]'."
           ),
           uiOutput("trial_matSelectUI"),
           uiOutput("comp_heatmapPlotUI"),
-          downloadButton("trial_downloadHeatmap", "Download Heatmap"),
+          downloadButton("trial_downloadHeatmap", "Download Heatmap of Seasonal Correlation Matrix"),
+          downloadButton("downloadEnvMatrix", "Download Seasonal Correlation Matrix"),
+          br(),
           plotOutput("dendroPlot"),
-          downloadButton("trial_downloadDendro", "Download Dendrogram")
+          downloadButton("trial_downloadDendro", "Download Dendrogram Plot"),
+          downloadButton("downloadDendroObj", "Download Dendrogram Object")
         )
       ),
       tabItem(tabName = "daily_between_sites",
@@ -318,9 +312,10 @@ server <- function(input, output, session) {
   results_dir <- paste0(output_dir,"/output")
 
   # Reactive values for storing the analysis state and the selected variable
-  analysisDone <- reactiveVal(FALSE)
+  #analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
-  #analysisDone <- reactiveVal(TRUE)
+  analysisDone <- reactiveVal(TRUE)
+  
   
   season_heatmap_plot <- reactiveVal(NULL)
   comp_heatmap_plot <- reactiveVal(NULL)
@@ -385,37 +380,85 @@ server <- function(input, output, session) {
   
 # run analysis ----
   observeEvent(input$runAnalysis, {
-    req(input$fileUpload)
-    analysisInProgress(TRUE)
+    req(input$fileUpload, input$modelChoice, !analysisInProgress())
     
+    analysisInProgress(TRUE)
+    analysisDone(FALSE)
     
     input <- read_csv(list.files(input_dir, pattern = ".csv", full.names = TRUE))
-    
     parms <- tibble(mat_handling = mat_handling(), 
                     weather_aquis = weather_aquis(), 
                     soil_aquis = soil_aquis())
     write_csv(parms, paste0(codes_dir,"/apsimx_output/parameters.csv"))
-    
     setwd(output_dir)
     
-    future({
-      source(paste0(codes_dir,"/apsimx.R"))  # Run script in the background
-    }) %...>% {
+    #run the script
+      system2("Rscript", args = paste0(codes_dir, "/apsimx.R"), wait = FALSE)
       # This code runs AFTER source() completes
       analysisDone(TRUE)
       analysisInProgress(FALSE)
+      count_files()
+      
+      print("finished analysis")
 
-      updateSiteSelectionUI()
-      updateSiteSelectionFacetedUI()
-      updateSiteSelectionBetweenUI()
-    
-    } %...!% {
-      # Error handling
-      analysisInProgress(FALSE)
-      showNotification("Error in analysis!", type = "error")
-    }
   })
 
+  #live folder updates ----------
+  met_count <- reactiveVal(0)
+  soil_count <- reactiveVal(0)
+  sim_count <- reactiveVal(0)
+  out_count <- reactiveVal(0)
+  
+  soil_dir <- paste0(codes_dir,"/apsimx_output/soils")
+  met_dir <- paste0(codes_dir,"/apsimx_output/met")
+  apsim_dir <- paste0(codes_dir,"/apsimx_output/apsim")
+  
+  count_files <- function(){
+    count_list <- list.files(met_dir, pattern = ".met", recursive = FALSE)
+    met_count(length(count_list))
+    
+    count_list <- list.files(soil_dir, pattern = ".soils", recursive = FALSE)
+    soil_count(length(count_list))
+    
+    count_list <- list.files(apsim_dir, pattern = ".apsimx", recursive = TRUE)
+    sim_count(length(count_list))
+    
+    count_list <- list.files(apsim_dir, pattern = ".db", recursive = TRUE)
+    out_count(length(count_list))
+  }
+  
+  #input <- read_csv(list.files(input_dir, pattern = ".csv", full.names = TRUE))
+  nloc <- reactiveVal(1)
+  ntrials <- reactiveVal(1)
+  
+  # Live folder counting (triggered when analysisInProgress is TRUE)
+  observe({
+    req(analysisInProgress())  # Ensure that the analysis is in progress
+    count_files()
+    invalidateLater(5000)
+  })
+  
+  output$met_count <- renderText({
+    #count <- met_count()
+    paste(met_count()," .met files ()")
+  })
+  
+  output$soil_count <- renderText({
+    count <- soil_count()
+    paste(count," soil profiles ()")
+  })
+  
+  output$sim_count <- renderText({
+    count <- sim_count()
+    paste(count," apsimx files generated ()")
+  })
+  
+  output$out_count <- renderText({
+    count <- out_count()
+    paste(count," apsimx files finished ()")
+  })
+  
+  
   # disable run analysis if analysis is currently in progress ---- 
   observe({
     if (analysisInProgress()) {
@@ -425,17 +468,10 @@ server <- function(input, output, session) {
     }
   })
   
-  output$inProgressMessage <- renderText({
-    if (analysisInProgress()) {
-      "Analysis in Progress ..."
-    } else {
-      "..."
-    }
-  })
-  
 # immediately after analysis ----
   observe({
     req(analysisDone())
+    
     tryCatch({
       source(paste0(codes_dir,"/trial_visualization.R"))
     }, error = function(e) {
@@ -443,7 +479,54 @@ server <- function(input, output, session) {
       cat("An error occurred while sourcing the file:", e$message, "\n")
     })
     print("visuals")
+    
+    count_files()
+    
+    trials_x <- read.csv(paste0(results_dir, "/trials_x.csv"))
+    
   })
+  
+#enable rest of the menu ----
+  output$reveal_menu <- renderMenu({
+    req(analysisDone())
+    
+    sidebarMenu(
+      menuItem(
+        "View Results", 
+        tabName = "results", 
+        icon = icon("table-list")
+      ),
+      menuItem(
+        "View Heatmaps",
+        tabName = "heatmap",
+        icon = icon("fire")
+      ),
+      menuItem(
+        "View Trial Similarities",
+        tabName = "trial_comp",
+        icon = icon("seedling")
+      ),
+      menuItem(
+        "Thermal Time / Precipitation",
+        icon = icon("cloud-sun-rain"),
+        menuSubItem(
+          "Typical TT/Precip Accumulation",
+          tabName = "daily_between_sites",
+          icon = icon("chart-line")
+        ),
+        menuSubItem(
+          "Site Yearly TT/Precip Totals",
+          tabName = "faceted_comparison",
+          icon = icon("chart-area")
+        ),
+        menuSubItem(
+          "Ten Year Site TT/Precip Means",
+          tabName = "between_sites",
+          icon = icon("chart-bar")
+        ))
+  )
+  }
+)
   
 #updateSiteSelectionUI ----
   updateSiteSelectionUI <- function() {
@@ -960,6 +1043,9 @@ server <- function(input, output, session) {
     }
   )
   
+  ## similarity matrix download ------
+  output$downloadEnvMatrix <- 
+  
   ##render dendrograms -----
   output$dendroPlot <- renderPlot({
     p <- plot(out_id_dend_obj(), horiz = TRUE)
@@ -973,7 +1059,7 @@ server <- function(input, output, session) {
     content = function(file) {
       # Use the stored heatmap for the download
       png(file, width = 1400, height = 1000)
-      grid::grid.draw(out_id_corr_pheatmap()$gtable)  # Draw the stored heatmap
+      grid::grid.draw(out_id_dend_obj())  # Draw the stored heatmap
       dev.off()
     }
   )
@@ -1044,7 +1130,7 @@ server <- function(input, output, session) {
       paste0("comparison_plot-", input$comparisonType, "-", Sys.Date(), ".png")
     },
     content = function(file) {
-      png(file, width = 800, height = 600)
+      png(file, width = 1400, height = 1000)
       print(comparison_plot_data())  # Print the stored plot
       dev.off()
     }
@@ -1123,7 +1209,7 @@ server <- function(input, output, session) {
       paste0("between_sites_plot-", Sys.Date(), ".png")
     },
     content = function(file) {
-      png(file, width = 800, height = 600)
+      png(file, width = 1400, height = 1000)
       print(between_sites_plot_data())  # Print the stored plot
       dev.off()
     }

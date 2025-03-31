@@ -2,6 +2,8 @@
 library(apsimx)
 library(tidyverse)
 library(daymetr)
+library(chirps)
+library(nasapower)
 library(data.table)
 library(soilDB)
 library(spData)
@@ -105,8 +107,10 @@ unlink("met",recursive = T) ; dir.create("met")
 # Setup for parallel processing
 no_cores <- detectCores() - 2  # Reserve 2 cores for the system
 cl <- makeCluster(no_cores)
-clusterExport(cl, varlist = c("locyear_df","yesterday","get_daymet2_apsim_met","get_power_apsim_met",
-                              "napad_apsim_met", "impute_apsim_met", "write_apsim_met","prev_year","weather_aquis"), envir = environment())
+clusterExport(cl, varlist = c("locyear_df","yesterday","get_daymet2_apsim_met",
+                              "get_power_apsim_met","get_chirps_apsim_met",
+                              "napad_apsim_met", "impute_apsim_met", "write_apsim_met",
+                              "prev_year","weather_aquis"), envir = environment())
 
 
 # Ensure the directory exists for weather data
@@ -120,6 +124,8 @@ parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
                                      years = c(as.integer(locyear_tmp$first_year), as.integer(prev_year)))}
     if (weather_aquis == "NASAPOWER"){met_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
                         dates = c(paste0(locyear_tmp$first_year,"-01-01"), yesterday))}
+    if (weather_aquis == "CHIRPS"){met_tmp <- get_chirps_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+                            dates = c(paste0(locyear_tmp$first_year,"-01-01"), yesterday))}
     na_met_tmp <- tryCatch(napad_apsim_met(met_tmp), error = function(e) met_tmp)
     imp_met_tmp <- tryCatch(impute_apsim_met(na_met_tmp), warning = function(w) na_met_tmp)
     attr(imp_met_tmp, "site") <- attr(met_tmp, "site")
@@ -164,7 +170,7 @@ for (id in ids_needs_soil){
     given_oc <- soil_profile_tmp[[1]][["soil"]]$Carbon
     soil_profile_tmp[[1]][["soil"]]$Carbon <- ifelse(given_oc < oc_min, oc_min, given_oc) 
     
-    write_rds(soil_profile_tmp, file = paste0("soils/soil_profile_",id))
+    write_rds(soil_profile_tmp, file = paste0("soils/soil_profile_",id,".soils"))
     soil_profile_list[[as.character(id)]] <- soil_profile_tmp[[1]]
     locs_df[locs_df$ID_Loc == id,"got_soil"] <- T
     print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4)))
@@ -271,7 +277,7 @@ for (batch in 1:num_batches) {
     
     # Wrap APSIM simulation and result handling in tryCatch to handle any errors
     tryCatch({
-      output_tmp <- apsimx(filename, src.dir = source_dir, cleanup = TRUE, silent = TRUE)
+      output_tmp <- apsimx(filename, src.dir = source_dir, silent = TRUE)
       output_tmp <- mutate(output_tmp, "ID" = trial_n) 
       # Append the output of this trial to the overall results
       # output <- rbind(output, output_tmp)
