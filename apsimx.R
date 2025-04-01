@@ -17,7 +17,7 @@ print("Starting ...")
 #debug
 # output_dir <- "C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output"
 # setwd(output_dir) 
- codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
+# codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
 # mat_handling <- "Soy" 
 # weather_aquis <- "NASAPOWER"
 # soil_aquis <- "SSURGO"
@@ -25,7 +25,7 @@ print("Starting ...")
 # templ_model <- file_path_sans_ext(basename(templ_model_path))
 # trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCT/example_input_files/date_test.csv") 
 
-#codes_dir <- here() #where the folder with the codes is
+codes_dir <- here() #where the folder with the codes is
 output_dir <- paste0(codes_dir,"/apsimx_output") #folder where the output goes
 setwd(output_dir) 
 
