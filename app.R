@@ -153,27 +153,7 @@ dashboardSidebar(
       )),
       tabItem(tabName = "results",
               fluidPage(
-                fluidRow(
-                  column(width = 5,
-                         h3("Dataset Descriptions"),
-                         p(
-                           strong("trials_x:"),
-                           " aligns with the input file; contains sim parameters, outcomes, and identifying information."
-                         ),
-                         p(
-                           strong("daily_charact_x:"),
-                           " the combined total output of the APSIM simulations; contains the recorded values of the reporting variables for each day of each simulation."
-                         ),
-                         p(
-                           strong("charact_x:"),
-                           " the seasonal profile; contains environmental and biological parameters summarized by developmental period."
-                         ),
-                         p(
-                           strong("final_x:"),
-                           " joins trials_x and charact_x; contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is “Variable_Period”, e.g., “Rain_5” is the mean rainfall within the fifth period of development."
-                         )),
-                  column(
-                    width = 7,
+                         
                     box(
                       width = 12,
                       h3("Boxplot"),
@@ -181,9 +161,25 @@ dashboardSidebar(
                       uiOutput("varSelectUI"),
                       plotOutput("boxplot"),
                       downloadButton("downloadBoxplot", "Download Boxplot")
-                    )
-                  ))
-                  ,
+                    ),
+                    p(
+                      strong("trials_x:"),
+                      " aligns with the input file; contains sim parameters, outcomes, and identifying information."
+                    ),
+                    p(
+                      strong("daily_charact_x:"),
+                      " the combined total output of the APSIM simulations; contains the recorded values of the reporting variables for each day of each simulation."
+                    ),
+                    p(
+                      strong("charact_x:"),
+                      " the seasonal profile; contains environmental and biological parameters summarized by developmental period."
+                    ),
+                    p(
+                      strong("final_x:"),
+                      " joins trials_x and charact_x; contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is “Variable_Period”, e.g., “Rain_5” is the mean rainfall within the fifth period of development."
+                    ),
+                  
+                  
                 
                 div(
                   selectInput(

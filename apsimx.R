@@ -15,15 +15,17 @@ start_time <- Sys.time() # track running time
 print("Starting ...")
 
 #debug
-# output_dir <- "C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output"
-# setwd(output_dir) 
-# codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
-# mat_handling <- "Soy" 
-# weather_aquis <- "NASAPOWER"
-# soil_aquis <- "SSURGO"
-# templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCT/template_models/Soy_Template.apsimx"
-# templ_model <- file_path_sans_ext(basename(templ_model_path))
-# trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCT/example_input_files/date_test.csv") 
+if (FALSE){
+ output_dir <- "C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output"
+ setwd(output_dir) 
+ codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
+ mat_handling <- "Soy" 
+ weather_aquis <- "NASAPOWER"
+ soil_aquis <- "ISRIC"
+ templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCT/template_models/Soy_Template.apsimx"
+ templ_model <- file_path_sans_ext(basename(templ_model_path))
+ trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCT/example_input_files/date_test.csv") 
+}
 
 codes_dir <- here() #where the folder with the codes is
 output_dir <- paste0(codes_dir,"/apsimx_output") #folder where the output goes
@@ -57,6 +59,7 @@ trials_df <- mutate(trials_df,
   # if no planting date, use beginning and end of year as boundaries
   sim_start = if_else(is.na(PlantingDate), as_date(paste0(as.character(Year),"-01-01")), as_date(PlantingDate %m-% months(1))), 
   sim_end = if_else(is.na(PlantingDate), as_date(paste0(as.character(Year),"-12-31")), as_date(PlantingDate %m+% months(10))))
+trials_df <- trials_df %>% group_by(ID) %>% mutate(sim_end = min(sim_end, as_date(yesterday))) %>% ungroup()
 
 print("Handle Crop Maturities ...")
 # Get what maturities of cultivar we'll use
@@ -92,6 +95,8 @@ if (mat_handling == "Direct"){
   trials_df <- mutate(trials_df, Mat = Genetics)
 }
 
+check_time1 <- Sys.time() 
+
 # Get weather, make met files -----
 
 print("Get Weather Data ...")
@@ -102,10 +107,9 @@ locyear_df <- trials_df %>% select(X,Y,ID_Loc, sim_start) %>%
   summarize(first_year = min(first_year)) %>%
   mutate(first_year = min(first_year, prev_year - 10)) 
 
-unlink("met",recursive = T) ; dir.create("met")
-
 # Setup for parallel processing
 no_cores <- detectCores() - 2  # Reserve 2 cores for the system
+print(paste("Cores available:",no_cores))
 cl <- makeCluster(no_cores)
 clusterExport(cl, varlist = c("locyear_df","yesterday","get_daymet2_apsim_met",
                               "get_power_apsim_met","get_chirps_apsim_met",
@@ -115,7 +119,7 @@ clusterExport(cl, varlist = c("locyear_df","yesterday","get_daymet2_apsim_met",
 
 # Ensure the directory exists for weather data
 
-dir.create("met", recursive = TRUE, showWarnings = FALSE)
+unlink("met",recursive = T) ; dir.create("met")
 
 parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
   locyear_tmp <- locyear_df[idx, ]
@@ -135,6 +139,7 @@ parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
   })
 })
 
+check_time2 <- Sys.time() 
 
 # Get soil, make soil file -----
 print("Get Soil Data ...")
@@ -181,6 +186,7 @@ for (id in ids_needs_soil){
 }
 write_rds(soil_profile_list, "soils/soil_profile_list.rds")
 
+check_time3 <- Sys.time() 
 
 # Create APSIM files -----
 print("Create APSIM Files ...")
@@ -195,7 +201,7 @@ if (paste0(templ_model_path) != paste0(codes_dir,"/input/", templ_model, ".apsim
 
 # Prepare for parallel processing
 
-clusterExport(cl, c("trials_df", "codes_dir", "mat_handling", "templ_model", "edit_apsimx", "output_dir",
+clusterExport(cl, c("trials_df", "codes_dir", "mat_handling", "templ_model", "edit_apsimx", "output_dir", "soil_profile_list",
                     "edit_apsimx_replace_soil_profile", "paste0", "dir.create", "file.copy", "tryCatch", "print"))
 
 # Parallel APSIM files creation
@@ -236,13 +242,15 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   invisible()
 })
 
+check_time4 <- Sys.time() 
+
 # Run APSIM files -----
 print("Run APSIM Files ...")
 
 # Define the number of batches
 if (nrow(trials_df) <= 10) {
   num_batches <- 1 # If there are few trials, only run one batch. 
-} else {num_batches <- 20} # You can change this to run different percentages at a time
+} else {num_batches <- 10} # You can change this to run different percentages at a time
 
 # Calculate the number of trials per batch
 batch_size <- ceiling(nrow(trials_df) / num_batches)
@@ -251,7 +259,7 @@ batch_size <- ceiling(nrow(trials_df) / num_batches)
 clusterExport(cl, c("trials_df", "codes_dir", "templ_model", "edit_apsimx", 
                     "edit_apsimx_replace_soil_profile", "paste0", "dir.create",
                     "file.copy", "tryCatch", "print", "apsimx", "mutate", 
-                    "write_csv", "soil_profile_list"))
+                    "write_csv"))
 
 
 # Initialize a list to hold results from all batches
@@ -299,6 +307,7 @@ for (batch in 1:num_batches) {
   cat(sprintf("Completed batch %d out of %d (%.2f%%)\n", batch, num_batches, 100 * batch / num_batches))
 }
 
+check_time5 <- Sys.time() 
 
 # Summarize Results -----
 print("Summarize Results ...")
@@ -320,7 +329,7 @@ simharvs <- select(daily_output, ID, SimHarvestDate) %>% filter(!is.na(SimHarves
 simdates <- left_join(simsows, simmats, by = join_by(ID)) %>% left_join(simharvs, by = join_by(ID))
 daily_output <- select(daily_output, -SimSowDate, -SimMatDate, -SimHarvestDate)
 
-# Trim season (daily_output) to one month before planting and one month after death / harvest
+# Trim season (daily_output) to two weeks before planting and two weeks after death / harvest
 simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndDate = date(SimHarvestDate) %m+% weeks(2)) %>%
   select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
 daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, StartDate, EndDate), by = join_by(ID)) %>%
@@ -414,8 +423,29 @@ write_csv(daily_charact_x, "output/daily_charact_x.csv")
 final_x <- pivot_wider(charact_x, names_from = Period, values_from = Rain:Period_End_DOY) %>% right_join(trials_x,.,by = join_by(ID))
 write_csv(final_x, "output/final_x.csv")
 
+
+period_key <- daily_charact_x %>% select(StageName, Period) %>% distinct() %>%
+  filter(!is.na(StageName)) %>%
+  rename("APSIM StageName" = StageName)
+
+period_key <- mutate(period_key, Notes = case_match(Period,
+                                      min(Period) ~ "includes two weeks pre-planting",
+                                      max(Period) ~ "includes two weeks post-harvest",
+                                      .default = NA
+                                      
+)) %>% select(Period, `APSIM StageName`, Notes)
+write_csv(period_key, "output/period_key.csv")
+
+
 #calculate time duration for running the code:
 end_time <- Sys.time()
 duration <- end_time - start_time
 print(duration)
+
+# print("Time to begin analysis:"); print(check_time1 - start_time)
+# print("Time to collect weather:"); print(check_time2 - check_time1)
+# print("Time to collect soil:"); print(check_time3 - check_time2)
+# print("Time to create sim files:"); print(check_time4 - check_time3)
+# print("Time to run sim files:"); print(check_time5 - check_time4)
+# print("Time to process results:"); print(end_time - check_time5)
 

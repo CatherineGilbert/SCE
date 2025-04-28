@@ -21,11 +21,11 @@ charact_x <- read_csv("./output/charact_x.csv")
 daily_charact_x <- read_csv("./output/daily_charact_x.csv")
 final_x <- read_csv("./output/final_x.csv")
 
-
 nametag <- select(final_x, ID, Site, PlantingDate_Sim, Mat) %>% 
   mutate(tag = paste0(ID,": ", Site, " ", format(PlantingDate_Sim, "%j/%Y")),
          mtag = paste0(ID,": ", Mat, " ", Site, " ", format(PlantingDate_Sim, "%j/%Y"))) 
 
+if (plotting){
 #generic remove periods that don't have enough data to be used (remove 6 in this case)
 #filter to trials that ended successfully
 full_run_IDs <- select(final_x, ID, MaxStage) %>% 
@@ -39,10 +39,6 @@ if(any(period_durs$Duration < 1)) {
 } else {
   badp <- NULL }
 badp <- c(min(period_durs$Period), badp, max(period_durs$Period)) #remove first and last periods and bad periods
-
-
-
-if (plotting){
   
   #compare seasonal characteristics of trials, by maturity
   matvals <- unique(trials_x$Mat)
@@ -165,10 +161,12 @@ if (plotting){
   pdend <- mid00res$id_dend_obj
 }
   
-  
 # DISTANCE -------
 if (plotting) {
     
+  
+    hmm <- cbind(nametag[id_list,],id_cor)
+  
     #site distances??
     library(geosphere)
     sitedist_mx <- distm(trials_x[, c("Longitude","Latitude")],fun = distHaversine)
@@ -182,10 +180,13 @@ if (plotting) {
     plot(sitedist_tree, horiz = T, main = "Physical Distance")
     plot(pdend, horiz = T, main = "Seasonal Similarity")
     
-    (id_cor - (1 - dist_mx)) %>% pheatmap(cluster_cols = F, cluster_rows = F)
-    abs(id_cor - (1 - dist_mx)) %>% pheatmap(cluster_cols = F, cluster_rows = F)
+    (id_cor - (1 - flt_sitedist_mx)) %>% pheatmap(cluster_cols = F, cluster_rows = F)
+    abs(id_cor - (1 - flt_sitedist_mx)) %>% pheatmap(cluster_cols = F, cluster_rows = F)
     
-    pheatmap(id_cor,cluster_cols = F, cluster_rows = F)
+    
+    comp <- (id_cor - (1 - flt_sitedist_mx))
+    
+    pheatmap(comp, cluster_cols = F, cluster_rows = F)
     
     #77/15, 51/18, 20/17, 16/20, 17/21
     
@@ -193,7 +194,6 @@ if (plotting) {
     tanglegram(dend_compare)
     
   }
-  
   
 # HEATMAP OF VAR BY TRIAL -------
 
@@ -282,13 +282,16 @@ for(var in varchoice){
 }
 
 #TRIAL-WISE COMPARISONS OF PRECIP / THERMAL TIME ACCUMULATION  ----
-#daily_charact_x but DOY > 365 count into the next year
-wrap_daily <- daily_charact_x %>% select(Stage, ID, Rain, ThermalTime, Date, DOY) %>%
-  filter(!Stage %in% (c(1, max(Stage)))) %>% group_by(ID) %>% 
-  mutate(AccRain = cumsum(Rain), AccTT = cumsum(ThermalTime), wrapDOY = yday(min(Date)) + as.numeric(Date - min(Date))) %>%
-  select(ID, Date, DOY, wrapDOY, AccRain, AccTT) %>% left_join(nametag, by = join_by(ID))
 
 if (plotting){
+  #daily_charact_x but DOY > 365 count into the next year
+  wrap_daily <- daily_charact_x %>% select(Stage, ID, Rain, ThermalTime, Date, DOY) %>%
+    filter(!Stage %in% (c(1, max(Stage)))) %>% group_by(ID) %>% 
+    mutate(AccRain = cumsum(Rain), AccTT = cumsum(ThermalTime), wrapDOY = yday(min(Date)) + as.numeric(Date - min(Date))) %>%
+    select(ID, Date, DOY, wrapDOY, AccRain, AccTT) %>% left_join(nametag, by = join_by(ID))
+  
+  
+  
 for (var in c("AccRain","AccTT")) {
   print(var)
   plt_data <- filter(wrap_daily, ID %in% trials_list)
@@ -333,19 +336,22 @@ startend <- select(trials_x, Site, Year, ID, Mat, PlantingDate_Sim, HarvestDate_
 #mean start doy and end doy for each site
 mean_startend <- group_by(startend, Site) %>% 
   summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T))
+
 #season limited to average start and end of simulations
 filtmet <- bigmet %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
 
-#accumulation of thermal time / precip for an average season at each site
-#doy of sowing/harvest set on average dates based on trials that were input
-dbtw_sites <- filtmet %>% group_by(Site, year) %>% 
-  mutate(acc_precip = cumsum(rain), acc_tt = cumsum(tt)) %>%
-  ungroup() %>% group_by(Site, day) %>% 
-  summarize(acc_precip= mean(acc_precip, na.rm = T), acc_tt = mean(acc_tt, na.rm = T))
-sdbtw_sites <- dbtw_sites %>% mutate(day = day-min(day)+1)
-
-
 if (plotting) {
+
+  #accumulation of thermal time / precip for an average season at each site
+  #doy of sowing/harvest set on average dates based on trials that were input
+  dbtw_sites <- filtmet %>% group_by(Site, year) %>% 
+    mutate(acc_precip = cumsum(rain), acc_tt = cumsum(tt)) %>%
+    ungroup() %>% group_by(Site, day) %>% 
+    summarize(acc_precip= mean(acc_precip, na.rm = T), acc_tt = mean(acc_tt, na.rm = T))
+  sdbtw_sites <- dbtw_sites %>% mutate(day = day-min(day)+1)
+  
+  
+  
 ggplot(dbtw_sites) + 
   aes(x = day, y = acc_precip, colour = Site) +
   geom_line() +
@@ -378,12 +384,12 @@ ggplot(sdbtw_sites) +
 wthn_sites <- filtmet %>% ungroup() %>% group_by(Site, year) %>% 
   summarize(acc_precip = sum(rain), acc_tt = sum(tt)) 
 
-#comparing conditions over the last ten years, faceted for several sites ------
-means <- wthn_sites %>% group_by(Site) %>%
-  summarise(mean_acc_precip = mean(acc_precip),
-            mean_acc_tt = mean(acc_tt))
-
 if (plotting) {
+  #comparing conditions over the last ten years, faceted for several sites ------
+  means <- wthn_sites %>% group_by(Site) %>%
+    summarise(mean_acc_precip = mean(acc_precip),
+              mean_acc_tt = mean(acc_tt))
+  
 ggplot(wthn_sites) +
   geom_vline(data = means, aes(xintercept = mean_acc_precip), color = "black", linetype = "dashed") + 
   geom_hline(data = means, aes(yintercept = mean_acc_tt), color = "black", linetype = "dashed") +
