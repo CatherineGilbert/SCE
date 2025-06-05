@@ -16,7 +16,7 @@ print("Starting ...")
 
 #debug
 if (FALSE){
- output_dir <- "C:/Users/cmg3/Documents/GitHub/SCT/apsimx_output"
+ output_dir <- "C:/Users/cmg3/Documents/GitHub/SCT/output_files"
  setwd(output_dir) 
  codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
  mat_handling <- "Soy" 
@@ -28,7 +28,7 @@ if (FALSE){
 }
 
 codes_dir <- here() #where the folder with the codes is
-output_dir <- paste0(codes_dir,"/apsimx_output") #folder where the output goes
+output_dir <- paste0(codes_dir,"/output_files") #folder where the output goes
 setwd(output_dir) 
 
 parms <- read_csv("parameters.csv", progress = F, show_col_types = F) #pull trial parameters set in app, then set here
@@ -322,6 +322,16 @@ daily_output <- select(daily_output, -any_of(c("CheckpointID", "SimulationID", "
 # Stop the cluster
 stopCluster(cl)
 
+# For Debugging:
+if (FALSE){
+  outfiles <- list.files("apsim/", pattern = "_out", recursive = T)
+  daily_output <- lapply(outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}) %>% 
+    data.table::rbindlist(.,use.names = T)
+  daily_output <- select(daily_output, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
+}
+
+
+
 # Get simulated sowing and harvest dates
 simsows <- select(daily_output, ID, SimSowDate) %>% filter(!is.na(SimSowDate)) 
 simmats <- select(daily_output, ID, SimMatDate) %>% filter(!is.na(SimMatDate)) 
@@ -336,19 +346,19 @@ daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, Sta
   filter(Date >= StartDate & Date <= EndDate) %>% select(-StartDate,-EndDate)
 daily_output <- mutate(daily_output, Date = as_date(Date))
 
-# Create trials_x from trial-specific information
+# Create trial_info from trial-specific information
 yields <- group_by(daily_output, ID) %>% summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
 res <- group_by(daily_output, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
-trials_x <- rename(trials_df, Latitude = Y, Longitude = X)
-trials_x <- trials_x %>% select(-sim_start, -sim_end) %>% 
+trial_info <- rename(trials_df, Latitude = Y, Longitude = X)
+trial_info <- trial_info %>% select(-sim_start, -sim_end) %>% 
   left_join(yields, by = join_by(ID)) %>% 
   left_join(simdates, by = join_by(ID)) %>% 
   left_join(res, by = join_by(ID)) 
-trials_x <- mutate(trials_x, DTM_Sim = as.numeric(SimMatDate - SimSowDate)) %>%
+trial_info <- mutate(trial_info, DTM_Sim = as.numeric(SimMatDate - SimSowDate)) %>%
   relocate(DTM_Sim, .after = SimSowDate)
-trials_x <- rename(trials_x, MatDate_Sim = SimMatDate, PlantingDate_Sim = SimSowDate, HarvestDate_Sim = SimHarvestDate) 
-trials_x <- select(trials_x, -PlantingDate)
-trials_x <- relocate(trials_x, ID)
+trial_info <- rename(trial_info, MatDate_Sim = SimMatDate, PlantingDate_Sim = SimSowDate, HarvestDate_Sim = SimHarvestDate) 
+trial_info <- select(trial_info, -PlantingDate)
+trial_info <- relocate(trial_info, ID)
 
 # Periods
 if (mat_handling %in% c("Soy","Maize")) {
@@ -357,7 +367,7 @@ if (mat_handling %in% c("Soy","Maize")) {
   max_stage <- max(daily_output$Stage)
 }
 
-daily_output <- daily_output %>% left_join(select(trials_x, ID, HarvestDate_Sim, PlantingDate_Sim), by = join_by(ID)) %>% 
+daily_output <- daily_output %>% left_join(select(trial_info, ID, HarvestDate_Sim, PlantingDate_Sim), by = join_by(ID)) %>% 
    mutate(Period = case_when(
    Stage == 1 & (Date < PlantingDate_Sim) ~ 1,
    Stage == 1 & (Date >= HarvestDate_Sim) ~ max_stage,
@@ -368,7 +378,7 @@ daily_output <- daily_output %>% left_join(select(trials_x, ID, HarvestDate_Sim,
 # Add cumulative precipitation and thermal time
 daily_output <- daily_output %>% group_by(ID) %>% mutate(AccRain = cumsum(Rain), AccTT = cumsum(ThermalTime))
 
-# daily_output <- daily_output %>% left_join(select(trials_x, ID, MatDate_Sim, Planting)) %>% 
+# daily_output <- daily_output %>% left_join(select(trial_info, ID, MatDate_Sim, Planting)) %>% 
 #   mutate(Stage = case_match(
 #     Period,
 #     "1" ~ "Pre-planting", #germinating
@@ -385,7 +395,7 @@ daily_output <- daily_output %>% group_by(ID) %>% mutate(AccRain = cumsum(Rain),
 #   )) %>% select(-MatDate_Sim) %>% 
 #   mutate(Period = factor(Period, ordered = T, levels = as.character(1:11)))
 
-charact_x <- daily_output %>% 
+seasonal_data <- daily_output %>% 
   group_by(Period, ID) %>% select(-Yieldkgha, -Stage) %>% 
   summarize(across(where(is.numeric) & !c(DOY,AccRain,AccTT,AccEmTT), function(x){mean(x,na.omit=T)}), 
             AccRain = sum(Rain), AccTT = sum(ThermalTime), AccEmTT = max(AccEmTT),
@@ -399,32 +409,33 @@ charact_x <- daily_output %>%
   arrange(ID) 
 
 #empty data for missing periods 
-idp <- tidyr::expand(tibble(charact_x), ID, Period) #full list of ID/Period combinations
-idp <- anti_join(idp, charact_x,by = join_by(ID,Period)) #which ID/Period combinations are absent in charact_x
+idp <- tidyr::expand(tibble(seasonal_data), ID, Period) #full list of ID/Period combinations
+idp <- anti_join(idp, seasonal_data,by = join_by(ID,Period)) #which ID/Period combinations are absent in seasonal_data
 
 if (nrow(idp > 0)){
-  col_names <- names(charact_x)[3:length(names(charact_x))]
+  col_names <- names(seasonal_data)[3:length(names(seasonal_data))]
   for (col in col_names) {
     idp[[col]] <- NA
   }
   idp <- mutate(idp, Duration = 0) #set duration of nonexistant periods to zero
-  charact_x <- bind_rows(charact_x, idp) %>% arrange(ID, Period)
+  seasonal_data <- bind_rows(seasonal_data, idp) %>% arrange(ID, Period)
 }
 
-daily_charact_x <- daily_output
+daily_sim_outputs <- daily_output
 
 print("Writing Results ...")
 
-unlink("output",recursive = T) ; dir.create("output")
-write_csv(trials_x, "output/trials_x.csv")
-write_csv(charact_x, "output/charact_x.csv")
-write_csv(daily_charact_x, "output/daily_charact_x.csv")
+unlink("results",recursive = T) ; dir.create("results")
+write_csv(trial_info, "results/trial_info.csv")
+write_csv(seasonal_data, "results/seasonal_data.csv")
+write_csv(daily_sim_outputs, "results/daily_sim_outputs.csv")
 
-final_x <- pivot_wider(charact_x, names_from = Period, values_from = Rain:Period_End_DOY) %>% right_join(trials_x,.,by = join_by(ID))
-write_csv(final_x, "output/final_x.csv")
+final_x <- pivot_wider(seasonal_data, names_from = Period, values_from = Rain:Period_End_DOY) %>% right_join(trial_info,.,by = join_by(ID))
+write_csv(final_x, "results/final_x.csv")
 
 
-period_key <- daily_charact_x %>% select(StageName, Period) %>% distinct() %>%
+period_key <- daily_sim_outputs %>% ungroup() %>%
+  select(StageName, Period) %>% distinct() %>%
   filter(!is.na(StageName)) %>%
   rename("APSIM StageName" = StageName)
 
@@ -434,7 +445,7 @@ period_key <- mutate(period_key, Notes = case_match(Period,
                                       .default = NA
                                       
 )) %>% select(Period, `APSIM StageName`, Notes)
-write_csv(period_key, "output/period_key.csv")
+write_csv(period_key, "results/period_key.csv")
 
 
 #calculate time duration for running the code:
