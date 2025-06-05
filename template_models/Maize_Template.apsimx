@@ -1,6 +1,6 @@
 {
   "$type": "Models.Core.Simulations, Models",
-  "Version": 183,
+  "Version": 192,
   "Name": "Simulations",
   "ResourceName": null,
   "Children": [
@@ -367,6 +367,7 @@
                   "CEC": null,
                   "ECMetadata": null,
                   "CLMetadata": null,
+                  "CECMetadata": null,
                   "ESPMetadata": null,
                   "PHMetadata": null,
                   "Name": "Chemical",
@@ -399,14 +400,6 @@
                   "RelativeTo": "LL15",
                   "FilledFromTop": false,
                   "Name": "Water",
-                  "ResourceName": null,
-                  "Children": [],
-                  "Enabled": true,
-                  "ReadOnly": false
-                },
-                {
-                  "$type": "Models.Soils.CERESSoilTemperature, Models",
-                  "Name": "Temperature",
                   "ResourceName": null,
                   "Children": [],
                   "Enabled": true,
@@ -449,6 +442,7 @@
                   "MaxDepthSoluteAccessible": 0.0,
                   "RunoffEffectivenessAtMovingSolute": 0.0,
                   "MaxEffectiveRunoff": 0.0,
+                  "ConcInSolution": null,
                   "Name": "NO3",
                   "ResourceName": null,
                   "Children": [],
@@ -484,6 +478,7 @@
                   "MaxDepthSoluteAccessible": 0.0,
                   "RunoffEffectivenessAtMovingSolute": 0.0,
                   "MaxEffectiveRunoff": 0.0,
+                  "ConcInSolution": null,
                   "Name": "NH4",
                   "ResourceName": null,
                   "Children": [],
@@ -519,7 +514,18 @@
                   "MaxDepthSoluteAccessible": 0.0,
                   "RunoffEffectivenessAtMovingSolute": 0.0,
                   "MaxEffectiveRunoff": 0.0,
+                  "ConcInSolution": null,
                   "Name": "Urea",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.Soils.SoilTemp.SoilTemperature, Models",
+                  "Thickness": null,
+                  "InitialValues": null,
+                  "Name": "Temperature",
                   "ResourceName": null,
                   "Children": [],
                   "Enabled": true,
@@ -578,7 +584,6 @@
                 "        private Accumulator accumulatedRain;",
                 "        [Link]",
                 "        private ISoilWater waterBalance;",
-                "\t\t[Link] private CERESSoilTemperature CST;",
                 "",
                 "        [Description(\"Crop\")]",
                 "        public IPlant Crop { get; set; }",
@@ -602,9 +607,6 @@
                 "",
                 "        [Description(\"Duration of rainfall accumulation (d)\")]",
                 "        public int RainDays { get; set; }",
-                "        ",
-                "        [Description(\"Required soil temp for sowing (C)\")]",
-                "        public double SowTemp { get; set; } ",
                 "        ",
                 "        [Description(\"Force sowing by end of window?\")]",
                 "        public bool ForceSow { get; set; }",
@@ -651,8 +653,7 @@
                 "                    if (DateUtilities.WithinDates(StartDate, Clock.Today, EndDate) && // If no date specified, sow when parameters met. ",
                 "\t\t                    !Crop.IsAlive &&",
                 "\t\t                    MathUtilities.Sum(waterBalance.ESW) > MinESW &&",
-                "\t\t                    accumulatedRain.Sum > MinRain &&",
-                "\t\t                    CST.Value[1] >= SowTemp)",
+                "\t\t                    accumulatedRain.Sum > MinRain)",
                 "\t\t                {",
                 "\t\t                    SowNow = true;",
                 "\t\t                } ",
@@ -705,8 +706,8 @@
                   "Value": "7"
                 },
                 {
-                  "Key": "SowTemp",
-                  "Value": "10"
+                  "Key": "ForceSow",
+                  "Value": "True"
                 },
                 {
                   "Key": "CultivarName",
@@ -723,10 +724,6 @@
                 {
                   "Key": "Population",
                   "Value": "8"
-                },
-                {
-                  "Key": "ForceSow",
-                  "Value": "True"
                 }
               ],
               "Name": "Sowing",
@@ -755,7 +752,7 @@
                 "        public IPlant Crop { get; set; }",
                 "",
                 "        [Description(\"Type of fertiliser to apply? \")] ",
-                "        public Fertiliser.Types FertiliserType { get; set; }",
+                "        [Display(Type = DisplayType.FertiliserType)]public string FertiliserType { get; set; }",
                 "    ",
                 "        [Description(\"Amount of fertiliser to be applied (kg/ha)\")]",
                 "        public double Amount { get; set; }",
@@ -765,7 +762,7 @@
                 "        {",
                 "            Model crop = sender as Model;",
                 "            if (Crop != null && crop.Name.ToLower() == (Crop as IModel).Name.ToLower())",
-                "                Fertiliser.Apply(Amount: Amount, Type: FertiliserType);",
+                "                Fertiliser.Apply(amount: Amount, type: FertiliserType);",
                 "        }",
                 "    }",
                 "}"
