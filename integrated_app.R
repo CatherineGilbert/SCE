@@ -1,4 +1,3 @@
-
 library(geosphere)
 library(shiny)
 library(shinydashboard)
@@ -473,7 +472,7 @@ ui <- dashboardPage(
       tabItem(tabName = "faceted_comparison",
               fluidPage(
                 p(
-                  "This section provides a faceted comparison of accumulated precipitation and thermal time for different sites. Select the sites to visualize the comparison."
+                  "This section provides a faceted comparison of accumulated precipitation and thermal time at a site on a yearly basis. The dashed horizontal line on the graph represents the mean total thermal time for the last ten years, while the dashed vertical line represents the mean total precipitation for the last ten years. Select the sites to visualize the comparison."
                 ),
                 fluidRow(
                   column(width = 3,
@@ -488,7 +487,7 @@ ui <- dashboardPage(
       tabItem(tabName = "between_sites",
               fluidPage(
                 p(
-                  "This section visualizes the 10-year site averages for a typical growing season, comparing accumulated precipitation and thermal time between selected sites."
+                  "This figure shows the 10-year averages of accumulated thermal time and precipitation for a typical growing season at each site. The dashed horizontal line represents the mean total thermal time for all selected sites, while the dashed vertical line represents the mean total precipitation for all selected sites. "
                 ),
                 fluidRow(
                   column(width = 3,
@@ -1696,7 +1695,7 @@ server <- function(input, output, session) {
     long_comp <- mutate(long_comp, "planting_offset" = (abs(PlantingDOY.x - PlantingDOY.y) + 1),
                         "season_diff" = abs(as.numeric(seasonlength.x - seasonlength.y)))
     
-    #consistency between years for [location + planting data] comparisons, based on dates
+    #consistency between years for [location + planting date] comparisons, based on dates
     vardates <- long_comp %>% group_by(ID.x, ID.y, Site.x, Site.y, PD_mday.x, PD_mday.y) %>%
       summarize(var(season_corr), mean(season_corr),
                 "sitedist" = mean(sitedist), 
@@ -1707,7 +1706,7 @@ server <- function(input, output, session) {
                 mean(season_diff))
     names(vardates) <- c("ID.x","ID.y","Site.x","Site.y","Planting_Date.x","Planting_Date.y",
                          "Variance_of_Seasonal_Corr","Mean_Seasonal_Corr","Distance_(m)","Planting_Offset_(days)",
-                         "Latitude.x","Latitude.y","Latitude_Difference","Mean_Difference_in_Season_Duration_(days)")
+                         "Latitude.x","Latitude.y","Latitude_Diff","Mean_Diff_in_Season_Duration_(days)")
     return(vardates)
   }
   
