@@ -16,15 +16,15 @@ print("Starting ...")
 
 #debug
 if (FALSE){
- output_dir <- "C:/Users/cmg3/Documents/GitHub/SCT/output_files"
+ output_dir <- "C:/Users/cmg3/Documents/GitHub/SCE/output_files"
  setwd(output_dir) 
- codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCT"
+ codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCE"
  mat_handling <- "Soy" 
  weather_aquis <- "NASAPOWER"
  soil_aquis <- "ISRIC"
- templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCT/template_models/Soy_Template.apsimx"
+ templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCE/template_models/Soy_Template.apsimx"
  templ_model <- file_path_sans_ext(basename(templ_model_path))
- trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCT/example_input_files/date_test.csv") 
+ trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/date_test.csv") 
 }
 
 codes_dir <- here() #where the folder with the codes is
@@ -255,11 +255,13 @@ if (nrow(trials_df) <= 10) {
 # Calculate the number of trials per batch
 batch_size <- ceiling(nrow(trials_df) / num_batches)
 
+# save trial error messages
+errlog <- NULL
 
 clusterExport(cl, c("trials_df", "codes_dir", "templ_model", "edit_apsimx", 
                     "edit_apsimx_replace_soil_profile", "paste0", "dir.create",
                     "file.copy", "tryCatch", "print", "apsimx", "mutate", 
-                    "write_csv"))
+                    "write_csv", "errlog"))
 
 
 # Initialize a list to hold results from all batches
@@ -294,14 +296,18 @@ for (batch in 1:num_batches) {
       #return(output)
       return()  
     }, error = function(e){
-      cat(paste0("Simulation for trial ", trial_n, " failed with error: ", e$message, "\n"))
-      return(NULL)  # Return NULL if there was an error
+      errlog <- paste0(errlog, "Simulation for trial ", trial_n, " failed with error: ", e$message)
+      return(errlog)  # Return NULL if there was an error
     })
   })
   
   # Combine the results from this batch and add to the all_results list
   #batch_results <- do.call(rbind, results)
   #all_results[[batch]] <- batch_results
+  
+  # Print errors for failed trials
+  errlog <- do.call(rbind, results)
+  print(paste(errlog))
   
   # Print out the progress
   cat(sprintf("Completed batch %d out of %d (%.2f%%)\n", batch, num_batches, 100 * batch / num_batches))
