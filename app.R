@@ -28,6 +28,7 @@ plan(multisession, workers = 2)
 
 # Define UI ----
 ui <- dashboardPage(
+  title = "Seasonal Characterization Engine",
   skin = "black",
   dashboardHeader(
     title = tags$div(
@@ -37,14 +38,20 @@ ui <- dashboardPage(
         height = "40px",
         style = "margin-right: 10px;"
       ),
-      tags$span("SCE", style = "font-size: 30px; font-weight: bold;")
+      tags$span("Seasonal Characterization Engine", style = "font-size: 12px; font-weight: bold;")
     ),
     titleWidth = 300
   ),
   ## dashboardSidebar ----
   dashboardSidebar(
     width = 300,
-    sidebarMenu(menuItem(
+    sidebarMenu(
+      menuItem(
+        "About",
+        tabName = "info",
+        icon = icon("circle-info")
+      ),
+      menuItem(
       "Upload and Analyze",
       tabName = "analysis",
       icon = icon("upload")
@@ -498,6 +505,10 @@ ui <- dashboardPage(
                     downloadButton("downloadBetweenSitesPlot", "Download Plot")
                   )
                 )
+              )),
+      tabItem(tabName = "info",
+              fluidPage(
+                p("info")
               ))
     )
   )
