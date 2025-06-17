@@ -38,7 +38,7 @@ ui <- dashboardPage(
         height = "40px",
         style = "margin-right: 10px;"
       ),
-      tags$span("Seasonal Characterization Engine", style = "font-size: 12px; font-weight: bold;")
+      tags$span("SCE", style = "font-size: 20px; font-weight: bold;")
     ),
     titleWidth = 300
   ),
@@ -47,23 +47,36 @@ ui <- dashboardPage(
   dashboardSidebar(
     width = 300,
     sidebarMenu(
-      menuItem(
-        "About",
-        tabName = "info",
-        icon = icon("circle-info")
-      ),
-      menuItem(
-      "Upload and Analyze",
-      tabName = "analysis",
-      icon = icon("upload")
-    )),
-    sidebarMenuOutput("reveal_menu")
+      menuItem("About", tabName = "info", icon = icon("circle-info")),
+      menuItem("Upload and Analyze", tabName = "analysis", icon = icon("upload"))
+    ),
+    div(id = "sidebar_spinner",
+        tags$div(style = "padding: 20px; text-align: left;",
+                 icon("spinner", class = "fa-spin"),
+                 "Loading ..."
+        )
+    ),
+    hidden(
+      div(id = "sidebar_menu",
+          sidebarMenu(
+            menuItem("View Results", tabName = "results", icon = icon("table-list")),
+            menuItem("View Seasonal Heatmaps", tabName = "heatmap", icon = icon("fire")),
+            menuItem("View Trial Similarities", tabName = "trial_comp", icon = icon("seedling")),
+            menuItem("Thermal Time / Precipitation", icon = icon("cloud-sun-rain"),
+                     menuSubItem("Modify GDD Equation", tabName = "gdd_equation", icon = icon("calculator")),
+                     menuSubItem("Typical TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
+                     menuSubItem("Site Yearly TT/Precip Totals", tabName = "faceted_comparison", icon = icon("chart-area")),
+                     menuSubItem("Ten Year Site TT/Precip Means", tabName = "between_sites", icon = icon("chart-bar"))
+            )
+          )
+      )
+    )
   ),
   
   
   ## dashbordBody CSS----
   dashboardBody(
-    shinyjs::useShinyjs(),
+    useShinyjs(),
     tags$head(tags$style(
       HTML(
         "
@@ -114,15 +127,29 @@ ui <- dashboardPage(
     tabItems(
       tabItem(tabName = "info",
         fluidPage(
-          p("Created by Catherine Gilbert, German Mandrini, and Sam Shi."),
+          h2("Seasonal Characterization Engine"),
+          p(em("Created by Catherine Gilbert, German Mandrini, and Sam Shi.")),
           br(),
-          tags$a("GitHub Repo", href = "https://github.com/CatherineGilbert/SCE", target = "_blank"),
-          br(),
-          tags$a("Documentation", href = "https://github.com/CatherineGilbert/SCE", target = "_blank"),
-          br(),
+          p("The", tags$b("Seasonal Characterization Engine (SCE)"), " describes growing environment in terms of the crop's 
+            development. Using APSIM, a procedural crop simulation program, the tool simulates the growth 
+            of a crop according to specified 'trial' conditions and returns seasonal profiles consisting 
+            of environmental parameters aligned with crop phenology. This tool can be used to more accurately
+            assess and compare the growing conditions experienced by crops, and to generate seasonal covariates 
+            which can be used in later crop modeling."),
+          fluidRow(
+            column(
+              width = 8, offset = 0,
+            tags$a("Go to GitHub Repo", href = "https://github.com/CatherineGilbert/SCE", target = "_blank", class = "btn btn-primary",),
+            tags$a("Open Documentation", href = "https://github.com/CatherineGilbert/SCE/blob/main/SCE_Documentation.docx", target = "_blank", class = "btn btn-primary",),
+            )
+            ),
           p(""),
+          br(),
           box(
-          p("Example Citation")
+            width = 12,
+          p(tags$b("Citation:")),
+          p("Gilbert, C. (2025). CatherineGilbert/SCE [R]. https://github.com/CatherineGilbert/SCE (Original work published 2024)
+")
           )
         )      
       ),
@@ -466,7 +493,8 @@ ui <- dashboardPage(
       tabItem(tabName = "daily_between_sites",
               fluidPage(
                 p(
-                  "This section allows you to compare daily accumulated precipitation and thermal time between different sites. Select the comparison type and sites for analysis."
+                  "This section allows you to compare the accumulation of precipitation and thermal 
+                  time during the typical growing season at each site. Select the parameter to view and sites to compare for the visualization."
                 ),
                 selectInput(
                   "comparisonType",
@@ -484,7 +512,7 @@ ui <- dashboardPage(
                   ,
                   column(
                     width = 9,
-                    plotOutput("comparisonPlot"),
+                    plotOutput("comparisonPlot", height = "600px"),
                     downloadButton("downloadComparisonPlot", "Download Plot")
                   )
                 )
@@ -492,7 +520,10 @@ ui <- dashboardPage(
       tabItem(tabName = "faceted_comparison",
               fluidPage(
                 p(
-                  "This section provides a faceted comparison of accumulated precipitation and thermal time at a site on a yearly basis. The dashed horizontal line on the graph represents the mean total thermal time for the last ten years, while the dashed vertical line represents the mean total precipitation for the last ten years. Select the sites to visualize the comparison."
+                  "This section shows, for each site, the total accumulated precipitation and thermal time during 
+                  each year's expected growing season. The dashed lines on the graph represent the 
+                  mean total thermal time or precipitation at that site over the last ten years. 
+                  Select the sites to compare for the visualization."
                 ),
                 numericInput(
                   inputId = "ttpr2_cex",
@@ -507,7 +538,7 @@ ui <- dashboardPage(
                          uiOutput("siteSelectionUI_faceted")),
                   column(
                     width = 10,
-                    plotOutput("facetedComparisonPlot"),
+                    plotOutput("facetedComparisonPlot", height = "600px"),
                     downloadButton("downloadFacetedComparisonPlot", "Download Plot")
                   )
                 )
@@ -515,7 +546,10 @@ ui <- dashboardPage(
       tabItem(tabName = "between_sites",
               fluidPage(
                 p(
-                  "This figure shows the 10-year averages of accumulated thermal time and precipitation for a typical growing season at each site. The dashed horizontal line represents the mean total thermal time for all selected sites, while the dashed vertical line represents the mean total precipitation for all selected sites. "
+                  "This figure shows the 10-year averages of accumulated thermal time and precipitation 
+                  for a typical growing season at each site. The dashed horizontal line represents the 
+                  mean total thermal time for all selected sites, while the dashed vertical line represents 
+                  the mean total precipitation for all selected sites. Select the sites to compare for the visualization."
                 ),
                 numericInput(
                   inputId = "ttpr3_cex",
@@ -530,7 +564,7 @@ ui <- dashboardPage(
                          uiOutput("siteSelectionUI_between")),
                   column(
                     width = 10,
-                    plotOutput("plotBetweenSites"),
+                    plotOutput("plotBetweenSites", height = "600px"),
                     downloadButton("downloadBetweenSitesPlot", "Download Plot")
                   )
                 )
@@ -560,7 +594,7 @@ server <- function(input, output, session) {
   pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
   palette <- rev(pal_f(50)[1:50])
   
-  # Front Page / Analysis ----
+ # Front Page / Analysis ----
   ## select template model ------
   observeEvent(input$modelChoice, {
     tryCatch({
@@ -749,6 +783,10 @@ server <- function(input, output, session) {
   observe({
     req(analysisDone())
     
+    shinyjs::show("sidebar_spinner")
+    print("show sidebar spinner-------------------------------------------------")
+    shinyjs::hide("sidebar_menu")
+    
     trial_info <<- read_csv(paste0(results_dir, "/trial_info.csv"))
     final_x <<- read_csv(paste0(results_dir, "/final_x.csv"))
     seasonal_data <<- read_csv(paste0(results_dir, "/seasonal_data.csv"))
@@ -759,16 +797,16 @@ server <- function(input, output, session) {
       mutate(tag = paste0(ID,": ", Site, " ", PlantingDate_Sim),
              mtag = paste0(ID,": ", Mat, " ", Site, " ", PlantingDate_Sim)) 
     
-    #start and end of simulation as doy, going over 365 if wrapping over the new year
+    ### start and end of simulation as doy, going over 365 if wrapping over the new year -----
     startend <- select(trial_info, Site, Year, ID, Mat, PlantingDate_Sim, HarvestDate_Sim) %>%
       mutate(first_doy = yday(PlantingDate_Sim), 
              until_final =  as.numeric(as_date(HarvestDate_Sim) - as_date(PlantingDate_Sim)),
              final_doy = first_doy + until_final) #done this way because final_doy can go over 365
-    #mean start doy and end doy for each site
+    ### mean start doy and end doy for each site ------
     mean_startend <<- group_by(startend, Site) %>% 
       summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T))
     
-    #get thermal time and precip for the last ten years of records
+    ### get thermal time and precip for the last ten years of records ------
     prev_year <- as.numeric(substr(Sys.time(),1,4)) - 1
     bigmet <- data.frame()
     for(s in 1:max(trial_info$ID_Loc)){
@@ -788,62 +826,17 @@ server <- function(input, output, session) {
     bigmet_gdd <- bigmet_gdd %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
     filtmet(bigmet_gdd)
     
-    #count again 
+    ### refresh progress counters again ----
     nloc(nrow(distinct(select(trial_info, Latitude, Longitude))))
     ntrials(nrow(trial_info))
     count_files()
     
     site_list(sort(unique(trial_info$Site)))
     
-  }) %>% bindEvent(analysisDone())
-
-
-  ## enable rest of the menu ----
-  output$reveal_menu <- renderMenu({
-    req(analysisDone())
+    shinyjs::hide("sidebar_spinner")
+    shinyjs::show("sidebar_menu")
     
-    sidebarMenu(
-      menuItem(
-        "View Results", 
-        tabName = "results", 
-        icon = icon("table-list")
-      ),
-      menuItem(
-        "View Seasonal Heatmaps",
-        tabName = "heatmap",
-        icon = icon("fire")
-      ),
-      menuItem(
-        "View Trial Similarities",
-        tabName = "trial_comp",
-        icon = icon("seedling")
-      ),
-      menuItem(
-        "Thermal Time / Precipitation",
-        icon = icon("cloud-sun-rain"),
-        menuSubItem(
-          "Modify GDD Equation",
-          tabName = "gdd_equation",
-          icon = icon("calculator")
-        ),
-        menuSubItem(
-          "Typical TT/Precip Accumulation",
-          tabName = "daily_between_sites",
-          icon = icon("chart-line")
-        ),
-        menuSubItem(
-          "Site Yearly TT/Precip Totals",
-          tabName = "faceted_comparison",
-          icon = icon("chart-area")
-        ),
-        menuSubItem(
-          "Ten Year Site TT/Precip Means",
-          tabName = "between_sites",
-          icon = icon("chart-bar")
-        ))
-    )
-  }
-  )
+  }) %>% bindEvent(analysisDone())
   
   ## set filtmet from GDD ------------
   
@@ -895,7 +888,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # View Results & Boxplot ----
+# View Results & Boxplot ----
   ## viewData / view data in tables below boxplot ----  
   output$viewData <- renderDT({
     req(analysisDone())
