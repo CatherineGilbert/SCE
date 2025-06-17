@@ -47,23 +47,36 @@ ui <- dashboardPage(
   dashboardSidebar(
     width = 300,
     sidebarMenu(
-      menuItem(
-        "About",
-        tabName = "info",
-        icon = icon("circle-info")
-      ),
-      menuItem(
-      "Upload and Analyze",
-      tabName = "analysis",
-      icon = icon("upload")
-    )),
-    sidebarMenuOutput("reveal_menu")
+      menuItem("About", tabName = "info", icon = icon("circle-info")),
+      menuItem("Upload and Analyze", tabName = "analysis", icon = icon("upload"))
+    ),
+    div(id = "sidebar_spinner",
+        tags$div(style = "padding: 20px; text-align: left;",
+                 icon("spinner", class = "fa-spin"),
+                 "Loading ..."
+        )
+    ),
+    hidden(
+      div(id = "sidebar_menu",
+          sidebarMenu(
+            menuItem("View Results", tabName = "results", icon = icon("table-list")),
+            menuItem("View Seasonal Heatmaps", tabName = "heatmap", icon = icon("fire")),
+            menuItem("View Trial Similarities", tabName = "trial_comp", icon = icon("seedling")),
+            menuItem("Thermal Time / Precipitation", icon = icon("cloud-sun-rain"),
+                     menuSubItem("Modify GDD Equation", tabName = "gdd_equation", icon = icon("calculator")),
+                     menuSubItem("Typical TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
+                     menuSubItem("Site Yearly TT/Precip Totals", tabName = "faceted_comparison", icon = icon("chart-area")),
+                     menuSubItem("Ten Year Site TT/Precip Means", tabName = "between_sites", icon = icon("chart-bar"))
+            )
+          )
+      )
+    )
   ),
   
   
   ## dashbordBody CSS----
   dashboardBody(
-    shinyjs::useShinyjs(),
+    useShinyjs(),
     tags$head(tags$style(
       HTML(
         "
@@ -560,7 +573,7 @@ server <- function(input, output, session) {
   pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
   palette <- rev(pal_f(50)[1:50])
   
-  # Front Page / Analysis ----
+ # Front Page / Analysis ----
   ## select template model ------
   observeEvent(input$modelChoice, {
     tryCatch({
@@ -749,6 +762,10 @@ server <- function(input, output, session) {
   observe({
     req(analysisDone())
     
+    shinyjs::show("sidebar_spinner")
+    print("show sidebar spinner-------------------------------------------------")
+    shinyjs::hide("sidebar_menu")
+    
     trial_info <<- read_csv(paste0(results_dir, "/trial_info.csv"))
     final_x <<- read_csv(paste0(results_dir, "/final_x.csv"))
     seasonal_data <<- read_csv(paste0(results_dir, "/seasonal_data.csv"))
@@ -759,16 +776,16 @@ server <- function(input, output, session) {
       mutate(tag = paste0(ID,": ", Site, " ", PlantingDate_Sim),
              mtag = paste0(ID,": ", Mat, " ", Site, " ", PlantingDate_Sim)) 
     
-    #start and end of simulation as doy, going over 365 if wrapping over the new year
+    ### start and end of simulation as doy, going over 365 if wrapping over the new year -----
     startend <- select(trial_info, Site, Year, ID, Mat, PlantingDate_Sim, HarvestDate_Sim) %>%
       mutate(first_doy = yday(PlantingDate_Sim), 
              until_final =  as.numeric(as_date(HarvestDate_Sim) - as_date(PlantingDate_Sim)),
              final_doy = first_doy + until_final) #done this way because final_doy can go over 365
-    #mean start doy and end doy for each site
+    ### mean start doy and end doy for each site ------
     mean_startend <<- group_by(startend, Site) %>% 
       summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T))
     
-    #get thermal time and precip for the last ten years of records
+    ### get thermal time and precip for the last ten years of records ------
     prev_year <- as.numeric(substr(Sys.time(),1,4)) - 1
     bigmet <- data.frame()
     for(s in 1:max(trial_info$ID_Loc)){
@@ -788,62 +805,17 @@ server <- function(input, output, session) {
     bigmet_gdd <- bigmet_gdd %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
     filtmet(bigmet_gdd)
     
-    #count again 
+    ### refresh progress counters again ----
     nloc(nrow(distinct(select(trial_info, Latitude, Longitude))))
     ntrials(nrow(trial_info))
     count_files()
     
     site_list(sort(unique(trial_info$Site)))
     
-  }) %>% bindEvent(analysisDone())
-
-
-  ## enable rest of the menu ----
-  output$reveal_menu <- renderMenu({
-    req(analysisDone())
+    shinyjs::hide("sidebar_spinner")
+    shinyjs::show("sidebar_menu")
     
-    sidebarMenu(
-      menuItem(
-        "View Results", 
-        tabName = "results", 
-        icon = icon("table-list")
-      ),
-      menuItem(
-        "View Seasonal Heatmaps",
-        tabName = "heatmap",
-        icon = icon("fire")
-      ),
-      menuItem(
-        "View Trial Similarities",
-        tabName = "trial_comp",
-        icon = icon("seedling")
-      ),
-      menuItem(
-        "Thermal Time / Precipitation",
-        icon = icon("cloud-sun-rain"),
-        menuSubItem(
-          "Modify GDD Equation",
-          tabName = "gdd_equation",
-          icon = icon("calculator")
-        ),
-        menuSubItem(
-          "Typical TT/Precip Accumulation",
-          tabName = "daily_between_sites",
-          icon = icon("chart-line")
-        ),
-        menuSubItem(
-          "Site Yearly TT/Precip Totals",
-          tabName = "faceted_comparison",
-          icon = icon("chart-area")
-        ),
-        menuSubItem(
-          "Ten Year Site TT/Precip Means",
-          tabName = "between_sites",
-          icon = icon("chart-bar")
-        ))
-    )
-  }
-  )
+  }) %>% bindEvent(analysisDone())
   
   ## set filtmet from GDD ------------
   
@@ -895,7 +867,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # View Results & Boxplot ----
+# View Results & Boxplot ----
   ## viewData / view data in tables below boxplot ----  
   output$viewData <- renderDT({
     req(analysisDone())
