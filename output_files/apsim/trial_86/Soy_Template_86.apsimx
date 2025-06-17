@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCT/output_files/met/loc_42.met",
+          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_42.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -102,7 +102,7 @@
               "Longitude": -95.3115,
               "LocationAccuracy": null,
               "YearOfSampling": null,
-              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-05-15 23:33:47.019152",
+              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-06-13 17:17:18.125235",
               "Comments": "cokey = 26005689 - acres percent = 85 - component percent = 85 - taxonomic classification name = Fine-loamy, mixed, superactive, mesic Aquic Hapludolls - drainage class = Moderately well drained - elevation = 350 - slope = 2 - geomdesc = Talf",
               "Name": "Normania:2374074",
               "ResourceName": null,

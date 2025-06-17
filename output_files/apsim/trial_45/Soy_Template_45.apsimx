@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCT/output_files/met/loc_29.met",
+          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_29.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -102,7 +102,7 @@
               "Longitude": -88.6051,
               "LocationAccuracy": null,
               "YearOfSampling": null,
-              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-05-15 23:33:06.041916",
+              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-06-13 17:16:56.199776",
               "Comments": "cokey = 26162079 - acres percent = 89 - component percent = 89 - taxonomic classification name = Coarse-silty, mixed, active, acid, thermic Aquic Udifluvents - drainage class = Moderately well drained - elevation = 103 - slope = 1 - geomdesc = Talf",
               "Name": "Collins:567368",
               "ResourceName": null,

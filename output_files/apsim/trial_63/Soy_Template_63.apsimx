@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCT/output_files/met/loc_1.met",
+          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_1.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -102,7 +102,7 @@
               "Longitude": -96.61426667,
               "LocationAccuracy": null,
               "YearOfSampling": null,
-              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-05-15 23:31:57.76027",
+              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-06-13 17:16:12.029089",
               "Comments": "cokey = 26000985 - acres percent = 90 - component percent = 90 - taxonomic classification name = Fine-silty, mixed, superactive, frigid Aeric Calciaquolls - drainage class = Somewhat poorly drained - elevation = 300 - slope = 1 - geomdesc = Rise",
               "Name": "Gunclub:2799726",
               "ResourceName": null,

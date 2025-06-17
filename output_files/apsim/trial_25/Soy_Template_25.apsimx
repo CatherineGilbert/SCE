@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCT/output_files/met/loc_10.met",
+          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_10.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -102,7 +102,7 @@
               "Longitude": -96.42075,
               "LocationAccuracy": null,
               "YearOfSampling": null,
-              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-05-15 23:32:16.970749",
+              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-06-13 17:16:21.758133",
               "Comments": "cokey = 25348483 - acres percent = 92 - component percent = 92 - taxonomic classification name = Fine-silty, mixed, superactive, mesic Mollic Hapludalfs - drainage class = Well drained - elevation = 400 - slope = 4 - geomdesc = Tread",
               "Name": "Yutan:1691452",
               "ResourceName": null,

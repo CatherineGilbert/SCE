@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCT/output_files/met/loc_25.met",
+          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_25.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -102,7 +102,7 @@
               "Longitude": -88.518259,
               "LocationAccuracy": null,
               "YearOfSampling": null,
-              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-05-15 23:32:53.722317",
+              "DataSource": "SSURGO (https://sdmdataaccess.nrcs.usda.gov/) through R package soilDB, R package apsimx function ssurgo2sp. Timestamp 2025-06-13 17:16:46.237047",
               "Comments": "cokey = 24935609 - acres percent = 55 - component percent = 55 - taxonomic classification name = Fine, smectitic, mesic Aquollic Hapludalfs - drainage class = Somewhat poorly drained - elevation = 200 - slope = 3 - geomdesc = Talf",
               "Name": "Hoyleton:2109198",
               "ResourceName": null,

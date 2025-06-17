@@ -1,0 +1,6 @@
+.Rhistory
+.git
+.gitignore
+manifest.json
+rsconnect/
+.Rproj.user
