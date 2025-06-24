@@ -1,10 +1,17 @@
+######################################################################
+# If you're reading this as a user, this isn't for you. These are my 
+# notes for setting up the docker file / image from the original project files. 
+####################################################################
+
 library(shiny2docker)
 shiny2docker() #generates dockerfile and renv file for package versions
 
 remotes::install_github("josiahparry/r-sysreqs")
 library(sysreqs) #makes sure that the system requirements make sense for packages
 
-Download the .deb file from APSIMX downloads site and the Linux distribution. Extract it to get the individual files, put them in a folder with the project. We'll have to copy and extract these to the image later.
+# Download the .deb file from APSIMX downloads site and the Linux distribution. 
+# Extract it to get the individual files, put them in a folder with the project. 
+# We'll have to copy and extract these to the image later.
 
 get_pkgs_sysreqs(c("shiny", 
 "shinydashboard", 

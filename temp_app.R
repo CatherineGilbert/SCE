@@ -993,19 +993,23 @@ server <- function(input, output, session) {
   
   ## select maturity for heatmap -----
   output$season_matSelectUI <- renderUI({
+    req(analysisDone())
     gen_choices <- unique(trial_info$Mat)
     selectInput(inputId = "season_matSelect", label = "Select Maturity", choices = gen_choices, selected = gen_choices[1])
   })
   
   ## select variable for heatmap ----
   output$season_varHeatmapUI <- renderUI({
+    req(analysisDone())
     varchoice <- seasonal_data %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>% names()
     selectInput("season_varSelect", "Select Parameter", choices = varchoice)
   })
   
+  
   ## generate heatmap ----
-  output$season_heatmapPlot <- renderPlot(
-    {
+  output$season_heatmapPlot <- renderPlot(create_heatmap())
+      
+  create_heatmap <- function(){
       req(input$season_varSelect)  # Ensure a variable is selected
       req(input$season_heatBy)
       matsel <- input$season_matSelect 
@@ -1107,7 +1111,14 @@ server <- function(input, output, session) {
       popViewport()
       
       popViewport() 
-    })
+    }
+  
+  ## force refresh of maps  ------
+  #observe({
+  #  if (analysisDone()) {
+  #    create_heatmap()
+  #  } 
+  #})
   
   ## render heatmap ----
   output$season_heatmapPlotUI <- renderUI({
