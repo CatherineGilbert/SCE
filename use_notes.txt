@@ -1,10 +1,20 @@
+######################################################################
+# If you're reading this as a user, this isn't for you. These are my 
+# notes for setting up the docker file / image from the original project files. 
+####################################################################
+
 library(shiny2docker)
-shiny2docker() #generates dockerfile and renv file for package versions
+shiny2docker() #generates initial dockerfile and renv file for package versions
+
+library(renv)
+renv::snapshot("C:/Users/cmg3/Documents/GitHub/SCE") #can be used to update renv if new packages are included
 
 remotes::install_github("josiahparry/r-sysreqs")
 library(sysreqs) #makes sure that the system requirements make sense for packages
 
-Download the .deb file from APSIMX downloads site and the Linux distribution. Extract it to get the individual files, put them in a folder with the project. We'll have to copy and extract these to the image later.
+# Download the .deb file from APSIMX downloads site and the Linux distribution. 
+# Extract it to get the individual files, put them in a folder with the project. 
+# We'll have to copy and extract these to the image later.
 
 get_pkgs_sysreqs(c("shiny", 
 "shinydashboard", 
@@ -41,19 +51,20 @@ get_pkgs_sysreqs(c("shiny",
 "spData", 
 "here", 
 "tools", 
-"parallel"), "ubuntu", 24.04) %>% print(n = 100)
+"parallel",
+"leaflet"), "ubuntu", 24.04) %>% print(n = 100)
 
-Build the docker image from the docker hub terminal by navigating to the directory and using 
+# Build the docker image from the docker hub terminal by navigating to the directory and using 
 docker build -t sce:first_attempt .
 
-To start the container run 
+# To start the container run 
 docker run -p 3838:3838 your_image_name
 
-It should be available at localhost:3838.
+# It should be available at localhost:3838.
 
-To update the app online: 
-1. Save changes in code
-2. In Docker Desktop:
+# To update the app online: 
+# 1. Save changes in code
+# 2. In Docker Desktop:
  cd C:\Users\cmg3\Documents\GitHub\SCE
  docker build -t sce:first_attempt .
  docker run -p 3838:3838 sce:first_attempt
@@ -61,6 +72,6 @@ To update the app online:
  docker tag sce:first_attempt catherinegilbert/sce:latest
  docker push catherinegilbert/sce:latest
 
-3. Starting the app from SSH into the instance.  
+# 3. Starting the app from SSH into the instance.  
   ssh -i  SCEKeyPair.pem ubuntu@141.142.219.133
   ./start-shiny-app.sh

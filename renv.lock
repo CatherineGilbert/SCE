@@ -3625,6 +3625,93 @@
       "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
       "Repository": "CRAN"
     },
+    "leaflet": {
+      "Package": "leaflet",
+      "Version": "2.2.2",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Create Interactive Web Maps with the JavaScript 'Leaflet' Library",
+      "Authors@R": "c( person(\"Joe\", \"Cheng\", , \"joe@posit.co\", role = c(\"aut\", \"cre\")), person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = \"aut\", comment = c(ORCID = \"0000-0001-9986-114X\")), person(\"Bhaskar\", \"Karambelkar\", role = \"aut\"), person(\"Yihui\", \"Xie\", role = \"aut\"), person(\"Hadley\", \"Wickham\", role = \"ctb\"), person(\"Kenton\", \"Russell\", role = \"ctb\"), person(\"Kent\", \"Johnson\", role = \"ctb\"), person(\"Vladimir\", \"Agafonkin\", role = c(\"ctb\", \"cph\"), comment = \"Leaflet library\"), person(\"CloudMade\", role = \"cph\", comment = \"Leaflet library\"), person(\"Leaflet contributors\", role = \"ctb\", comment = \"Leaflet library\"), person(\"Brandon Copeland\", role = c(\"ctb\", \"cph\"), comment = \"leaflet-measure plugin\"), person(\"Joerg Dietrich\", role = c(\"ctb\", \"cph\"), comment = \"Leaflet.Terminator plugin\"), person(\"Benjamin Becquet\", role = c(\"ctb\", \"cph\"), comment = \"Leaflet.MagnifyingGlass plugin\"), person(\"Norkart AS\", role = c(\"ctb\", \"cph\"), comment = \"Leaflet.MiniMap plugin\"), person(\"L. Voogdt\", role = c(\"ctb\", \"cph\"), comment = \"Leaflet.awesome-markers plugin\"), person(\"Daniel Montague\", role = c(\"ctb\", \"cph\"), comment = \"Leaflet.EasyButton plugin\"), person(\"Kartena AB\", role = c(\"ctb\", \"cph\"), comment = \"Proj4Leaflet plugin\"), person(\"Robert Kajic\", role = c(\"ctb\", \"cph\"), comment = \"leaflet-locationfilter plugin\"), person(\"Mapbox\", role = c(\"ctb\", \"cph\"), comment = \"leaflet-omnivore plugin\"), person(\"Michael Bostock\", role = c(\"ctb\", \"cph\"), comment = \"topojson\"), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\")) )",
+      "Description": "Create and customize interactive maps using the 'Leaflet' JavaScript library and the 'htmlwidgets' package. These maps can be used directly from the R console, from 'RStudio', in Shiny applications and R Markdown documents.",
+      "License": "GPL-3",
+      "URL": "https://rstudio.github.io/leaflet/, https://github.com/rstudio/leaflet",
+      "BugReports": "https://github.com/rstudio/leaflet/issues",
+      "Depends": [
+        "R (>= 3.1.0)"
+      ],
+      "Imports": [
+        "crosstalk",
+        "htmltools",
+        "htmlwidgets (>= 1.5.4)",
+        "jquerylib",
+        "leaflet.providers (>= 2.0.0)",
+        "magrittr",
+        "methods",
+        "png",
+        "raster (>= 3.6.3)",
+        "RColorBrewer",
+        "scales (>= 1.0.0)",
+        "sp",
+        "stats",
+        "viridisLite",
+        "xfun"
+      ],
+      "Suggests": [
+        "knitr",
+        "maps",
+        "purrr",
+        "R6",
+        "RJSONIO",
+        "rmarkdown",
+        "s2",
+        "sf (>= 0.9-6)",
+        "shiny",
+        "terra",
+        "testthat (>= 3.0.0)"
+      ],
+      "Config/testthat/edition": "3",
+      "Config/Needs/website": "dplyr, geojsonio, ncdf4, tidyverse/tidytemplate",
+      "Encoding": "UTF-8",
+      "LazyData": "true",
+      "RoxygenNote": "7.3.1",
+      "NeedsCompilation": "no",
+      "Author": "Joe Cheng [aut, cre], Barret Schloerke [aut] (<https://orcid.org/0000-0001-9986-114X>), Bhaskar Karambelkar [aut], Yihui Xie [aut], Hadley Wickham [ctb], Kenton Russell [ctb], Kent Johnson [ctb], Vladimir Agafonkin [ctb, cph] (Leaflet library), CloudMade [cph] (Leaflet library), Leaflet contributors [ctb] (Leaflet library), Brandon Copeland [ctb, cph] (leaflet-measure plugin), Joerg Dietrich [ctb, cph] (Leaflet.Terminator plugin), Benjamin Becquet [ctb, cph] (Leaflet.MagnifyingGlass plugin), Norkart AS [ctb, cph] (Leaflet.MiniMap plugin), L. Voogdt [ctb, cph] (Leaflet.awesome-markers plugin), Daniel Montague [ctb, cph] (Leaflet.EasyButton plugin), Kartena AB [ctb, cph] (Proj4Leaflet plugin), Robert Kajic [ctb, cph] (leaflet-locationfilter plugin), Mapbox [ctb, cph] (leaflet-omnivore plugin), Michael Bostock [ctb, cph] (topojson), Posit Software, PBC [cph, fnd]",
+      "Maintainer": "Joe Cheng <joe@posit.co>",
+      "Repository": "CRAN"
+    },
+    "leaflet.providers": {
+      "Package": "leaflet.providers",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Leaflet Providers",
+      "Authors@R": "c( person(\"Leslie\", \"Huang\", , \"lesliehuang@nyu.edu\", role = \"aut\"), person(\"Barret\", \"Schloerke\", , \"barret@posit.co\", role = c(\"ctb\", \"cre\"), comment = c(ORCID = \"0000-0001-9986-114X\")), person(\"Leaflet Providers contributors\", role = c(\"ctb\", \"cph\"), comment = \"Leaflet Providers plugin\"), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\")) )",
+      "Description": "Contains third-party map tile provider information from 'Leaflet.js', <https://github.com/leaflet-extras/leaflet-providers>, to be used with the 'leaflet' R package. Additionally, 'leaflet.providers' enables users to retrieve up-to-date provider information between package updates.",
+      "License": "BSD_2_clause + file LICENSE",
+      "URL": "https://rstudio.github.io/leaflet.providers/, https://github.com/rstudio/leaflet.providers",
+      "BugReports": "https://github.com/rstudio/leaflet.providers/issues",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "Imports": [
+        "htmltools"
+      ],
+      "Suggests": [
+        "jsonlite",
+        "testthat (>= 3.0.0)",
+        "V8"
+      ],
+      "Config/Needs/website": "tidyverse/tidytemplate",
+      "Config/testthat/edition": "3",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "RoxygenNote": "7.2.3",
+      "Collate": "'providers_data.R' 'get_current_providers.R' 'leaflet.providers-package.R' 'zzz.R'",
+      "NeedsCompilation": "no",
+      "Author": "Leslie Huang [aut], Barret Schloerke [ctb, cre] (<https://orcid.org/0000-0001-9986-114X>), Leaflet Providers contributors [ctb, cph] (Leaflet Providers plugin), Posit Software, PBC [cph, fnd]",
+      "Maintainer": "Barret Schloerke <barret@posit.co>",
+      "Repository": "CRAN"
+    },
     "lifecycle": {
       "Package": "lifecycle",
       "Version": "1.0.4",
@@ -4328,6 +4415,23 @@
       "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
       "Repository": "CRAN"
     },
+    "png": {
+      "Package": "png",
+      "Version": "0.1-8",
+      "Source": "Repository",
+      "Title": "Read and write PNG images",
+      "Author": "Simon Urbanek <Simon.Urbanek@r-project.org>",
+      "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
+      "Depends": [
+        "R (>= 2.9.0)"
+      ],
+      "Description": "This package provides an easy and simple way to read, write and display bitmap images stored in the PNG format. It can read and write both files and in-memory raw vectors.",
+      "License": "GPL-2 | GPL-3",
+      "SystemRequirements": "libpng",
+      "URL": "http://www.rforge.net/png/",
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN"
+    },
     "prettyunits": {
       "Package": "prettyunits",
       "Version": "1.2.0",
@@ -4723,6 +4827,48 @@
       "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
       "Repository": "CRAN"
     },
+    "raster": {
+      "Package": "raster",
+      "Version": "3.6-32",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Geographic Data Analysis and Modeling",
+      "Date": "2025-03-27",
+      "Imports": [
+        "Rcpp",
+        "methods",
+        "terra (>= 1.8-5)"
+      ],
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Depends": [
+        "sp (>= 1.4-5)",
+        "R (>= 3.5.0)"
+      ],
+      "Suggests": [
+        "ncdf4",
+        "igraph",
+        "tcltk",
+        "parallel",
+        "rasterVis",
+        "MASS",
+        "sf",
+        "tinytest",
+        "gstat",
+        "fields",
+        "exactextractr"
+      ],
+      "Description": "Reading, writing, manipulating, analyzing and modeling of spatial data. This package has been superseded by the \"terra\" package <https://CRAN.R-project.org/package=terra>.",
+      "License": "GPL (>= 3)",
+      "URL": "https://rspatial.org/raster",
+      "BugReports": "https://github.com/rspatial/raster/issues/",
+      "Authors@R": "c( person(\"Robert J.\", \"Hijmans\", role = c(\"cre\", \"aut\"),   email = \"r.hijmans@gmail.com\",  comment = c(ORCID = \"0000-0001-5872-2872\")), person(\"Jacob\", \"van Etten\", role = \"ctb\"), person(\"Michael\", \"Sumner\", role = \"ctb\"), person(\"Joe\", \"Cheng\", role = \"ctb\"), person(\"Dan\", \"Baston\", role = \"ctb\"), person(\"Andrew\", \"Bevan\", role = \"ctb\"), person(\"Roger\", \"Bivand\", role = \"ctb\"), person(\"Lorenzo\", \"Busetto\", role = \"ctb\"), person(\"Mort\", \"Canty\", role = \"ctb\"), person(\"Ben\", \"Fasoli\", role = \"ctb\"), person(\"David\", \"Forrest\", role = \"ctb\"), person(\"Aniruddha\", \"Ghosh\", role = \"ctb\"), person(\"Duncan\", \"Golicher\", role = \"ctb\"), person(\"Josh\", \"Gray\", role = \"ctb\"), person(\"Jonathan A.\", \"Greenberg\", role = \"ctb\"), person(\"Paul\", \"Hiemstra\", role = \"ctb\"), person(\"Kassel\", \"Hingee\", role = \"ctb\"), person(\"Alex\", \"Ilich\", role = \"ctb\"), person(\"Institute for Mathematics Applied Geosciences\", role=\"cph\"), person(\"Charles\", \"Karney\", role = \"ctb\"), person(\"Matteo\", \"Mattiuzzi\", role = \"ctb\"), person(\"Steven\", \"Mosher\", role = \"ctb\"), person(\"Babak\", \"Naimi\", role = \"ctb\"),\t person(\"Jakub\", \"Nowosad\", role = \"ctb\"), person(\"Edzer\", \"Pebesma\", role = \"ctb\"), person(\"Oscar\", \"Perpinan Lamigueiro\", role = \"ctb\"), person(\"Etienne B.\", \"Racine\", role = \"ctb\"), person(\"Barry\", \"Rowlingson\", role = \"ctb\"), person(\"Ashton\", \"Shortridge\", role = \"ctb\"), person(\"Bill\", \"Venables\", role = \"ctb\"), person(\"Rafael\", \"Wueest\", role = \"ctb\") )",
+      "NeedsCompilation": "yes",
+      "Author": "Robert J. Hijmans [cre, aut] (<https://orcid.org/0000-0001-5872-2872>), Jacob van Etten [ctb], Michael Sumner [ctb], Joe Cheng [ctb], Dan Baston [ctb], Andrew Bevan [ctb], Roger Bivand [ctb], Lorenzo Busetto [ctb], Mort Canty [ctb], Ben Fasoli [ctb], David Forrest [ctb], Aniruddha Ghosh [ctb], Duncan Golicher [ctb], Josh Gray [ctb], Jonathan A. Greenberg [ctb], Paul Hiemstra [ctb], Kassel Hingee [ctb], Alex Ilich [ctb], Institute for Mathematics Applied Geosciences [cph], Charles Karney [ctb], Matteo Mattiuzzi [ctb], Steven Mosher [ctb], Babak Naimi [ctb], Jakub Nowosad [ctb], Edzer Pebesma [ctb], Oscar Perpinan Lamigueiro [ctb], Etienne B. Racine [ctb], Barry Rowlingson [ctb], Ashton Shortridge [ctb], Bill Venables [ctb], Rafael Wueest [ctb]",
+      "Maintainer": "Robert J. Hijmans <r.hijmans@gmail.com>",
+      "Repository": "CRAN"
+    },
     "readr": {
       "Package": "readr",
       "Version": "2.1.5",
@@ -4935,51 +5081,57 @@
       "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
       "Repository": "CRAN"
     },
-    "remotes": {
-      "Package": "remotes",
-      "Version": "2.5.0",
+    "renv": {
+      "Package": "renv",
+      "Version": "1.1.4",
       "Source": "Repository",
-      "Title": "R Package Installation from Remote Repositories, Including 'GitHub'",
-      "Authors@R": "c( person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = c(\"aut\", \"cre\")), person(\"Jim\", \"Hester\", role = \"aut\"), person(\"Hadley\", \"Wickham\", role = \"aut\"), person(\"Winston\", \"Chang\", role = \"aut\"), person(\"Martin\", \"Morgan\", role = \"aut\"), person(\"Dan\", \"Tenenbaum\", role = \"aut\"), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\")), person(\"Ascent Digital Services\", role = \"cph\") )",
-      "Description": "Download and install R packages stored in 'GitHub', 'GitLab', 'Bitbucket', 'Bioconductor', or plain 'subversion' or 'git' repositories.  This package provides the 'install_*' functions in 'devtools'. Indeed most of the code was copied over from 'devtools'.",
+      "Type": "Package",
+      "Title": "Project Environments",
+      "Authors@R": "c( person(\"Kevin\", \"Ushey\", role = c(\"aut\", \"cre\"), email = \"kevin@rstudio.com\", comment = c(ORCID = \"0000-0003-2880-7407\")), person(\"Hadley\", \"Wickham\", role = c(\"aut\"), email = \"hadley@rstudio.com\", comment = c(ORCID = \"0000-0003-4757-117X\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\")) )",
+      "Description": "A dependency management toolkit for R. Using 'renv', you can create and manage project-local R libraries, save the state of these libraries to a 'lockfile', and later restore your library as required. Together, these tools can help make your projects more isolated, portable, and reproducible.",
       "License": "MIT + file LICENSE",
-      "URL": "https://remotes.r-lib.org, https://github.com/r-lib/remotes#readme",
-      "BugReports": "https://github.com/r-lib/remotes/issues",
-      "Depends": [
-        "R (>= 3.0.0)"
-      ],
+      "URL": "https://rstudio.github.io/renv/, https://github.com/rstudio/renv",
+      "BugReports": "https://github.com/rstudio/renv/issues",
       "Imports": [
-        "methods",
-        "stats",
-        "tools",
         "utils"
       ],
       "Suggests": [
-        "brew",
-        "callr",
-        "codetools",
+        "BiocManager",
+        "cli",
+        "compiler",
         "covr",
-        "curl",
-        "git2r (>= 0.23.0)",
+        "cpp11",
+        "devtools",
+        "gitcreds",
+        "jsonlite",
+        "jsonvalidate",
         "knitr",
-        "mockery",
-        "pingr",
-        "pkgbuild (>= 1.0.1)",
+        "miniUI",
+        "modules",
+        "packrat",
+        "pak",
+        "R6",
+        "remotes",
+        "reticulate",
         "rmarkdown",
-        "rprojroot",
-        "testthat (>= 3.0.0)",
-        "webfakes",
-        "withr"
+        "rstudioapi",
+        "shiny",
+        "testthat",
+        "uuid",
+        "waldo",
+        "yaml",
+        "webfakes"
       ],
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.2",
       "VignetteBuilder": "knitr",
       "Config/Needs/website": "tidyverse/tidytemplate",
       "Config/testthat/edition": "3",
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.2.3",
-      "SystemRequirements": "Subversion for install_svn, git for install_git",
+      "Config/testthat/parallel": "true",
+      "Config/testthat/start-first": "bioconductor,python,install,restore,snapshot,retrieve,remotes",
       "NeedsCompilation": "no",
-      "Author": "Gábor Csárdi [aut, cre], Jim Hester [aut], Hadley Wickham [aut], Winston Chang [aut], Martin Morgan [aut], Dan Tenenbaum [aut], Posit Software, PBC [cph, fnd], Ascent Digital Services [cph]",
-      "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
+      "Author": "Kevin Ushey [aut, cre] (<https://orcid.org/0000-0003-2880-7407>), Hadley Wickham [aut] (<https://orcid.org/0000-0003-4757-117X>), Posit Software, PBC [cph, fnd]",
+      "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
       "Repository": "CRAN"
     },
     "reprex": {

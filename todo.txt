@@ -1,0 +1,9 @@
+- figure out why soils progress is not updating
+
+- add high quality figures to paper
+- update seasonal report variable table
+- update later sections of SCE workflow in documentation with that from paper
+- make the "start..." progress text appear immediately
+
+- update citation
+- freeze code, push final version to github, server, and dockerhub

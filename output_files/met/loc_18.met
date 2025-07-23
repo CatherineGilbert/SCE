@@ -1,10 +1,10 @@
-!data from DayMet obtained through daymetr R pacakge. retrieved:  2025-06-13 17:15:57.382994
+!data from DayMet obtained through daymetr R pacakge. retrieved:  2025-07-21 16:59:41.591613
 [weather.met.weather]
 site =  noname
 latitude = 42.38
 longitude = -82.2524
 tav = 9.83995479452055
-amp = 27.298 !calculated with the apsimx R package: 2025-06-13 17:15:57.560573
+amp = 27.298 !calculated with the apsimx R package: 2025-07-21 16:59:41.696225
 year day radn maxt mint rain vp swe
 () () (MJ/m2/day) (oC) (oC) (mm) (hPa) (kg/m2)
 2014 1 2.4589440908 -7.54 -11.31 4.93 2.5766 4.93
