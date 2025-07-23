@@ -1,0 +1,374 @@
+---
+title: "SCE Documentation"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: united
+    fig_caption: false
+---
+
+# 1. Overview
+
+The Seasonal Characterization Engine, or SCE, consists of two major files: the SCE app and an analysis script. Through the app, the user provides trial parameters and a template crop model for the trial simulations. The analysis script accesses public APIs to collect appropriate weather and soil data, generates APSIM model files according to the user's parameters, runs the simulations through Next-Gen APSIM, and returns model outputs summarized by stage of development. This allows the script to return climatic variables (ex: precipitation, temperature, humidity) and modeled stresses (ex: predicted water stress, heat stress, total stress) according to their intersection with the crop's phenology.
+
+*Acknowledgment is made to the APSIM Initiative which takes responsibility for quality assurance and a structured innovation program for APSIM's modelling software, which is provided free for research and development use (see www.apsim.info for details).*
+
+# 2. Requirements
+
+The SCE app requires internet access in order to be able to gather soil and weather information from online databases.
+
+The SCE can be downloaded directly from the GitHub repository, in which case starting the app is as simple as launching "app.R." Using the SCE this way requires that a copy of Next-Gen APSIM be available on the computer (the app will find the program itself). The app will also require a number of R packages be installed-- when opening the SCE app and analysis script through an IDE such as RStudio, the user should be prompted to download these packages before running the scripts.
+
+For the sake of reproducibility, the SCE app is bundled with a Dockerfile and the files necessary to build the working environment. "renv.lock" contains the versioned R packages, and the folder "next_gen_apsim" contains the files for the particular Next-Gen APSIM distribution. In the case that packages and software become outdated, building an image from the Dockerfile allows a user to replicate the SCE app in its original environment.
+
+# 3. User Control
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic1_usercontrol.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+User control of the SCE can be performed on the second page of the application, the "Upload and Analyze" tab. User inputs are set with controls in the "Input Trial Data" box. A highlighted button at the upper right runs the analysis once requirements are met. The "Progress" box tracks the progress of the analysis script, and a "Download Results" button allows the user to download the final datasets in a .zip file.
+
+## 3.1. The Input File
+
+In the "Input Trial Data" box, the user is prompted to upload the input file, which provides the trial information. Trial information is formatted as a .csv file with the columns "Site", "Latitude", "Longitude", "Planting", and "Genetics". Example input files for maize and soybean are provided in the "example_input_files" directory.
+
+Each row of the file represents an individual trial and its parameters. "Site" is the identifier for that location, and "Latitude" and "Longitude" are the WGS84 coordinates. "Planting" is when the crop should be planted in the simulation, and can be entered as a date in YYYY-MM-DD format or as a year, in which case the crop will be sown when the model determines that the conditions in that year and location have become suitable. The final column, "Genetics", represents the cultivar maturity genetics and must be formatted differently depending on the maturity system used. The section below on Maturity Handing provides more information.
+
+## 3.2. The Template Model
+
+Under the trial data upload, the user selects the template crop model as a base for the seasonal characterization. The SCE is distributed with the "Maize_Template.apsimx" and "Soy_Template.apsimx" template models in the "template_models" directory. The user may also choose a custom crop model to use with the engine: we recommend modifying either of the existing template files and swapping out crop modules and/or adjusting management controls and reporting variables as desired.
+
+## 3.3. Maturity Handling
+
+Under "Select Maturity Handling", the user can choose which system the script should use to translate the "Genetics" information in the input file into cultivar maturities. This in turn determines the cultivar parameter files that the APSIM simulations use to set the phenology of each trial. The three options for maturity handling are "Maize", "Soy", and "Direct". "Maize" is intended to be used with the "Maize_Template" model, "Soy" with the "Soy_Template" model, and "Direct" with any other custom model.
+
+### 3.3.1. Maize Maturity Handling
+
+For the "Maize" option, the "Genetics" values of the input file should be taken from the cultivar RM and formatted as character string of A or B and a number of growing degree days (ex: "B_100", "A120", "B 95", etc., are all acceptable). Maize maturity is handled through binning: the RM values of the inputs are matched to their closest available maturities in the generic Maize A and B cultivars.
+
+### 3.3.2. Soy Maturity Handling
+
+For the "Soy" option, the "Genetics" values of the input file should be formatted as a decimal RM where the floor of the value corresponds to the cultivar's maturity group classification. RM values 0 -- 0.999, 1 -- 1.999, 2 -- 2.999, etc., translate to maturity groups "0", "I", "II", etc. The tool supports maturities 000 -- X, with 000 available as RM values -2 -- -1.001 and 00 available as values -1 -- -0.001.
+
+For any cultivar in the input file within maturity designations 000 -- VII ("Genetics" / RM value -2 -- 7.999), the decimal part of the RM value is used to classify the cultivar into a "early", "mid", or "late" variant of the base maturity. Decimal values within 0.001 -- 0.333, 0.334 -- 0.666, and 0.667 -- 0.999 translate to the "early", "mid", and "late" variants respectively.
+
+Because the soybean RM handling uses a decimal system, when entering a soybean cultivar which broadly belongs to a maturity group (e.g., a "maturity two"), it's more appropriate to enter the value incremented by 0.5 (e.g., 2.5, a "mid" maturity two) than the exact value (e.g., 2.0, an early maturity two).
+
+For maturities VIII -- X, the SCE's template soybean model uses the APSIM generic cultivars that match those maturities. For maturities 000 -- VII, however, the template soybean model uses a set of custom cultivars with new maturity parameters. These maturity parameters were calibrated from phenological data shared by GDM Seeds Inc., from the records of their North American soybean breeding program.
+
+### 3.3.3. Direct Maturity Handling
+
+For the "Direct" maturity handling option, the "Genetics" values of the input file should be the exact names of the APSIM cultivars which the user would like to use for the trial simulation.
+
+## 3.4. Weather and Soil Acquisition
+
+The user may select from drop down menus the source of their weather data and the source of their soil. The provided options for weather acquisition are DAYMET, CHIRPS, and NASAPOWER; the provided options for soil acquisition are SSURGO and ISRIC. Users should be mindful that DAYMET and SSURGO are limited to retrieving data for points within the United States.
+
+## 3.5. (Advanced) Embedded Management Scripts Defining Simulation Limits
+
+Outside the app's interface, the template models provided with the project contain two custom management scripts that allow finer control of the parameters for starting and ending trials.
+
+### 3.5.1. "Sowing": Sowing Date Determination
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/sowing.png" width="500"/>
+
+Inputs and controls for the "Sowing" management script.
+
+</p>
+:::
+
+The management script "Sowing" determines the sowing date of the trial if only the year is provided. When accessed through the APSIM interface, the user can adjust parameters for variable sowing: the start and end of the sowing window, minimum extractable soil water required, accumulated rainfall required, required duration of rainfall accumulation, and required soil temperature. The user can also choose to enforce sowing by the end of the sowing window if sowing conditions are not met.
+
+### 3.5.2. "ReaperMan": Environmental Parameters for Ending Crops
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/reaperman.png" width="500"/>
+
+Inputs and controls for the "ReaperMan" management script.
+:::
+
+The second custom script is "ReaperMan", a management script for ending trials. A current limitation of the base APSIM soybean and maize models is the lack of environmental mortality: plants will simply survive through otherwise lethal conditions and resume growth when conditions are amenable. Because of this, this script is intended as a common sense check for whether the crop should be ended.
+
+The management script has several adjustable triggers derived from the environmental mortality parameters of the previous generation APSIM application (Apsim7.10). The parameters include the number of days to wait before ending a crop that hasn't germinated, a crop that hasn't emerged, or a crop which is no longer developing. The final parameter is the minimum temperature in degrees Celsius that the maximum daily temperature must exceed, or the crop will be declared dead from a hard frost.
+
+# 4. Workflow of the Seasonal Characterization Engine
+
+Once the required inputs have been provided, the user clicks the "Run Analysis" button to begin the process. Progress for each stage of the script is tracked in a box below.
+
+## 4.1. Processing Inputs
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/fig2_preprocessing.png" style="width: 80%; max-width: 1000px;"/>
+
+A diagram of the SCE's process for translating the user inputs (in blue) into the parameters used to generate the future trial simulations. The parameters of each trial simulation are stored in a row of the parameter file (in purple). A location ID (in pink) links each trial to a matching APSIM soil profile (in yellow) and a .met file which contains weather information (in orange).
+
+</p>
+:::
+
+The SCE script begins by processing the input trial data to get the parameters of each of the trial simulations. "Planting" is used to set the year of the trial and specific planting date if it exists. The initial boundaries (start / end) of each simulation are the first and last day of the year it takes place in.
+
+The SCE script creates a list of location IDs representing unique trial locations. The script queries the chosen weather database and creates .met files, in parallel, for each unique location. Each .met file contains the weather data needed to cover any trials associated with that location, plus the last ten years of daily weather information. These last ten years will be used for describing "typical growing season" in the "Thermal Time / Precipitation" tab of the application. The .met files are stored in the "apsimx_output/met" directory and appended with the location ID.
+
+The script then queries the chosen soil database and creates an APSIM soil profile for each location. These files are stored in the "apsimx_output/soils" directory and similarly appended with the location ID.
+
+Using the "Maturity Handling" decision given earlier (Maize/Soy/Direct), the app runs the appropriate function and converts the values in the "Genetics" column of the trial input file to the internal names of APSIM cultivars. The maturity definitions of these cultivars are used to used to set the phenology of each of the simulated trials. These cultivar names are stored under "Mat" in the final trial_info file.
+
+## 4.2. Creating and Processing Trial Simulations
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/fig3_running%20trials.png" style="width: 100%; max-width: 1000px;"/>
+
+A diagram of the SCE process for creating and running trial simulations. The user provides a template .apsimx model (in blue), which contains the crop module and management scripts. This template is copied and overwritten according to the previously generated trial sim parameters to create new trial simulation files. Each new simulation is run through APSIM and its outputs stored separately.
+
+</p>
+:::
+
+The SCE script uses the chosen template model to generate the individual trial simulations. For each row of the input file, the script edits a copy of the chosen template model according to the specified trial parameters and attaches the appropriate weather and soil information. The script then splits these simulations into batches and runs them in parallel through the Next-Gen APSIM application. The simulations and their outputs are stored under "apsim_outputs/apsim" directory in individual folders labeled with the trial ID.
+
+## 4.3. Processing Trial Outputs
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/fig4_outputs.png" style="width: 100%; max-width: 1000px;"/>
+
+</p>
+:::
+
+When all simulations are finished, the script summarizes the descriptive parameters over the simulated phenology of the crop. The reporting variables are aggregated by "Period." These periods correspond to the Next-Gen APSIM phenological phases, with the addition that the first period contains two weeks before planting until planting / germination, and the final period contains from when the crop is ready to harvest until two weeks after the harvest.
+
+# 5. Outputs
+
+## 5.1. Output Files
+
+|                         |                                                                                                                                                                                                                                                                                                           |
+|-------------------|-----------------------------------------------------|
+| **File Name**           | **Contents**                                                                                                                                                                                                                                                                                              |
+| "daily_sim_outputs.csv" | The combined total output of the APSIM simulations. This file contains the recorded values of the reporting variables for each day of each simulation. This data is available for users who wish to access the raw outputs of the tool.                                                                   |
+| "seasonal_data.csv"     | The seasonal profiles. Contains the seasonal covariates for each trial (environmental and biological parameters summarized by period) as well as parameters which describe the periods themselves, such as starting and end date. This data is in long format by ID and period.                           |
+| "trial_info.csv"        | Trial and simulation summary information. This file aligns with the input trial data and contains the trial simulation's parameters, as well as any other information which applies to the trial as a whole.                                                                                              |
+| "final_x.csv"           | This file joins the contents of trial_info and seasonal_data, and contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is "Variable_Period", e.g., "Rain_5" is the mean rainfall within the fifth period of development. |
+| "period_key.csv"        | Gives the numbered periods and the APSIM stages they are associated with. These are used to map the period codes to crop development.                                                                                                                                                                     |
+
+## 5.2. Variables of seasonal_data
+
+The default reporting variables of seasonal_data are:
+
+|                   |                  |                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|-----------------|-----------------|---------------------------------------|
+| Name              | Unit             | Description                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ID                | (unitless)       | ID of the simulation. This matches the row number of the input file.                                                                                                                                                                                                                                                                                                                                                               |
+| Period            | (unitless)       | Period of development. Equivalent to APSIM stages of development.                                                                                                                                                                                                                                                                                                                                                                  |
+| Rain              | mm               | Mean daily rainfall during that period, summarized from [Weather].Rain.                                                                                                                                                                                                                                                                                                                                                            |
+| AccRain           | mm               | Total rainfall accumulated within that period, summarized from [Weather].Rain.                                                                                                                                                                                                                                                                                                                                                     |
+| Radn              | mJ/m²            | Mean daily radiation during that period, summarized from [Weather].Radn.                                                                                                                                                                                                                                                                                                                                                           |
+| MaxT              | °C               | Mean of maximum daily temperatures during that period, summarized from [Weather].MaxT.                                                                                                                                                                                                                                                                                                                                             |
+| MeanT             | °C               | Mean of daily temperatures during that period, summarized from [Weather].MeanT.                                                                                                                                                                                                                                                                                                                                                    |
+| MinT              | °C               | Mean of minimum daily temperatures during that period, summarized from [Weather].MinT.                                                                                                                                                                                                                                                                                                                                             |
+| ThermalTime       | GDD              | Mean daily thermal time within that period, summarized from [Crop].Phenology.ThermalTime.                                                                                                                                                                                                                                                                                                                                          |
+| AccTT             | GDD              | Total thermal time accumulated within that period, summarized from [Crop].Phenology.ThermalTime.                                                                                                                                                                                                                                                                                                                                   |
+| AccEmTT           | GDD              | Total thermal time accumulated since the crop's emergence, as reported by [Crop].Phenology.AccumulatedEmergedTT.                                                                                                                                                                                                                                                                                                                   |
+| SoilTemp          | °C               | Mean of daily soil temperature in the second soil layer during that period, as reported by Soil].Temperature.Value[2].                                                                                                                                                                                                                                                                                                             |
+| PAWmm             | mm               | Mean of daily total plant available water within the soil profile during that period, summarized from sum([Soil].Water.PAWmm).                                                                                                                                                                                                                                                                                                     |
+| NH4               | kg/ha            | Mean of daily total ammonium content within the soil profile during that period, summarized from sum([Soil].NH4).                                                                                                                                                                                                                                                                                                                  |
+| NO3               | kg/ha            | Mean of daily total nitrate content within the soil profile during that period, summarized from sum([Soil].NO3).                                                                                                                                                                                                                                                                                                                   |
+| Urea              | kg/ha            | Mean of daily total urea content within the soil profile during that period, summarized from sum([Soil].Urea).                                                                                                                                                                                                                                                                                                                     |
+| OrganicC          | kg/ha            | Mean of daily total organic carbon content within the soil profile during that period, summarized from sum([Nutrient].Organic.C).                                                                                                                                                                                                                                                                                                  |
+| FracGrowth        | (unitless)       | Mean daily fractional growth rate during that period, summarized from [Leaf].FRGR. Daily [Leaf[.FRGR is the minimum of the values of NutrientStress ([Photosynthesis].FN), TempStress ([Photosynthesis].FT), and WaterStress ([Photosynthesis].FW) on that day. Each of these variables are measured on a scale from 1 to 0, where 1 indicates no inhibition of photosynthesis and 0 indicates total inhibition of photosynthesis. |
+| NutrientStress    | (unitless ratio) | Value of [Photosynthesis].FN, the coefficient of nutritional stress on potential photosynthesis.                                                                                                                                                                                                                                                                                                                                   |
+| TempStress        | (unitless ratio) | Value of [Photosynthesis].FT, the coefficient of air temperature stress on potential photosynthesis.                                                                                                                                                                                                                                                                                                                               |
+| WaterStress       | (unitless ratio) | Value of [Photosynthesis].FW, the coefficient of water stress on potential photosynthesis.                                                                                                                                                                                                                                                                                                                                         |
+| Period_Start_Date | YYYY-MM-DD       | Day on which the period starts.                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Period_End_Date   | YYYY-MM-DD       | Day on which the period ends.                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Period_Start_DOY  | DOY              | Numbered day of the year on which the period starts.                                                                                                                                                                                                                                                                                                                                                                               |
+| Period_End_DOY    | DOY              | Numbered day of the year on which the period ends.                                                                                                                                                                                                                                                                                                                                                                                 |
+| Duration          | days             | Duration of the period in days.                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+## 5.3. Variables of trial_info
+
+The default reporting variables of trial_info are:
+
+|                  |                    |                                                                                                                                                                                                                                       |
+|-----------------|-----------------|--------------------------------------|
+| Name             | Unit               | Description                                                                                                                                                                                                                           |
+| ID               | (unitless)         | ID of the simulation. This matches the row number of the input file.                                                                                                                                                                  |
+| Site             | (unitless)         | "Site", from the input file. A tag for the location of the trial.                                                                                                                                                                     |
+| Latitude         | WGS84 coordinate   | "Latitude", from the input file. Latitude of the trial.                                                                                                                                                                               |
+| Longitude        | WGS84 coordinate   | "Longitude", from the input file. Longitude of the trial.                                                                                                                                                                             |
+| Genetics         | (unitless)         | "Genetics", from the input file. Cultivar maturity genetics for the simulated crop.                                                                                                                                                   |
+| Planting         | YYYY-MM-DD or YYYY | "Planting", from the input file. Either a date or year in which the simulated trial will be planted.                                                                                                                                  |
+| ID_Loc           | (unitless)         | The location ID for the simulation, which is used to retrieve the matching .met and soil profile files.                                                                                                                               |
+| Year             | YYYY               | Year in which the simulated trial was planted.                                                                                                                                                                                        |
+| Mat              | (unitless)         | Internal name of the cultivar used to set the maturity parameters of the simulation.                                                                                                                                                  |
+| Yield_Sim        | kg/ha              | Simulated yield.                                                                                                                                                                                                                      |
+| MaxStage         | (unitless)         | The final period of development that the crop reached within the simulation.                                                                                                                                                          |
+| StartDate        | YYYY-MM-DD         | First day of the simulation, two weeks before planting.                                                                                                                                                                               |
+| PlantingDate_Sim | YYYY-MM-DD         | Date on which the simulated trial was planted.                                                                                                                                                                                        |
+| DTM_Sim          | days               | Days from planting to maturity within the simulation.                                                                                                                                                                                 |
+| MatDate_Sim      | YYYY-MM-DD         | Maturity date for the simulated crop.                                                                                                                                                                                                 |
+| HarvestDate_Sim  | YYYY-MM-DD         | Harvest date for the simulated crop.                                                                                                                                                                                                  |
+| EndDate          | YYYY-MM-DD         | Final day of the simulation, two weeks after the crop ends or is harvested.                                                                                                                                                           |
+| Result           | (unitless)         | A message indicating whether the simulated crop was harvested at maturity, and if it was not, which mortality trigger caused the crop to be ended prematurely. Produced by ReaperMan, the custom management script for ending a crop. |
+
+## 5.4. Default Period Key
+
+The two template models provided with the engine use the APSIM Soybean and Maize models. The period codes of simulations generated from these models can therefore be translated accordingly:
+
+|        |                                                                       |                                                                       |
+|------------------|---------------------------|---------------------------|
+| Period | Soybean                                                               | Maize                                                                 |
+| 1      | From two weeks before the planting date until planting / germination. | From two weeks before the planting date until planting / germination. |
+| 2      | Emerging.                                                             | Emerging.                                                             |
+| 3      | Vegetative.                                                           | Juvenile.                                                             |
+| 4      | Early Flowering.                                                      | Photosensitive.                                                       |
+| 5      | Early Pod Development.                                                | Leaf Appearance.                                                      |
+| 6      | Early Grain Filling.                                                  | Flag Leaf to Flowering.                                               |
+| 7      | Mid Grain Filling.                                                    | Flowering to Grain Filling.                                           |
+| 8      | Late Grain Filling.                                                   | Grain Filling.                                                        |
+| 9      | Maturing.                                                             | Maturing.                                                             |
+| 10     | Ripening.                                                             | Ripening.                                                             |
+| 11     | From when the crop is ready to harvest until two weeks after harvest. | From when the crop is ready to harvest until two weeks after harvest. |
+
+# 6. SCE Interface
+
+## 6.1. View Results
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic2a_viewresults.png" style="width: 80%; max-width: 1000px;"/> <img src="pictures/pic2b_viewresults.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+In the "View Results" section, the tool produces a box-and-whisker plot. The user can create select any of the reporting datasets and create a boxplot from any variable of that dataset, by site. Below this is a interactive data table which allows the user to view any of the five output files and download them individually.
+
+## 6.2. View Map
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic3_map.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+## 6.3. View Seasonal Heatmaps
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic4a_seasonalheatmaps.png" style="width: 80%; max-width: 1000px;"/> <img src="pictures/pic4b_seasonalheatmaps.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+This section allows the user to create a heatmap for a combination of reporting variable and maturity, with a choice to view the values by trial or the mean values for all the trials of a particular site. The X axis of the plot is the period within which the variable is aggregated and the Y axis of the plot is the site. The sites are ordered on the Y axis according to hierarchical clustering of the chosen variable, as indicated by the hierarchical tree on the plot's left margin. The cells of the heatmap are colored according to the values of the variable with red indicating higher values and blue indicating lower, with colors scaled according to period (column-wise).
+
+The user can download this heatmap as a .png. The user can also download, for any of the displayed heatmaps, the matrix which is being shown as a .csv.
+
+Below this graph is a key for the periods in the heatmap above, giving the numbers of the Periods and the APSIM StageName that they correspond to.
+
+## 6.4. View Trial Similarities
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic5a_trials.png" style="width: 80%; max-width: 1000px;"/> <img src="pictures/pic5b_trials.png" style="width: 80%; max-width: 1000px;"/> <img src="pictures/pic5c_trials.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+This section of the application allows users to create a seasonal correlation matrix, a similarity matrix of the trials based on correlation of their seasonal profiles. The analysis compares trials with the same maturity classifications. The user selects the maturity genetics that they will be using for the comparisons using a dropdown menu.
+
+The first chart is a heatmap of the seasonal correlation matrix. The user has the option to download the plot as a .png or download the matrix itself as a .csv. The rows and column names of the similarity matrix will be the trial IDs. Trials are labeled in the format [ID:] [Location] [Planting Date].
+
+The dendrogram at sides of the similarity correlation matrix heatmap is recreated in a plot below the heatmap. A number input above the graph adjusts the number of clusters shown. Users have the option to download this plot as a .png, or download a .rds file of the dendrogram object itself.
+
+### 6.4.1. User Control of Trial Comparison
+
+At the bottom of the page, the user has the option to include or exclude seasonal covariates from the similarity analysis based on a number of criteria.
+
+-   The first checkbox includes or excludes SCs associated with the first and last periods pf the simulation, which are the two weeks before planting and the two weeks after harvest respectively. This can be used to constrain the seasonal profile, and the similarity comparison, to the strict duration of crop development.
+
+-   **"Min period duration":** Drops seasonal covariates associated with periods that have a mean duration shorter than that value (in days). This is useful for removing shortened periods (such as those a day or less in length) which may be part of the APSIM model definition but may not be relevant to the seasonal profile.
+
+-   **"Min variance within SC":** Drops seasonal covariates with a variance lower than this value. This can be used to remove variables with near-zero variance, which are likely uninformative.
+
+-   **"Min trial data completeness":** Drops trials with too much missing data (less than this proportion of their seasonal data is available). In the case that a simulation fails or is cut short, this can be used to remove suspicious trial data.
+
+-   **"Max SC correlation":** Drops highly correlated seasonal covariates. For highly correlated pairs, the variable with the largest mean absolute correlation is removed until all pair-wise correlations in the matrix are below this value. This can be used to control the multicollinearity within the data.
+
+To the right of these controls is a scrollable table of all of the seasonal covariates available for the similarity analysis. The first column gives the name of the covariate, and the second column, 'Status', gives whether or not it was included in the similarity analysis and on what criteria. The last column, 'Override', gives the user the option to override whatever other criteria they set and forcibly include or exclude the seasonal covariate from the analysis.
+
+The buttons below the table apply the user overrides and reset all selections. The 'Download SC Selection Table' button on the bottom right is used to download this table.
+
+### 6.4.2. The Seasonal Analogues Report
+
+Below the plot of the seasonal profile correlations, the user has an option to download a seasonal analogues report. The purpose of this report is to make general comparisons between the seasonal profiles of location and planting date combinations--- for example, how similar is the season for a maturity II planted in Urbana 5/15 to the season when its planted in Ames on 5/30? This report is useful for identifying analogous seasonal conditions between trials separated in locating and timing.
+
+The seasonal analogues report gives you the similarity of the seasonal profiles (within a cultivar maturity) summarized over the matching simulations of each year. This is taken from pivoting the seasonal correlation matrix to a long form dataframe, finding the correlations of seasonal profiles for matching years, and taking the mean of correlations of matching years.
+
+| Name                                 | Unit   | Description                                                                                                               |
+|-------------|-------------|----------------------------------------------|
+| ID.x                                 |        | The ID \# of the first trial in the comparison.                                                                           |
+| ID.y                                 |        | The ID \# of the second trial in the comparison.                                                                          |
+| Site.x                               |        | The name of the site for the first trial.                                                                                 |
+| Site.y                               |        | The name of the site for the second trial.                                                                                |
+| Planting_Date.x                      | MM/DD  |                                                                                                                           |
+| Planting_Date.y                      | MM/DD  |                                                                                                                           |
+| Variance_of_Seasonal_Corr            |        | Variance of the seasonal correlation of the location-planting combinations of trials one and two over all matching years. |
+| Mean_Seasonal_Corr                   |        | Mean seasonal correlation of the location-planting combinations of trials one and two over all matching years.            |
+| Distance\_(m)                        | meters | Distance between the sites of the two trials in meters.                                                                   |
+| Planting_Date_Offset\_(days)         | days   |                                                                                                                           |
+| Latitude.x                           |        |                                                                                                                           |
+| Latitude.y                           |        |                                                                                                                           |
+| Latitude_Diff                        |        |                                                                                                                           |
+| Mean_Diff_of_Season_Duration\_(days) | days   |                                                                                                                           |
+
+## 6.5. Thermal Time / Precipitation
+
+The two variables which drive the most variation in the seasonal profiles are thermal time (itself derived from temperature) and precipitation. The section "Thermal Time / Precipitation" allows the user to make comparisons of the normal conditions of a site in terms of these two variables, based on the last ten years of weather data. The start and end of the "typical" seasons is taken from the mean start and end times of the trial data entered for that location.
+
+### 6.5.1. Modify GDD Equation
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic6a_gdd.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+This page allows the user to modify the formula used to calculate Thermal Time, in growing degree days (GDD), for the figures in the Thermal Time / Precipitation section.
+
+This Thermal Time is different from--- and is should not be confused with--- the Thermal Time calculated within the APSIM simulations themselves. Thermal Time within the APSIM simulations is calculated separately for vegetative and reproductive periods. Because figures within this section use ten-year summaries for comparison, and the previous analysis likely won't have run a trial / crop simulation for each of the last ten years at each of the sites, the simulation results are only used to set the start and end date of the expected season at each site. Instead, the GDD is taken directly from the pre-collected weather data for each site.
+
+Users can set a base temperature and upper temperature for the GDD formula. The text below gives the current parameters of the formula, and a button below allows the user to recalculate daily GDD for their data.
+
+### 6.5.2. Typical TT/Precip Accumulation
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic6b_acc.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+The page "Typical TT/Precip Accumulation" allows the user to view the daily accumulated precipitation or thermal time of one or more sites over time. Users have the option to compare accumulated precipitation or accumulated thermal time by numbered day of the year or by a standardized number of days after planting. This is a quick visualization of how seasons are expected to progress between sites and can be used to demonstrate the variable rates of crop development between different locations.
+
+### 6.5.3. Site Yearly TT/Precip Totals
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic6c_ts.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+The "Site Yearly TT/Precip Totals" page allows users to compare seasonal thermal time and precipitation totals year by year. The plot shows, for a single site, the accumulated precipitation versus accumulated thermal time within the season for the last ten years of weather data. The dashed horizontal line on the graph represents the mean total thermal time for the last ten years, while the dashed vertical line represents the mean total precipitation for the last ten years. Selecting more than one site facet allows for comparison of yearly seasonal totals from multiple locations.
+
+This plot can be used to track changes in the seasons at a site or sites over time. A user can view and compare the stability of the season between locations and discern if conditions within the season appear to be trending in a direction over time.
+
+### 6.5.4. Ten Year Site TT/Precip Means
+
+::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
+<img src="pictures/pic6d_bigts.png" style="width: 80%; max-width: 1000px;"/>
+
+</p>
+:::
+
+The page "Ten Year Site TT/Precip Means" allows the user to plot mean total precipitation within the season by mean total thermal time within the season for each site using the weather data of the last ten years. The dashed horizontal line represents the mean total thermal time for all selected sites, while the dashed vertical line represents the mean total precipitation for all selected sites.
+
+This selection can be used to make comparisons between sites in terms of their typical season as described by thermal time and precipitation. When looking at a collection of sites, users can identify sites that diverge from the rest of the set in terms of these parameters and judge sites based on their total thermal time and precipitation relative to the group mean.

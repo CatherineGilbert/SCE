@@ -24,7 +24,7 @@ if (FALSE){
  soil_aquis <- "ISRIC"
  templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCE/template_models/Soy_Template.apsimx"
  templ_model <- file_path_sans_ext(basename(templ_model_path))
- trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/date_test.csv") 
+ trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/abc_test.csv") 
 }
 
 codes_dir <- here() #where the folder with the codes is
@@ -306,7 +306,7 @@ for (batch in 1:num_batches) {
   #all_results[[batch]] <- batch_results
   
   # Print errors for failed trials
-  errlog <- do.call(rbind, results)
+  errlog <<- do.call(rbind, results)
   print(paste(errlog))
   
   # Print out the progress
@@ -365,6 +365,7 @@ trial_info <- mutate(trial_info, DTM_Sim = as.numeric(SimMatDate - SimSowDate)) 
 trial_info <- rename(trial_info, MatDate_Sim = SimMatDate, PlantingDate_Sim = SimSowDate, HarvestDate_Sim = SimHarvestDate) 
 trial_info <- select(trial_info, -PlantingDate)
 trial_info <- relocate(trial_info, ID)
+trial_info <- select(trial_info, -any_of("...1"))
 
 # Periods
 if (mat_handling %in% c("Soy","Maize")) {
@@ -423,7 +424,7 @@ if (nrow(idp > 0)){
   for (col in col_names) {
     idp[[col]] <- NA
   }
-  idp <- mutate(idp, Duration = 0) #set duration of nonexistant periods to zero
+  idp <- mutate(idp, Duration = 0) #set duration of nonexistent periods to zero
   seasonal_data <- bind_rows(seasonal_data, idp) %>% arrange(ID, Period)
 }
 
@@ -432,6 +433,7 @@ daily_sim_outputs <- daily_output
 print("Writing Results ...")
 
 unlink("results",recursive = T) ; dir.create("results")
+
 write_csv(trial_info, "results/trial_info.csv")
 write_csv(seasonal_data, "results/seasonal_data.csv")
 write_csv(daily_sim_outputs, "results/daily_sim_outputs.csv")

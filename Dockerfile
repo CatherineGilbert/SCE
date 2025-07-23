@@ -3,6 +3,7 @@ FROM rocker/geospatial:4.5.0
 
 # Install required system dependencies for R packages and tools like APSIM
 #RUN apt-get update -y && apt-get install -y  make pandoc zlib1g-dev libxml2-dev libicu-dev cmake libgdal-dev gdal-bin libgeos-dev libcurl4-openssl-dev libssl-dev libproj-dev libsqlite3-dev libudunits2-dev libx11-dev libnetcdf-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev libjpeg-dev libpng-dev libtiff-dev git wget tar && rm -rf /var/lib/apt/lists/*
+
 RUN apt-get update -y && apt-get install -y \
   zlib1g-dev \
   git \

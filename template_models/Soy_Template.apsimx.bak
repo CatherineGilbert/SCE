@@ -1194,8 +1194,7 @@
                 "                    if (DateUtilities.WithinDates(StartDate, Clock.Today, EndDate) && // If no date specified, sow when parameters met. ",
                 "\t\t                    !Crop.IsAlive &&",
                 "\t\t                    MathUtilities.Sum(waterBalance.ESW) > MinESW &&",
-                "\t\t                    accumulatedRain.Sum > MinRain &&",
-                "\t\t                    CST.Value[1] >= SowTemp)",
+                "\t\t                    accumulatedRain.Sum > MinRain)",
                 "\t\t                {",
                 "\t\t                    SowNow = true;",
                 "\t\t                } ",
@@ -1218,7 +1217,56 @@
                 "    }",
                 "}"
               ],
-              "Parameters": null,
+              "Parameters": [
+                {
+                  "Key": "Crop",
+                  "Value": "[Soybean]"
+                },
+                {
+                  "Key": "SowDate",
+                  "Value": "NA"
+                },
+                {
+                  "Key": "StartDate",
+                  "Value": "15-march"
+                },
+                {
+                  "Key": "EndDate",
+                  "Value": "31-may"
+                },
+                {
+                  "Key": "MinESW",
+                  "Value": "100"
+                },
+                {
+                  "Key": "MinRain",
+                  "Value": "25"
+                },
+                {
+                  "Key": "RainDays",
+                  "Value": "7"
+                },
+                {
+                  "Key": "ForceSow",
+                  "Value": "True"
+                },
+                {
+                  "Key": "CultivarName",
+                  "Value": "Generic_MG1"
+                },
+                {
+                  "Key": "SowingDepth",
+                  "Value": "30"
+                },
+                {
+                  "Key": "RowSpacing",
+                  "Value": "750"
+                },
+                {
+                  "Key": "Population",
+                  "Value": "6"
+                }
+              ],
               "Name": "Sowing",
               "ResourceName": null,
               "Children": [],
@@ -1602,6 +1650,12 @@
                 "[Weather].MinT as MinT",
                 "[Soybean].Phenology.ThermalTime as ThermalTime",
                 "[Soybean].Phenology.AccumulatedEmergedTT as AccEmTT",
+                "[Soil].Temperature.Value[2] as SoilTemp",
+                "sum([Soil].Water.PAWmm) as PAWmm",
+                "sum([Soil].NH4.kgha) as NH4",
+                "sum([Soil].NO3.kgha) as NO3",
+                "sum([Soil].Urea.kgha) as Urea",
+                "sum([Nutrient].Organic.C) as OrganicC",
                 "[Soybean].Grain.Wt*10 as Yieldkgha",
                 "[Leaf].FRGR as FracGrowthRate",
                 "[Photosynthesis].FN as NutrientStress",

@@ -23,6 +23,7 @@ library(viridisLite)
 library(dendextend)
 library(scales)
 library(grid)
+library(leaflet)
 
 plan(multisession, workers = 2)
 
@@ -50,24 +51,33 @@ ui <- dashboardPage(
       menuItem("About", tabName = "info", icon = icon("circle-info")),
       menuItem("Upload and Analyze", tabName = "analysis", icon = icon("upload"))
     ),
-    div(id = "sidebar_spinner",
-        tags$div(style = "padding: 20px; text-align: left;",
-                 icon("spinner", class = "fa-spin"),
-                 "Loading ..."
-        )
-    ),
     hidden(
       div(id = "sidebar_menu",
           sidebarMenu(
             menuItem("View Results", tabName = "results", icon = icon("table-list")),
+            menuItem("View Map", tabName = "view_map", icon = icon("map")),
             menuItem("View Seasonal Heatmaps", tabName = "heatmap", icon = icon("fire")),
-            menuItem("View Trial Similarities", tabName = "trial_comp", icon = icon("seedling")),
+            menuItem("View Trial Similarities", tabName = "trial_comp", icon = icon("seedling"))
+          )
+      )
+    ),
+    hidden(
+      div(id = "ttpp_sidebar_menu",
+          sidebarMenu(
             menuItem("Thermal Time / Precipitation", icon = icon("cloud-sun-rain"),
-                     menuSubItem("Modify GDD Equation", tabName = "gdd_equation", icon = icon("calculator")),
-                     menuSubItem("Typical TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
-                     menuSubItem("Site Yearly TT/Precip Totals", tabName = "faceted_comparison", icon = icon("chart-area")),
-                     menuSubItem("Ten Year Site TT/Precip Means", tabName = "between_sites", icon = icon("chart-bar"))
+               menuSubItem("Modify GDD Equation", tabName = "gdd_equation", icon = icon("calculator")),
+               menuSubItem("Typical TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
+               menuSubItem("Site Yearly TT/Precip Totals", tabName = "faceted_comparison", icon = icon("chart-area")),
+               menuSubItem("Ten Year Site TT/Precip Means", tabName = "between_sites", icon = icon("chart-bar"))
             )
+          )
+      )
+    ),
+    hidden(
+      div(id = "sidebar_spinner",
+          tags$div(style = "padding: 20px; text-align: left;",
+                   icon("spinner", class = "fa-spin"),
+                   "Loading ..."
           )
       )
     )
@@ -133,14 +143,15 @@ ui <- dashboardPage(
           p("The", tags$b("Seasonal Characterization Engine (SCE)"), " describes growing environment in terms of the crop's 
             development. Using APSIM, a procedural crop simulation program, the tool simulates the growth 
             of a crop according to specified 'trial' conditions and returns seasonal profiles consisting 
-            of environmental parameters aligned with crop phenology. This tool can be used to more accurately
+            of environmental variables aligned with crop phenology. This tool can be used to more accurately
             assess and compare the growing conditions experienced by crops, and to generate seasonal covariates 
             which can be used in later crop modeling."),
           fluidRow(
             column(
-              width = 8, offset = 0,
+              width = 12, offset = 0,
             tags$a("Go to GitHub Repo", href = "https://github.com/CatherineGilbert/SCE", target = "_blank", class = "btn btn-primary",),
-            tags$a("Open Documentation", href = "https://github.com/CatherineGilbert/SCE/blob/main/SCE_Documentation.docx", target = "_blank", class = "btn btn-primary",),
+            tags$a("Open Documentation", href = "SCE_Documentation.html", target = "_blank", class = "btn btn-primary",),
+            downloadButton("download_ex", "Download Example Files", class = "btn btn-primary", style = "color: white;")
             )
             ),
           p(""),
@@ -166,14 +177,27 @@ ui <- dashboardPage(
                       shiny::span(icon("info-circle"), id = "tip_input")
                     ), accept = c(".csv")
                   ),
+
+                  div(style = "margin-top: -20px; margin-left: 20px;",
+                      checkboxInput("useExampleInput", "Use example file?", value = FALSE),
+                      uiOutput("exampleOptions")
+                  ),
+
+
                   fileInput(
-                    "modelChoice",
+                    "templateUpload",
                     label = tagList(
                       "Select Template Crop Model:",
                       shiny::span(icon("info-circle"), id = "tip_tempmodel")
                     ), 
                     accept = c(".apsimx")
                   ),
+                  
+                  div(style = "margin-top: -20px; margin-left: 20px;",
+                      checkboxInput("useExampleTemplate", "Use example file?", value = FALSE),
+                      uiOutput("exampleTemplate")
+                  ),
+                  
                   selectInput(
                     "matType",
                     label = tagList(
@@ -198,8 +222,7 @@ ui <- dashboardPage(
                   selectInput(
                     "soilAquis",
                     "Select Soil Aquisition:",
-                    choices = c("SSURGO" = "SSURGO",
-                                "ISRIC" = "ISRIC")
+                    choices = c("ISRIC" = "ISRIC","SSURGO" = "SSURGO")
                   )
                 ),
                 box(
@@ -210,7 +233,7 @@ ui <- dashboardPage(
                     tags$i(
                       id = "runSpinner",
                       class = "fa fa-spinner fa-spin",
-                      style = "display:none; font-size: 24px; color: white;"  # match spinner to your theme
+                      style = "display:none; font-size: 24px; color: white;"
                     )
                   )
                 ),
@@ -262,10 +285,10 @@ ui <- dashboardPage(
                                " the combined total output of the APSIM simulations; contains the recorded values of the reporting variables for each day of each simulation.", 
                                tags$br(),
                                tags$strong("seasonal_data:"),
-                               " the seasonal profile; contains environmental and biological parameters summarized by developmental period.", 
+                               " the seasonal profile; contains environmental and biological variables summarized by developmental period.", 
                                tags$br(),
                                tags$strong("final_x:"),
-                               " joins trial_info and seasonal_data; contains the full outputs of the seasonal characterization engine in wide format. The naming convention of period-specific parameters is 'Variable_Period', e.g., 'Rain_5' is the mean rainfall within the fifth period of development.",
+                               " joins trial_info and seasonal_data; contains the full outputs of the seasonal characterization engine in wide format. The naming convention of seasonal covariates (e.g. period-specific variables) is 'Variable_Period', e.g., 'Rain_5' is the mean rainfall within the fifth period of development.",
                                tags$br(),
                                tags$strong("period_key:"),
                                "  table showing which APSIM stage each Period maps to."
@@ -302,16 +325,21 @@ ui <- dashboardPage(
                 )),
                 DTOutput("viewData")
               )),
+      ### map view UI  -----
+    tabItem(tabName = "view_map",
+            fluidPage(
+              leafletOutput("map", height = 800)
+            )),
       ### heatmap UI ----
       tabItem(
         tabName = "heatmap",
         fluidPage(
           h3("Seasonal Heatmaps"),
-          p("This section allows you to create a heatmap to visually compare values of a seasonal parameter 
+          p("This section allows you to create a heatmap to visually compare values of a seasonal variable 
             across the periods of the crop's development between different trials or sites."),
-          p("Use the dropdown menus to select which maturity group to view, the parameter to inspect,
+          p("Use the dropdown menus to select which maturity group to view, the variable to inspect,
             and whether this comparison should be made between trials or sites. If trials are chosen, 
-            the cell values will simply be the recorded values of that parameter for that combination of period 
+            the cell values will simply be the recorded values of that variable for that combination of period 
             and trial. If sites are chosen this will be the means of the same values for each site."
           ),
           p("The X axis of the plot is the developmental period and the Y axis of the plot is the trial/site. 
@@ -384,21 +412,34 @@ ui <- dashboardPage(
             right in the format [Trial ID:] [Site Name] [Date Planted]. 
           "),
           h3("Dendrogram of Seasonal Similarities"),
-          numericInput(inputId = "k_val", label = "Cluster #", val = 3, min = 1, max = 1000, step = 1),
+          fluidRow(
+            column(width = 3, 
+                   numericInput(inputId = "k_val", label = "Cluster #", val = 3, min = 1, max = 1000, step = 1)
+                   ),
+            column(width = 3,
+                   numericInput(
+                     inputId = "dendro_cex",
+                     label = "Adjust Label Size",
+                     value = 1,        
+                     min = 0,          
+                     max = 2,          
+                     step = 0.1        
+                   ))
+          ),
           uiOutput("dendroPlotUI"),
           downloadButton("trial_downloadDendro", "Download Dendrogram Plot (.png)"),
           downloadButton("downloadDendroObj", "Download Dendrogram Object (.rds)"),
           p("
             The dendrogram above is the same dendrogram at the sides of the heatmap plot, but pulled out for easier viewing. 
           "),
-          h3("Parameter Controls"),
+          h3("Seasonal Covariate Controls"),
           p("  
             Using the controls below, you can change the decision criteria for including or excluding seasonal
             covariates from the similarity calculations. Below and to the right is a scrollable table of all of the 
-            seasonal covariates available for the similarity analysis. The first column, 'Parameter', gives the name of
+            seasonal covariates available for the similarity analysis. The first column, 'Seasonal Covariate', gives the name of
             the covariate, and the second column, 'Status', gives whether or not it was included in the analysis and 
             on what criteria. The last column, 'Override', gives you the option to override whatever other criteria you set and 
-            forcibly include or exclude the parameter from the analysis. The 'Apply Overrides' button *must* be used to apply changes.
+            forcibly include or exclude the seasonal covariate from the analysis. The 'Apply Overrides' button *must* be used to apply changes.
             The button on the bottom right can be used to download this table. 
           "),
           fluidRow(
@@ -419,26 +460,26 @@ ui <- dashboardPage(
                    
                    numericInput("nzv_chk", 
                                 label = tagList(
-                                  "Min parameter variance:", 
+                                  "Min variance within SC:", 
                                   shiny::span(icon("info-circle"), id = "tip_nzv_chk")
                                 ), 
-                                value = 1e-6, min = 1e-10, max = 1),
+                                value = 1e-10, min = 1e-10, max = 1, step = 0.0001),
                    
                    numericInput("empty_chk", 
                                 label = tagList(
                                   "Min trial data completeness:", 
                                   shiny::span(icon("info-circle"), id = "tip_empty_chk")
                                 ), 
-                                value = 0.9, min = 0, max = 1, step = 0.01),
+                                value = 1e-10, min = 1e-10, max = 1, step = 0.01),
                    
                    numericInput("var_chk", 
                                 label = tagList(
-                                  "Max parameter correlation:", 
+                                  "Max SC correlation:", 
                                   shiny::span(icon("info-circle"), id = "tip_var_chk")
                                 ), 
-                                value = 0.90, min = 0, max = 1, step = 0.01),
+                                value = 1, min = 0, max = 1, step = 0.01),
                    
-                   downloadButton("downloadParamTable", "Download Parameter Table (.csv)")
+                   downloadButton("downloadParamTable", "Download SC Selections Table (.csv)")
             ),
             column(width = 8, 
                    div(
@@ -463,8 +504,9 @@ ui <- dashboardPage(
       ### TT / precip UIs ----
       tabItem(tabName = "gdd_equation",
               fluidPage(
+                h2("Modify GDD Equation"),
                 p(
-                  "Modify the GDD equation used to calculate Thermal Time for these charts."
+                  "Modify the parameters of the GDD equation used to calculate Thermal Time for the charts within this tab."
                 ),
                 div(
                   withMathJax(
@@ -497,9 +539,10 @@ ui <- dashboardPage(
               )),
       tabItem(tabName = "daily_between_sites",
               fluidPage(
+                h2("Typical TT/Precip Accumulation"),
                 p(
                   "This section allows you to compare the accumulation of precipitation and thermal 
-                  time during the typical growing season at each site. Select the parameter to view and sites to compare for the visualization."
+                  time during the typical growing season at each site. Select the variable to view and sites to compare for the visualization."
                 ),
                 selectInput(
                   "comparisonType",
@@ -524,6 +567,7 @@ ui <- dashboardPage(
               )),
       tabItem(tabName = "faceted_comparison",
               fluidPage(
+                h2("Site Yearly TT/Precip Totals"),
                 p(
                   "This section shows, for each site, the total accumulated precipitation and thermal time during 
                   each year's expected growing season. The dashed lines on the graph represent the 
@@ -539,10 +583,10 @@ ui <- dashboardPage(
                   step = 1        
                 ),
                 fluidRow(
-                  column(width = 2,
+                  column(width = 3,
                          uiOutput("siteSelectionUI_faceted")),
                   column(
-                    width = 10,
+                    width = 9,
                     plotOutput("facetedComparisonPlot", height = "600px"),
                     downloadButton("downloadFacetedComparisonPlot", "Download Plot (.png)")
                   )
@@ -550,6 +594,7 @@ ui <- dashboardPage(
               )),
       tabItem(tabName = "between_sites",
               fluidPage(
+                h2("Ten Year Site TT/Precip Means"),
                 p(
                   "This figure shows the 10-year averages of accumulated thermal time and precipitation 
                   for a typical growing season at each site. The dashed horizontal line represents the 
@@ -565,10 +610,10 @@ ui <- dashboardPage(
                   step = 1        
                 ),
                 fluidRow(
-                  column(width = 2,
+                  column(width = 3,
                          uiOutput("siteSelectionUI_between")),
                   column(
-                    width = 10,
+                    width = 9,
                     plotOutput("plotBetweenSites", height = "600px"),
                     downloadButton("downloadBetweenSitesPlot", "Download Plot (.png)")
                   )
@@ -589,6 +634,7 @@ server <- function(input, output, session) {
   #analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
   analysisDone <- reactiveVal(TRUE)
+  analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
   if(!dir.exists(output_dir)) {dir.create(output_dir)}
@@ -600,38 +646,76 @@ server <- function(input, output, session) {
   palette <- rev(pal_f(50)[1:50])
   
  # Front Page / Analysis ----
-  ## select template model ------
-  observeEvent(input$modelChoice, {
-    tryCatch({
-      file.remove(list.files(input_dir, pattern = ".apsimx", full.names = TRUE))
-      tmp_path <- paste0(input_dir, "/", input$modelChoice$name)
-      file.copy(input$modelChoice$datapath, 
-                tmp_path, overwrite = TRUE)
-      if (file.exists(tmp_path)) {
-        cat("Template model copy successful\n")
-      } else {
-        cat("Template model copy failed\n")
-      }
-    }, error = function(e) {
-      cat("An error occurred during template model file copy: ", e$message, "\n")
-    })
+  
+  ## download examples ------
+  output$download_ex <- downloadHandler(
+    filename = function() {
+      "SCE_examples.zip"
+    },
+    content = function(file) {
+      files_to_zip <- c(paste0(codes_dir,"example_input_files/soy_example_input.csv"), 
+                        paste0(codes_dir,"example_input_files/maize_example_input.csv"),
+                        paste0(codes_dir,"template_models/Soy_Template.apsimx"),
+                        paste0(codes_dir,"template_models/Maize_Template.apsimx")
+                        )
+      
+      # Create a temporary directory and copy files there
+      tmp_dir <- tempdir()
+      file_paths <- file.path(tmp_dir, files_to_zip)
+      file.copy(files_to_zip, file_paths, overwrite = TRUE)
+      
+      # Create ZIP
+      zip(zipfile = file, files = file_paths, flags = "-j")  # -j = junk the paths
+    },
+    contentType = "application/zip"
+  )
+  
+  
+  ## UI for example files --------
+  ## Disable/enable fileInput 
+  observe({
+    if (input$useExampleInput) {
+      shinyjs::disable("fileUpload")
+    } else {
+      shinyjs::enable("fileUpload")
+    }
   })
   
-  ## file upload ---- 
-  observeEvent(input$fileUpload, {
-    tryCatch({
-      file.remove(list.files(input_dir, pattern = ".csv", full.names = TRUE))
-      tmp_path <- paste0(input_dir, "/", input$fileUpload$name)
-      file.copy(input$fileUpload$datapath, 
-                tmp_path, overwrite = TRUE)
-      if (file.exists(tmp_path)) {
-        cat("File copy successful\n")
-      } else {
-        cat("File copy failed\n")
-      }
-    }, error = function(e) {
-      cat("An error occurred during file copy: ", e$message, "\n")
-    })
+  ## Conditionally show radio buttons for example inputs
+  output$exampleOptions <- renderUI({
+    if (input$useExampleInput) {
+      wellPanel(
+        style = "padding: 0px;",
+        div(style = "padding: 10px; margin-bottom: -15px;",
+            radioButtons("exampleInput",NULL,
+                         choices = c("Soybean", "Maize"),
+                         inline = TRUE)
+        )
+      )
+    }
+  })
+  
+    ## Disable/enable template upload
+  observe({
+    if (input$useExampleTemplate) {
+      shinyjs::disable("templateUpload")
+    } else {
+      shinyjs::enable("templateUpload")
+    }
+  })
+  
+  ## Conditionally show radio buttons for example template models
+  output$exampleTemplate <- renderUI({
+    if (input$useExampleTemplate) {
+      wellPanel(
+        style = "padding: 0px;",
+        div(style = "padding: 10px; margin-bottom: -15px;",
+          radioButtons("exampleTemplate",NULL,
+                       choices = c("Soybean", "Maize"),
+                       inline = TRUE)
+        )
+      )
+    }
   })
   
   ## set parameters -------
@@ -650,45 +734,155 @@ server <- function(input, output, session) {
   })
   
   ## set progress counters -------
-  nloc <- reactiveVal(NULL)
-  ntrials <- reactiveVal(NULL)
+  nloc <- reactiveVal(0)
+  ntrials <- reactiveVal(0)
   met_count <- reactiveVal(0)
   soil_count <- reactiveVal(0)
   sim_count <- reactiveVal(0)
   out_count <- reactiveVal(0)
   valid_count <- reactiveVal(0)
+  prog_error <- reactiveVal(NA)
+  prog_m <- reactiveVal(NA)
   
   ## run the analysis ----
+  
   observeEvent(input$runAnalysis, {
-    req(input$fileUpload, input$modelChoice)
-    
+    #check if analysis already in progress. if so, don't disrupt
     if (analysisInProgress()) {
       cat("Analysis already in progress.\n")
+      return()
+    } 
+
+    analysisInProgress(TRUE)
+    analysisDone(FALSE)
+    analysisFailed(FALSE)
+    
+    shinyjs::show("runSpinner")
+    shinyjs::hide("sidebar_menu")
+    shinyjs::hide("ttpp_sidebar_menu")
+    
+    # reset counters for the progress update
+    prog_error(NA)
+    prog_m(NULL)
+    met_count(0)
+    soil_count(0)
+    sim_count(0)
+    out_count(0)
+    valid_count(0)
+    ntrials(0)
+    nloc(0)
+    
+    prog_m(c(prog_m(), "Starting ..."))
+    
+    #check if input chosen
+    if ((!input$useExampleInput & !is.null(input$fileUpload)) | 
+        (input$useExampleInput & !is.null(input$exampleInput))
+    ){
+
     } else {
-      analysisInProgress(TRUE)
-      analysisDone(FALSE)
+      cat("No trial input choice detected.\n")
+      analysisFailed(TRUE) ; analysisInProgress(FALSE)
+      prog_error(c("No trial input choice detected."))
+      return()
+    }
+    
+    #check if template chosen
+    if ((!input$useExampleTemplate & !is.null(input$templateUpload)) | 
+        (input$useExampleTemplate & !is.null(input$exampleTemplate))
+    ){
+
+    } else {
+      cat("No template model choice detected.\n")
+      analysisFailed(TRUE) ; analysisInProgress(FALSE)
+      prog_error(c("No template model choice detected."))
+      return()
+    }
+    
+    
+    #clear existing files
+    unlink(paste0(output_dir,"/met"),recursive = T) ; dir.create(paste0(output_dir,"/met"))
+    unlink(paste0(output_dir,"/soils"),recursive = T) ; dir.create(paste0(output_dir,"/soils"))
+    unlink(paste0(output_dir,"/apsim"),recursive = T) ; dir.create(paste0(output_dir,"/apsim"))
+    unlink(paste0(output_dir,"/results"),recursive = T) ; dir.create(paste0(output_dir,"/results"))
+    
+    #set parameters
+    parms <- tibble(mat_handling = mat_handling(), 
+                    weather_aquis = weather_aquis(), 
+                    soil_aquis = soil_aquis())
+    write_csv(parms, paste0(codes_dir,"/output_files/parameters.csv"))
+    
+    ### upload template model -----
+    
+    prog_m(c(prog_m(), "Copying template model ..."))
+    
+      file.remove(list.files(input_dir, pattern = ".apsimx", full.names = TRUE))
+      if(input$useExampleTemplate == TRUE){
+        if (input$exampleTemplate == "Soybean") {
+          send_tmp_path <- paste0(input_dir, "/Soy_Template.apsimx")
+          source_tmp_path <- paste0(codes_dir,"/template_models/Soy_Template.apsimx")
+        } else if (input$exampleTemplate == "Maize") {
+          send_tmp_path <- paste0(input_dir, "/Maize_Template.apsimx")
+          source_tmp_path <- paste0(codes_dir,"/template_models/Maize_Template.apsimx")
+        }
+      } else if (!is.null(input$templateUpload)) {
+        send_tmp_path <- paste0(input_dir, "/", input$templateUpload$name)
+        source_tmp_path <- input$templateUpload$datapath
+      } else {
+        cat("No template model detected.")
+        analysisFailed(TRUE) ; analysisInProgress(FALSE)
+        prog_error(c("No template model detected."))
+        return()
+      }
+      file.copy(source_tmp_path, send_tmp_path, overwrite = TRUE)
+      if (file.exists(send_tmp_path)) {
+        cat("Template model copy successful\n")
+      } else {
+        cat("Template model copy failed\n")
+        analysisFailed(TRUE) ; analysisInProgress(FALSE)
+        prog_error(c("Template model copy failed."))
+        return()
+      }
+    
+    ### upload trial .csv -----
+
+      prog_m(c(prog_m(), "Reading input file ..."))
       
+        file.remove(list.files(input_dir, pattern = ".csv", full.names = TRUE))
+        if(input$useExampleInput == TRUE){
+          if (input$exampleInput == "Soybean") {
+            send_tmp_path <- paste0(input_dir, "/soy_example_input.csv")
+            source_tmp_path <- paste0(codes_dir,"/example_input_files/soy_example_input.csv")
+          } else if (input$exampleInput == "Maize") {
+            send_tmp_path <- paste0(input_dir, "/maize_example_input.csv")
+            source_tmp_path <- paste0(codes_dir,"/example_input_files/maize_example_input.csv")
+          }
+        } else if (!is.null(input$fileUpload)) {
+          send_tmp_path <- paste0(input_dir, "/", input$fileUpload$name)
+          source_tmp_path <- input$fileUpload$datapath
+        } else {
+          cat("No input file detected.")
+          analysisFailed(TRUE) ; analysisInProgress(FALSE)
+          prog_error(c("No input file detected."))
+          return()
+        }
+        file.copy(source_tmp_path, send_tmp_path, overwrite = TRUE)
+        if (file.exists(send_tmp_path)) {
+          cat("Input file copy successful.")
+        } else {
+          cat("Input file copy failed\n")
+          analysisFailed(TRUE) ; analysisInProgress(FALSE)
+          prog_error(c("Input file copy failed."))
+          return()
+        }
+        
+    ### call analysis script  -----
+      
+      #get the input and set associated progress counters
       input <- read_csv(list.files(input_dir, pattern = ".csv", full.names = TRUE))
-      
-      #clear existing files
-      unlink(paste0(output_dir,"/met"),recursive = T) ; dir.create(paste0(output_dir,"/met"))
-      unlink(paste0(output_dir,"/soils"),recursive = T) ; dir.create(paste0(output_dir,"/soils"))
-      unlink(paste0(output_dir,"/apsim"),recursive = T) ; dir.create(paste0(output_dir,"/apsim"))
-      
-      #reset counters for the progress updates
       nloc(nrow(distinct(select(input, Latitude, Longitude))))
       ntrials(nrow(input))
-      met_count(0)
-      soil_count(0)
-      sim_count(0)
-      out_count(0)
-      valid_count(0)
       
-      #set parameters
-      parms <- tibble(mat_handling = mat_handling(), 
-                      weather_aquis = weather_aquis(), 
-                      soil_aquis = soil_aquis())
-      write_csv(parms, paste0(codes_dir,"/output_files/parameters.csv"))
+      prog_m(c(prog_m(), "Getting trial parameters ..."))
       
       future({
         cat("Running analysis ...")
@@ -698,9 +892,11 @@ server <- function(input, output, session) {
         analysisInProgress(FALSE)
         analysisDone(TRUE)  
         count_files()
-      }) %>% catch(function(err) {  # Catch errors gracefully
+      }) %>% 
+        catch(function(err) {  # Catch analysis errors 
         cat("Error in analysis:", err$message, "\n")
         analysisInProgress(FALSE)
+        analysisFailed(TRUE)
       })
       
       observe({
@@ -708,7 +904,6 @@ server <- function(input, output, session) {
         count_files()
         invalidateLater(500, session) 
       })
-    }
   })
   
   ## live folder updates ----------
@@ -718,6 +913,7 @@ server <- function(input, output, session) {
   
   # Function to count files in each directory
   count_files <- function() {
+    if (!(nloc() >= 1 & ntrials() >= 1)) {return()}
     if (met_count() != nloc()) {
       met_count(length(list.files(met_dir, pattern = "\\.met$", recursive = FALSE))) 
     } 
@@ -740,57 +936,72 @@ server <- function(input, output, session) {
   }
   
   output$progressLog <- renderText({
-    req(analysisDone() || analysisInProgress())
+    req(analysisDone() || analysisInProgress() || analysisFailed())
     
     logs <- c()
     
-    logs <- c(logs, "Starting ...")
+    logs <- c(logs, prog_m())
     
-    if (met_count() > 0) {
-      logs <- c(logs, sprintf("%d .met files collected (%.1f%%)", 
-                              met_count(), 100 * met_count() / nloc()))
+    if (ntrials() >= 1) {
+    
+      if (met_count() > 0) {
+        logs <- c(logs, sprintf("%d .met files collected (%.1f%%)", 
+                                met_count(), 100 * met_count() / nloc()))
+      }
+      
+      if (soil_count() > 0) {
+        logs <- c(logs, sprintf("%d soil profiles collected (%.1f%%)", 
+                                soil_count(), 100 * soil_count() / nloc()))
+      }
+      
+      if (sim_count() > 0) {
+        logs <- c(logs, sprintf("%d apsimx files generated (%.1f%%)", 
+                                sim_count(), 100 * sim_count() / ntrials()))
+      }
+      
+      if (out_count() > 0) {
+        logs <- c(logs, sprintf("%d simulations finished (%.1f%%)\n[[%d sims confirmed successful (%.1f%%)]]",
+                                out_count(), 100 * out_count() / ntrials(),
+                                valid_count(), 100 * valid_count() / ntrials()))
+      }
+      
+      if (out_count() == ntrials()){
+        logs <- c(logs, "Processing ...")
+      }
+      
+      if (analysisDone()) {
+        logs <- c(logs, "Finished.")
+      }
     }
     
-    if (soil_count() > 0) {
-      logs <- c(logs, sprintf("%d soil profiles collected (%.1f%%)", 
-                              soil_count(), 100 * soil_count() / nloc()))
-    }
-    
-    if (sim_count() > 0) {
-      logs <- c(logs, sprintf("%d apsimx files generated (%.1f%%)", 
-                              sim_count(), 100 * sim_count() / ntrials()))
-    }
-    
-    if (out_count() > 0) {
-      logs <- c(logs, sprintf("%d simulations finished (%.1f%%)\n[[%d sims confirmed successful (%.1f%%)]]",
-                              out_count(), 100 * out_count() / ntrials(),
-                              valid_count(), 100 * valid_count() / ntrials()))
-    }
-    
-    if (out_count() == ntrials()){
-      logs <- c(logs, "Processing ...")
-    }
-    
-    if (analysisDone()) {
-      logs <- c(logs, "Finished.")
+    #### error messages in the progress log ----------------
+    if (analysisFailed()) {
+      logs <- c(logs, "\nERROR ///////////")
+      if (!is.na(prog_error())) {logs <- c(logs, prog_error())}
+      if (nloc() > 0 & ntrials() > 0){
+        if (met_count() == 0){logs <- c(logs, ".met files could not be generated.")}
+        if (soil_count() == 0){logs <- c(logs, ".soils files could not be generated.")}
+        if (sim_count() == 0){logs <- c(logs, ".apsimx files could not be generated.")}
+        if (out_count() == 0){logs <- c(logs, "No simulations ran successfully.")}
+        if (met_count() != 0 & soil_count() != 0 & sim_count() != 0 & out_count() != 0) {
+           logs <- c(logs, "Something went wrong processing the results.")
+         }
+      }
     }
     
     paste(logs, collapse = "\n")
   })
   
   site_list <- reactiveVal(NULL)
-  filtmet <- reactiveVal(NULL)
+  filtmet <- reactiveVal(NULL)  
   base_temp <- reactiveVal()
   max_temp <- reactiveVal()
-  
   
   ## immediately after analysis ----
   observe({
     req(analysisDone())
-    
+    shinyjs::hide("runSpinner")
     shinyjs::show("sidebar_spinner")
-    print("show sidebar spinner-------------------------------------------------")
-    shinyjs::hide("sidebar_menu")
     
     trial_info <<- read_csv(paste0(results_dir, "/trial_info.csv"))
     final_x <<- read_csv(paste0(results_dir, "/final_x.csv"))
@@ -800,51 +1011,74 @@ server <- function(input, output, session) {
     
     nametag <<- select(final_x, ID, Site, PlantingDate_Sim, Mat) %>% 
       mutate(tag = paste0(ID,": ", Site, " ", PlantingDate_Sim),
-             mtag = paste0(ID,": ", Mat, " ", Site, " ", PlantingDate_Sim)) 
-    
-    ### start and end of simulation as doy, going over 365 if wrapping over the new year -----
-    startend <- select(trial_info, Site, Year, ID, Mat, PlantingDate_Sim, HarvestDate_Sim) %>%
-      mutate(first_doy = yday(PlantingDate_Sim), 
-             until_final =  as.numeric(as_date(HarvestDate_Sim) - as_date(PlantingDate_Sim)),
-             final_doy = first_doy + until_final) #done this way because final_doy can go over 365
-    ### mean start doy and end doy for each site ------
-    mean_startend <<- group_by(startend, Site) %>% 
-      summarize(first_doy = mean(first_doy, na.rm = T), final_doy = mean(final_doy, na.rm = T))
-    
-    ### get thermal time and precip for the last ten years of records ------
-    prev_year <- as.numeric(substr(Sys.time(),1,4)) - 1
-    bigmet <- data.frame()
-    for(s in 1:max(trial_info$ID_Loc)){
-      try({
-        lil_met <- read_apsim_met(paste0("./met/loc_",s,".met"), verbose = F) %>% as_tibble() %>%
-          filter(year >= prev_year - 9, year <= prev_year) %>% mutate(ID_Loc = s)
-        bigmet <- bind_rows(bigmet, lil_met)
-      })
-    }
-    bigmet <- trial_info %>% select(Site, ID_Loc) %>% distinct() %>% left_join(bigmet) %>% group_by(Site, ID_Loc, year, day)
-    bigmet <<- bigmet
-    
-    base_temp(input$base_temp)
-    max_temp(input$max_temp)
-    
-    bigmet_gdd <- mutate(bigmet, tt = max((min(maxt,max_temp()) + max(mint,base_temp()))/2 - base_temp(),0)) %>% ungroup()
-    bigmet_gdd <- bigmet_gdd %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
-    filtmet(bigmet_gdd)
+             mtag = paste0(ID,": ", Mat, " ", Site, " ", PlantingDate_Sim))
     
     ### refresh progress counters again ----
     nloc(nrow(distinct(select(trial_info, Latitude, Longitude))))
     ntrials(nrow(trial_info))
     count_files()
-    
     site_list(sort(unique(trial_info$Site)))
     
-    shinyjs::hide("sidebar_spinner")
-    shinyjs::show("sidebar_menu")
+    req(analysisDone())
+    base_temp(input$base_temp)
+    max_temp(input$max_temp)
+    ttpp <- ttpp_crunch()  # run your slow function here
+    bigmet <<- ttpp$bigmet
+    mean_startend <<- ttpp$mean_startend
+    filtmet(ttpp$bigmet_gdd)
     
+    ## show sidebar stuff ----
+    shinyjs::hide("sidebar_spinner")
+    shinyjs::show("ttpp_sidebar_menu")
+    shinyjs::show("sidebar_menu")
+
   }) %>% bindEvent(analysisDone())
   
-  ## set filtmet from GDD ------------
-  
+  ## crunch met data for TT/Precipitation analysis ------------
+  ttpp_crunch <- function(){
+    
+    prev_year <- year(Sys.Date()) - 1
+    id_locs <- unique(trial_info$ID_Loc)
+    
+    ### start and end of simulation as doy, going over 365 if wrapping over the new year -----
+    mean_startend <- trial_info %>%
+      transmute(Site, 
+                first_doy = yday(PlantingDate_Sim),
+                until_final =  as.numeric(as_date(HarvestDate_Sim) - as_date(PlantingDate_Sim)),
+                final_doy = first_doy + until_final) %>% #done this way because final_doy can go over 365
+      group_by(Site) %>%
+      summarize(across(c(first_doy, final_doy), ~mean(.x, na.rm = TRUE)), .groups = "drop")
+    
+    ### get thermal time and precip for the last ten years of records ------
+    met_list <- map(id_locs, function(s) {
+      file_path <- paste0("./met/loc_", s, ".met")
+      tryCatch({
+        read_apsim_met(file_path, verbose = FALSE) %>%
+          as_tibble() %>%
+          filter(year >= prev_year - 9, year <= prev_year) %>%
+          mutate(ID_Loc = s)
+      }, error = function(e) NULL)
+    })
+    bigmet <- bind_rows(met_list)
+    
+    bigmet <- bigmet %>% left_join(distinct(trial_info, Site, ID_Loc), by = "ID_Loc") 
+    
+    max_temp <- input$max_temp
+    base_temp <- input$base_temp
+    
+    bigmet_gdd <- bigmet %>%
+      mutate(tt = pmax((pmin(maxt, max_temp) + pmax(mint, base_temp)) / 2 - base_temp, 0)) %>%
+      left_join(mean_startend, by = "Site") %>%
+      filter(day >= first_doy & day <= final_doy)
+    
+    list(
+      mean_startend = mean_startend,
+      bigmet = bigmet,
+      bigmet_gdd = bigmet_gdd
+    )
+  }
+
+  ### recalculate GDD ------
   observeEvent({
     input$recalc_GDD
   }, {
@@ -853,16 +1087,6 @@ server <- function(input, output, session) {
     bigmet_gdd <- mutate(bigmet, tt = max((min(maxt,input$max_temp) + max(mint,input$base_temp))/2 - input$base_temp,0)) %>% ungroup()
     bigmet_gdd <- bigmet_gdd %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
     filtmet(bigmet_gdd)
-  })
-  
-  
-  ## show and hide spinner ----
-  observe({
-    if (analysisInProgress()) {
-      shinyjs::show("runSpinner")
-    } else {
-      shinyjs::hide("runSpinner")
-    }
   })
   
   ## download results ----
@@ -890,6 +1114,15 @@ server <- function(input, output, session) {
       shinyjs::enable("downloadData")
     } else {
       shinyjs::disable("downloadData")
+    }
+  })
+  
+  ## show and hide spinner ----
+  observe({
+    if (analysisInProgress()) {
+      shinyjs::show("runSpinner")
+    } else {
+      shinyjs::hide("runSpinner")
     }
   })
   
@@ -993,21 +1226,25 @@ server <- function(input, output, session) {
   
   ## select maturity for heatmap -----
   output$season_matSelectUI <- renderUI({
+    req(analysisDone())
     gen_choices <- unique(trial_info$Mat)
     selectInput(inputId = "season_matSelect", label = "Select Maturity", choices = gen_choices, selected = gen_choices[1])
   })
   
   ## select variable for heatmap ----
   output$season_varHeatmapUI <- renderUI({
+    req(analysisDone())
     varchoice <- seasonal_data %>% ungroup() %>% select(where(is.numeric) & !c(ID, Period)) %>% names()
-    selectInput("season_varSelect", "Select Parameter", choices = varchoice)
+    selectInput("season_varSelect", "Select Variable", choices = varchoice)
   })
   
   ## generate heatmap ----
-  output$season_heatmapPlot <- renderPlot(
-    {
+    
+  create_heatmap <- function(){
+    
       req(input$season_varSelect)  # Ensure a variable is selected
       req(input$season_heatBy)
+      req(input$season_matSelect)
       matsel <- input$season_matSelect 
       var <- input$season_varSelect
       heatby <- input$season_heatBy
@@ -1107,7 +1344,11 @@ server <- function(input, output, session) {
       popViewport()
       
       popViewport() 
-    })
+  }
+  
+  output$season_heatmapPlot <- renderPlot(create_heatmap())
+  
+
   
   ## render heatmap ----
   output$season_heatmapPlotUI <- renderUI({
@@ -1189,6 +1430,20 @@ server <- function(input, output, session) {
                 paging = FALSE,
                 searching = FALSE
               ))
+  })
+  
+  # View Map ----
+  
+  output$map <- renderLeaflet({
+    req(analysisDone)
+    locs_df <- select(trial_info, Site, Latitude, Longitude) %>% distinct()
+    leaflet(locs_df) %>%
+      addTiles() %>%
+      addMarkers(
+        lng = ~Longitude,
+        lat = ~Latitude,
+        label = ~Site
+      )
   })
   
   
@@ -1458,7 +1713,7 @@ server <- function(input, output, session) {
     req(out_used_params())
     
     header <- fluidRow(
-      column(4, strong("Parameter")),
+      column(4, strong("Seasonal Covariate")),
       column(4, strong("Status")),
       column(4, strong("Override"))
     )
@@ -1591,12 +1846,12 @@ server <- function(input, output, session) {
         status
       }
     }, base_table$Status, base_table$Override)
-    base_table[, c("Parameter", "Status", "Override", "EffectiveStatus")]
+    base_table[, c("Seasonal Covariate", "Status", "Override", "EffectiveStatus")]
   }
   
   output$downloadParamTable <- downloadHandler(
     filename = function(){
-      paste0("param-table_", input$trial_matSelect, "_", Sys.Date(), ".csv")
+      paste0("sc-selection-table_", input$trial_matSelect, "_", Sys.Date(), ".csv")
     },
     content = function(file) {
       param_out <- as_tibble(get_current_param_table())
@@ -1653,6 +1908,7 @@ server <- function(input, output, session) {
     if (is.null(out_id_dend_obj())) {
       print("Dendrogram object is NULL")
     } else {
+      req(input$dendro_cex)
       
       par(mar = c(5,2,2,15))
       dend <- out_id_dend_obj()
@@ -1660,7 +1916,10 @@ server <- function(input, output, session) {
       dend_labels <- dend_labels[match(labels(dend), as.character(dend_labels$ID)), ]
       labels(dend) <- pull(dend_labels, tag)
       
-      dend %>% set("branches_k_color", k=input$k_val) %>% plot(horiz = TRUE)
+      dend %>% 
+        set("branches_k_color", k=input$k_val) %>% 
+        set("labels_cex", input$dendro_cex) %>%
+        plot(horiz = TRUE)
       dend %>% rect.dendrogram(k=input$k_val, horiz = TRUE, border = 8, lty = 5, lwd = 2)
     }
   })
@@ -1796,7 +2055,13 @@ output$current_GDD_settings <- renderText({
              actionButton("unselectAllSites_faceted", "Unselect All")
       ),
       column(width = 12,
-             checkboxGroupInput("selectedSites_faceted", "Select Sites", choices = site_list(), selected = site_list()[1:2])
+             tags$label("Select Sites"),
+             tags$div(
+               style = "height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;",
+               checkboxGroupInput("selectedSites_faceted", NULL,  
+                                  choices = site_list(), 
+                                  selected = site_list()[1:2])
+             )
       )
     )
   })
@@ -1808,7 +2073,13 @@ output$current_GDD_settings <- renderText({
              actionButton("unselectAllSites_between", "Unselect All")
       ),
       column(width = 12,
-             checkboxGroupInput("selectedSites_between", "Select Sites", choices = site_list(), selected = site_list()[1:2])
+             tags$label("Select Sites"),
+             tags$div(
+               style = "height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;",
+               checkboxGroupInput("selectedSites_between", NULL,  
+                                  choices = site_list(), 
+                                  selected = site_list()[1:2])
+             )
       )
     )
   })
