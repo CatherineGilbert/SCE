@@ -435,13 +435,15 @@ ui <- dashboardPage(
           h3("Seasonal Covariate Controls"),
           p("  
             Using the controls below, you can change the decision criteria for including or excluding seasonal
-            covariates from the similarity calculations. Below and to the right is a scrollable table of all of the 
+            covariates from the similarity calculations."),
+          p("  
+            Below and to the right is a scrollable table of all of the 
             seasonal covariates available for the similarity analysis. The first column, 'Seasonal Covariate', gives the name of
             the covariate, and the second column, 'Status', gives whether or not it was included in the analysis and 
             on what criteria. The last column, 'Override', gives you the option to override whatever other criteria you set and 
-            forcibly include or exclude the seasonal covariate from the analysis. The 'Apply Overrides' button *must* be used to apply changes.
-            The button on the bottom right can be used to download this table. 
+            forcibly include or exclude the seasonal covariate from the analysis. 
           "),
+          p("The 'Apply Overrides' button", tags$i("must"), "be used to apply changes."),
           fluidRow(
             column(width = 4,
                    checkboxInput("exclude_startend", 

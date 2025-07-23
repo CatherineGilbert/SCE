@@ -1,6 +1,6 @@
 Uses APSIM + the R apsimx package to produce seasonal covariates for simulated trial conditions. 
 
-The full documentation is [available in the project files](  https://github.com/CatherineGilbert/SCE/blob/main/SCE_Documentation.docx).
+The full documentation is [available in the project files](https://github.com/CatherineGilbert/SCE/blob/main/www/SCE_Documentation.html). The first page of the app provides a button to view this documentation in-browser. 
 
 ### Running the App
 
@@ -12,7 +12,7 @@ For the sake of reproducibility, the SCE app is bundled with a Dockerfile and th
 
   To run the app as a Docker container:  
   1. (If you don't have it already) Install Docker. https://docs.docker.com/get-started/get-docker/  
-  2. Download the GitHub directory.   
+  2. Download this GitHub directory.   
   3. Through the terminal, navigate to the downloaded directory and run  
   ```
   docker build -t sce-app .  
@@ -37,8 +37,10 @@ To run the seasonal characterization, you'll need to provide a custom file descr
   * For maize, Genetics is a character string with the approximate number of days to maturity for the cultivar and a letter, A or B, for early or late maturing varieties respectively. The cultivar maturities available are 80, 90, 95, 100, 103, 105, 108, 110, 112, 115, 120, and 130. The input will be matched to the closest of these values and the early or late variant. Several input formats (ex: "A_100", "A100", "100a") are acceptable.   
 * "Planting" is when the trial is sown. This can be provided as a date in YYYY-MM-DD format, or as only the year. If no planting date is specified, the simulation will sow the trial on the first suitable day of the year.
 
-Example input trial files are available in the "example_input_files" folder. 
+Example input trial files are available in the "example_input_files" folder, and can be downloaded from the front page of the app. Under "Upload Input File", you can check "Use example file?" and then "Maize" or "Soybean" to use the respective example input for the analysis. 
 
-Running the seasonal characterization also requires a template .apsimx crop model to use to generate the trial simulations. To run characterizations for maize or soybean, you can select the "Maize_Template.apsimx" or "Soy_Template.apsimx" files provided in the "template_models" folder. Choose the maturity handling option that matches your crop of choice. Then hit "Run Analysis".
+Running the seasonal characterization requires a template .apsimx crop model for generating the trial simulations. You can similarly check "Use example file?" under "Select Template Crop Model" and then "Maize" or "Soybean" to use the respective template model. 
 
-See the [provided documentation]( https://github.com/CatherineGilbert/SCE/blob/main/SCE_Documentation.docx) for more information on user control.
+Choose the maturity handling option that matches your crop of choice. Then hit "Run Analysis" to preform the seasonal characterization. When the characterization is finished, the rest of the app's interface will become available, allowing you to download the results of the seasonal characterization or perform further analysis. 
+
+See the [provided documentation]( https://github.com/CatherineGilbert/SCE/blob/main/www/SCE_Documentation.html) for more information on user control.

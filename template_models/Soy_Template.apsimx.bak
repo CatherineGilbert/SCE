@@ -1419,13 +1419,13 @@
                 "        [Description(\"Number of days to wait before killing unemerged plants\")] ",
                 "        public int EmergWait { get; set; }  ",
                 "        ",
-                "        [Description(\"Kill if maximum daily tempterature is below (C)\")]  ",
-                "        public double LethalFrost { get; set; }",
-                "        ",
                 "        [Description(\"Number of days to wait before killing stalled plants\")] ",
                 "        public int MaxStall { get; set; }  ",
                 "        public double PrevStage {get; set;}",
                 "        public int StalledFor {get; set;}  ",
+                "        ",
+                "        [Description(\"Kill if maximum daily tempterature is below (C)\")]  ",
+                "        public double LethalFrost { get; set; }",
                 "        ",
                 "        private DateTime GerminationDeadline; ",
                 "        private DateTime EmergenceDeadline; ",
@@ -1550,12 +1550,12 @@
                   "Value": "30"
                 },
                 {
-                  "Key": "LethalFrost",
-                  "Value": "-2.5"
-                },
-                {
                   "Key": "MaxStall",
                   "Value": "14"
+                },
+                {
+                  "Key": "LethalFrost",
+                  "Value": "-2.5"
                 }
               ],
               "Name": "ReaperMan",
