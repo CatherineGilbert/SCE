@@ -274,29 +274,29 @@ ui <- dashboardPage(
                   "))
                 ),
                 fluidRow(
-                  column(width = 3,
+                  column(width = 4,
                          div(class = "left-panel", 
                              h3("Dataset Descriptions"),
                              p(
+                               tags$br(),
                                tags$strong("trial_info:"),
                                " aligns with the input file; contains sim parameters, outcomes, and identifying information.", 
-                               tags$br(),
+                               tags$br(),tags$br(),
                                tags$strong("daily_sim_outputs:"),
-                               " the combined total output of the APSIM simulations; contains the recorded values of the reporting variables for each day of each simulation.", 
-                               tags$br(),
+                               " the combined total output of the APSIM simulations; contains the daily records of each reporting variable.", 
+                               tags$br(),tags$br(),
                                tags$strong("seasonal_data:"),
-                               " the seasonal profile; contains environmental and biological variables summarized by developmental period.", 
-                               tags$br(),
+                               " the seasonal profile; contains environmental and physiological variables summarized by developmental period.", 
+                               tags$br(),tags$br(),
                                tags$strong("final_x:"),
-                               " joins trial_info and seasonal_data; contains the full outputs of the seasonal characterization engine in wide format. The naming convention of seasonal covariates (e.g. period-specific variables) is 'Variable_Period', e.g., 'Rain_5' is the mean rainfall within the fifth period of development.",
-                               tags$br(),
+                               " joins trial_info and seasonal_data; contains the full outputs of the SCE in wide format. The naming convention of the seasonal covariates is 'Variable_Period', e.g., 'Rain_5' is the mean rainfall within the fifth period of development.",
+                               tags$br(),tags$br(),
                                tags$strong("period_key:"),
                                "  table showing which APSIM stage each Period maps to."
                              )     
-                             
                          )
                   ),
-                  column(width = 9,
+                  column(width = 8,
                          h3("Boxplot"),
                          fluidRow(
                            column(width = 6,
@@ -744,7 +744,7 @@ server <- function(input, output, session) {
   out_count <- reactiveVal(0)
   valid_count <- reactiveVal(0)
   prog_error <- reactiveVal(NA)
-  prog_m <- reactiveVal(NA)
+  prog_m <- reactiveVal("Using pre-loaded analysis results ...")
   
   ## run the analysis ----
   
