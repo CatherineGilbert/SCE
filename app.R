@@ -24,6 +24,7 @@ library(dendextend)
 library(scales)
 library(grid)
 library(leaflet)
+library(beepr)
 
 plan(multisession, workers = 2)
 
@@ -978,6 +979,7 @@ server <- function(input, output, session) {
     
     #### error messages in the progress log ----------------
     if (analysisFailed()) {
+      beep()
       logs <- c(logs, "\nERROR ///////////")
       if (!is.na(prog_error())) {logs <- c(logs, prog_error())}
       if (nloc() > 0 & ntrials() > 0){
@@ -1002,6 +1004,7 @@ server <- function(input, output, session) {
   ## immediately after analysis ----
   observe({
     req(analysisDone())
+    beep()
     shinyjs::hide("runSpinner")
     shinyjs::show("sidebar_spinner")
     
