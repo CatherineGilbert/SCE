@@ -12,8 +12,8 @@
       "Children": [
         {
           "$type": "Models.Clock, Models",
-          "Start": "2018-04-19T00:00:00",
-          "End": "2019-03-19T00:00:00",
+          "Start": "2005-04-29T00:00:00",
+          "End": "2006-03-29T00:00:00",
           "Name": "Clock",
           "ResourceName": null,
           "Children": [],
@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_9.met",
+          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_2.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -1224,7 +1224,7 @@
                 },
                 {
                   "Key": "SowDate",
-                  "Value": "19-May"
+                  "Value": "29-May"
                 },
                 {
                   "Key": "StartDate",
@@ -1252,7 +1252,7 @@
                 },
                 {
                   "Key": "CultivarName",
-                  "Value": "mid1"
+                  "Value": "late1"
                 },
                 {
                   "Key": "SowingDepth",
@@ -1419,13 +1419,13 @@
                 "        [Description(\"Number of days to wait before killing unemerged plants\")] ",
                 "        public int EmergWait { get; set; }  ",
                 "        ",
-                "        [Description(\"Kill if maximum daily tempterature is below (C)\")]  ",
-                "        public double LethalFrost { get; set; }",
-                "        ",
                 "        [Description(\"Number of days to wait before killing stalled plants\")] ",
                 "        public int MaxStall { get; set; }  ",
                 "        public double PrevStage {get; set;}",
                 "        public int StalledFor {get; set;}  ",
+                "        ",
+                "        [Description(\"Kill if maximum daily tempterature is below (C)\")]  ",
+                "        public double LethalFrost { get; set; }",
                 "        ",
                 "        private DateTime GerminationDeadline; ",
                 "        private DateTime EmergenceDeadline; ",
@@ -1550,12 +1550,12 @@
                   "Value": "30"
                 },
                 {
-                  "Key": "LethalFrost",
-                  "Value": "-2.5"
-                },
-                {
                   "Key": "MaxStall",
                   "Value": "14"
+                },
+                {
+                  "Key": "LethalFrost",
+                  "Value": "-2.5"
                 }
               ],
               "Name": "ReaperMan",

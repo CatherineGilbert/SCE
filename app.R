@@ -635,7 +635,7 @@ server <- function(input, output, session) {
   # Reactive values for storing the analysis state and the selected variable
   #analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
+  analysisDone <- reactiveVal(FALSE)
   analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
