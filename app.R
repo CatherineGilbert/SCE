@@ -611,14 +611,14 @@ ui <- dashboardPage(
 # Define server logic ----
 server <- function(input, output, session) {
   
-  codes_dir <- here()
+  codes_dir <- getwd()
   input_dir <- paste0(codes_dir,"/input")
   unlink(input_dir,recursive = T) ; dir.create(input_dir)
   
   # Reactive values for storing the analysis state and the selected variable
-  #analysisDone <- reactiveVal(FALSE)
+  analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
+  #analysisDone <- reactiveVal(TRUE)
   analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
