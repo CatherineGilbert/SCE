@@ -1,29 +1,12 @@
-library(shiny)
-library(shinydashboard)
-library(shinyWidgets)
-library(shinyBS)
-library(shinyjs)
-library(DT)
-library(geosphere)
-library(pheatmap)
-library(apsimx)
-library(tidyverse)
-library(daymetr)
-library(data.table)
-library(RColorBrewer)
-library(janitor)
-library(tidyr)
-library(zip)
-library(here)
-library(future)
-library(promises)
-library(lubridate)
-library(ggplot2)
-library(viridisLite)
-library(dendextend)
-library(scales)
-library(grid)
-library(leaflet)
+if (!require("pacman")) install.packages("pacman")
+pkg <- c("shiny", "shinydashboard", "shinyWidgets", "shinyBS", 
+"shinyjs", "DT", "geosphere", "pheatmap", "apsimx", "tidyverse",
+"daymetr", "data.table", "RColorBrewer", "janitor", "tidyr",
+"zip", "here", "future", "promises", "lubridate", "ggplot2",
+"viridisLite", "dendextend", "scales", "grid", "leaflet", 
+"apsimx", "tidyverse", "daymetr", "chirps", "nasapower", 
+"soilDB", "spData", "tools", "parallel", "beepr")
+p_load(char = pkg)
 
 plan(multisession, workers = 2)
 
@@ -978,6 +961,7 @@ server <- function(input, output, session) {
     
     #### error messages in the progress log ----------------
     if (analysisFailed()) {
+      beep()
       logs <- c(logs, "\nERROR ///////////")
       if (!is.na(prog_error())) {logs <- c(logs, prog_error())}
       if (nloc() > 0 & ntrials() > 0){
@@ -1002,6 +986,7 @@ server <- function(input, output, session) {
   ## immediately after analysis ----
   observe({
     req(analysisDone())
+    beep()
     shinyjs::hide("runSpinner")
     shinyjs::show("sidebar_spinner")
     

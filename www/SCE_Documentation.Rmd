@@ -18,9 +18,26 @@ The Seasonal Characterization Engine, or SCE, consists of two major files: the S
 
 The SCE app requires internet access in order to be able to gather soil and weather information from online databases.
 
-The SCE can be downloaded directly from the GitHub repository, in which case starting the app is as simple as launching "app.R." Using the SCE this way requires that a copy of Next-Gen APSIM be available on the computer (the app will find the program itself). The app will also require a number of R packages be installed-- when opening the SCE app and analysis script through an IDE such as RStudio, the user should be prompted to download these packages before running the scripts.
+## 2.2. Running the App Directly
 
-For the sake of reproducibility, the SCE app is bundled with a Dockerfile and the files necessary to build the working environment. "renv.lock" contains the versioned R packages, and the folder "next_gen_apsim" contains the files for the particular Next-Gen APSIM distribution. In the case that packages and software become outdated, building an image from the Dockerfile allows a user to replicate the SCE app in its original environment.
+1. Download the SCE from its GitHub directory as a .zip file. Extract the file.
+2. Download and install a copy of Next-Gen APSIM, if you don't have one. 
+3. Download and install both R and an IDE like RStudio, if you don't have them. 
+4. Open your R IDE
+
+The SCE can be downloaded directly from its GitHub repository, in which case starting the app is as simple as launching "app.R." Using the SCE this way requires that a copy of Next-Gen APSIM be available on the computer . The app will also require a number of R packages be installed-- when opening the SCE app and analysis script through an IDE such as RStudio, the user will be prompted to download these packages before running the scripts.
+
+## 2.1. Building from the Docker File
+
+For the sake of reproducibility, the SCE app is bundled with a Dockerfile and the files necessary to build the working environment. "renv.lock" contains the versioned R packages; the folder "next_gen_apsim" contains the files for the Next-Gen APSIM distribution. In the case that packages and software become outdated, building from the Dockerfile allows you to replicate the app in its original environment.
+
+To run the app as a Docker container:
+
+1.  [Install Docker](https://docs.docker.com/get-started/get-docker/), if you don't have it.
+2.  Download the SCE from its GitHub directory as a .zip file. Extract the file.
+3.  Through your terminal, navigate into the extracted folder and run `docker build -t sce-app .`
+4.  When the image has been built, run `docker run -p 3838:3838 sce-app`
+5.  Open a browser. The application should be available at <http://localhost:3838/>.
 
 # 3. User Control
 
@@ -151,7 +168,7 @@ The final result of the analysis are five output files. These can be downloaded 
 ## 5.1. Output Files
 
 |                         |                                                                                                                                                                                                                                                                                                           |
-|------------------------|------------------------------------------------|
+|-------------------------|----------------------------------------------|
 | **File Name**           | **Contents**                                                                                                                                                                                                                                                                                              |
 | "daily_sim_outputs.csv" | The combined total output of the APSIM simulations. This file contains the recorded values of the reporting variables for each day of each simulation. This data is available for users who wish to access the raw outputs of the tool.                                                                   |
 | "seasonal_data.csv"     | The seasonal profiles. Contains the seasonal covariates for each trial (environmental and biological parameters summarized by period) as well as parameters which describe the periods themselves, such as starting and end date. This data is in long format by ID and period.                           |
@@ -349,7 +366,7 @@ Below the plot of the seasonal profile correlations, the user has an option to d
 The seasonal analogues report gives you the similarity of the seasonal profiles (within a cultivar maturity) summarized over the matching simulations of each year. This is taken from pivoting the seasonal correlation matrix to a long form dataframe, finding the correlations of seasonal profiles for matching years, and taking the mean of correlations of matching years.
 
 | Name                                 | Unit                  | Description                                                                                                               |
-|-------------------|------------------|-----------------------------------|
+|-------------------|------------------|----------------------------------|
 | ID.x                                 | (unitless)            | The ID \# of the first trial in the comparison.                                                                           |
 | ID.y                                 | (unitless)            | The ID \# of the second trial in the comparison.                                                                          |
 | Site.x                               | (unitless)            | The name of the site for the first trial.                                                                                 |
@@ -434,4 +451,3 @@ Behold!
 
 </p>
 :::
-
