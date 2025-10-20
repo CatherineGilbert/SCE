@@ -195,7 +195,7 @@ ui <- dashboardPage(
                   ),
                   selectInput(
                     "weatherAquis",
-                    "Select Weather Aquisition:",
+                    "Select Weather Acquisition:",
                     choices = c(
                       "DAYMET" = "DAYMET",
                       "CHIRPS" = "CHIRPS",
@@ -204,7 +204,7 @@ ui <- dashboardPage(
                   ),
                   selectInput(
                     "soilAquis",
-                    "Select Soil Aquisition:",
+                    "Select Soil Acquisition:",
                     choices = c("ISRIC" = "ISRIC","SSURGO" = "SSURGO")
                   )
                 ),

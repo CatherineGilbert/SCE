@@ -14,17 +14,9 @@ The Seasonal Characterization Engine, or SCE, consists of two major files: the S
 
 *Acknowledgment is made to the APSIM Initiative which takes responsibility for quality assurance and a structured innovation program for APSIM's modelling software, which is provided free for research and development use (see www.apsim.info for details).*
 
-# 2. Requirements
+The SCE app requires internet access in order to be able to gather soil and weather information.
 
-The SCE app requires internet access in order to be able to gather soil and weather information from online databases.
-
-## 2.2. Running the App Directly
-
-1.  Download the SCE from its GitHub directory as a .zip file. Extract the file.
-2.  [Download and install a copy of Next-Gen APSIM,](https://www.apsim.info/download-apsim/) if you don't have one.
-3.  [Download and install a copy of R,](https://cran.r-project.org/bin/windows/base/) if you don't have one. Downloading an IDE like [RStudio](https://posit.co/downloads/) may also be convenient.
-4.  Open R or your R IDE. From the R console, run the command `setwd()` and set the working directory to the path of the extracted SCE folder. Ex: `setwd("example/path/to/SCE-main")`.
-5.  Run the command ```shiny::runApp()```. The application should open. 
+# 2. Installation
 
 ## 2.1. Building from the Docker File
 
@@ -37,6 +29,14 @@ To run the app as a Docker container:
 3.  Through your terminal, navigate into the extracted folder and run `docker build -t sce-app .`
 4.  When the image has been built, run `docker run -p 3838:3838 sce-app`
 5.  Open a browser. The application should be available at <http://localhost:3838/>.
+
+## 2.2. Running the App Directly
+
+1.  Download the SCE from its GitHub directory as a .zip file. Extract the file.
+2.  [Download and install a copy of Next-Gen APSIM,](https://www.apsim.info/download-apsim/) if you don't have one.
+3.  [Download and install a copy of R,](https://cran.r-project.org/bin/windows/base/) if you don't have one. Downloading an IDE like [RStudio](https://posit.co/downloads/) may also be convenient.
+4.  Open R or your R IDE. From the R console, run the command `setwd()` and set the working directory to the path of the extracted SCE folder. Ex: `setwd("example/path/to/SCE-main")`.
+5.  Run the command `shiny::runApp()`. The application should open.
 
 # 3. User Control
 
@@ -365,7 +365,7 @@ Below the plot of the seasonal profile correlations, the user has an option to d
 The seasonal analogues report gives you the similarity of the seasonal profiles (within a cultivar maturity) summarized over the matching simulations of each year. This is taken from pivoting the seasonal correlation matrix to a long form dataframe, finding the correlations of seasonal profiles for matching years, and taking the mean of correlations of matching years.
 
 | Name                                 | Unit                  | Description                                                                                                               |
-|--------------------|-------------------|----------------------------------|
+|--------------------|-------------------|---------------------------------|
 | ID.x                                 | (unitless)            | The ID \# of the first trial in the comparison.                                                                           |
 | ID.y                                 | (unitless)            | The ID \# of the second trial in the comparison.                                                                          |
 | Site.x                               | (unitless)            | The name of the site for the first trial.                                                                                 |
@@ -450,3 +450,36 @@ Behold!
 
 </p>
 :::
+
+# 8. Tutorials
+
+## 8.1. A Sample Analysis
+
+Open the application and switch to the "Upload and Analyze" tab. This is where the controls are for the analysis.
+
+To run the seasonal characterization, you'll need an input file with the starting parameters of each trial. This is a .csv with the columns "Site", "Latitude", "Longitude", "Genetics," and "Planting". Each row of this input file represents a set of trial conditions to characterize. One seasonal profile will be generated per line of the input file.
+
+You will likely need to create your own input file to generate seasonal profiles for the data you're interested in. For now, let's run one of the example files. Check the "Use example file?" button and select Maize.
+
+Running the analysis also requires a template crop model. This is a .apsimx file that contains some specific scripts and is used to generate the trial simulations. These template models are agnostic to the data that goes into them-- if you have data from soybeans, you can use the given template soybean model; if you have data from maize, you can use the given template maize model.
+
+Check "Use example file?" under "Select Template Crop Model" and then "Maize" to use the Maize template model.
+
+"Maturity Handling" is the system that the app uses to set the crop phenology. Choose "Maize" for maturity handling.
+
+Below the maturity handling drop-down are two more drop-down menus: "Select Weather Acquisition" and "Select Soil Acquisition". These are used to select which weather and soil databases you'll be pulling data from. In our case, the defaults here are fine.
+
+In the top right corner, click the "Run Analysis" button to preform the seasonal characterization. The "Progress" box below will be updated with the current state of the analysis. When the characterization is finished the rest of the app's interface will become available. You can download the results of the seasonal characterization or move the other menu tabs to perform further analysis.
+
+## 8.2. ... using Original Data
+
+I mentioned that
+
+-   "Site" is the name identifier for the location.
+-   "Latitude" and "Longitude" are standard numeric WGS84 coordinates.
+-   "Genetics" refers to the cultivar maturity system.
+    -   For soybean, Genetics is a number in the range -2 -- 10 (corresponding to maturity groups 000 -- X). There are early, standard, and late variants of each of these cultivar maturities. Adding 0 -- 0.33 to the Genetics value will classify the maturity as "early" within a maturity group, between 0.34 -- 0.66 will classify it as standard ("mid"), and between 0.67 -- 0.99 will classify it as "late." For example, an input Genetics value of 3.8 would be a late maturity III, 0.2 would be an early maturity 0, and -1.5 would be a standard maturity 000.
+    -   For maize, Genetics is a character string with the approximate number of days to maturity for the cultivar and a letter, A or B, for early or late maturing varieties respectively. The cultivar maturities available are 80, 90, 95, 100, 103, 105, 108, 110, 112, 115, 120, and 130. The input will be matched to the closest of these values and the early or late variant. Several input formats (ex: "A_100", "A100", "100a") are acceptable.
+-   "Planting" is when the trial is sown. This can be provided as a date in YYYY-MM-DD format, or as only the year. If no planting date is specified, the simulation will sow the trial on the first suitable day of the year.
+
+## 8.3. ... using a Custom Crop Model
