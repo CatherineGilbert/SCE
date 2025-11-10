@@ -618,7 +618,7 @@ From the front page of APSIM, click "Open an Example" and open the example for t
 
 In the Sowing module, set Crop to the new crop. In the Fertilize at sowing module, set Crop to be fertilized to the new crop. 
 
-At lines 14, 15, and 22 of the Report module, substitute the new crop in the variable path.
+At lines 14, 15, and 22 of the Report module, substitute the new crop in the variable path (ex: "[Maize].Phenology.ThermalTime as ThermalTime" becomes "[Wheat].Phenology.ThermalTime as ThermalTime").
 
 You may adjust any other of the model's parameters as you'd like. Save the new crop model. 
 
