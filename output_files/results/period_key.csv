@@ -2,11 +2,10 @@ Period,APSIM StageName,Notes
 1,Germinating,includes two weeks pre-planting
 2,Emerging,NA
 3,Juvenile,NA
-5,LeafAppearance,NA
-6,LeafAppearance,NA
+4,JuvenileToFloralInit,NA
+5,FloralInitToFlagLeaf,NA
 6,FlagLeafToFlowering,NA
 7,FloweringToGrainFilling,NA
 8,GrainFilling,NA
-10,MaturityToHarvestRipe,NA
-11,ReadyForHarvesting,includes two weeks post-harvest
 9,Maturing,NA
+11,ReadyForHarvesting,includes two weeks post-harvest

@@ -1258,6 +1258,8 @@ server <- function(input, output, session) {
       var_mat <- remove_empty(var_mat, which = "rows") %>% as.matrix()
       var_mat[is.nan(var_mat)] <- NA
       
+      print(var_mat)
+      
       if (all(var_mat == var_mat[1,1], na.rm = T)){  #check if matrix is constant
         heatmap <- pheatmap(var_mat, angle_col = 0,
                             #color = palette,
