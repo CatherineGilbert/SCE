@@ -12,8 +12,8 @@
       "Children": [
         {
           "$type": "Models.Clock, Models",
-          "Start": "2017-04-15T00:00:00",
-          "End": "2018-03-15T00:00:00",
+          "Start": "2017-01-01T00:00:00",
+          "End": "2017-12-31T00:00:00",
           "Name": "Clock",
           "ResourceName": null,
           "Children": [],
@@ -683,7 +683,7 @@
                 },
                 {
                   "Key": "SowDate",
-                  "Value": "15-May"
+                  "Value": "NA"
                 },
                 {
                   "Key": "StartDate",
@@ -711,7 +711,7 @@
                 },
                 {
                   "Key": "CultivarName",
-                  "Value": "B_90"
+                  "Value": "B_80"
                 },
                 {
                   "Key": "SowingDepth",
@@ -1073,7 +1073,7 @@
                   "LineThickness": 0,
                   "TableName": "Report",
                   "XFieldName": "Date",
-                  "YFieldName": "Urea",
+                  "YFieldName": "ThermalTime",
                   "X2FieldName": null,
                   "Y2FieldName": null,
                   "ShowInLegend": false,

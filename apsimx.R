@@ -355,11 +355,11 @@ daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, Sta
 daily_output <- mutate(daily_output, Date = as_date(Date))
 
 # Create trial_info from trial-specific information
-#yields <- group_by(daily_output, ID) %>% summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
+maxstage <- group_by(daily_output, ID) %>% summarize(MaxStage = max(Stage)) #summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
 res <- group_by(daily_output, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
 trial_info <- rename(trials_df, Latitude = Y, Longitude = X)
 trial_info <- trial_info %>% select(-sim_start, -sim_end) %>% 
-  #left_join(yields, by = join_by(ID)) %>% 
+  left_join(maxstage, by = join_by(ID)) %>% 
   left_join(simdates, by = join_by(ID)) %>% 
   left_join(res, by = join_by(ID)) 
 trial_info <- mutate(trial_info, DTM_Sim = as.numeric(SimMatDate - SimSowDate)) %>%
