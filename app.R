@@ -197,9 +197,9 @@ ui <- dashboardPage(
                     "weatherAquis",
                     "Select Weather Acquisition:",
                     choices = c(
+                      "NASAPOWER" = "NASAPOWER",
                       "DAYMET" = "DAYMET",
-                      "CHIRPS" = "CHIRPS",
-                      "NASAPOWER" = "NASAPOWER"
+                      "CHIRPS" = "CHIRPS"
                     )
                   ),
                   selectInput(
@@ -704,7 +704,7 @@ server <- function(input, output, session) {
   })
   
   ## set parameters -------
-  weather_aquis <- reactiveVal("DAYMET")
+  weather_aquis <- reactiveVal("NASAPOWER")
   soil_aquis <- reactiveVal("SSURGO")
   mat_handling <- reactiveVal("Soy")
   
@@ -1048,7 +1048,7 @@ server <- function(input, output, session) {
     })
     bigmet <- bind_rows(met_list)
     
-    bigmet <- bigmet %>% left_join(distinct(trial_info, Site, ID_Loc), by = "ID_Loc") 
+    bigmet <- bigmet %>% left_join(distinct(trial_info, Site, ID_Loc), by = "ID_Loc", relationship = "many-to-many") 
     
     max_temp <- input$max_temp
     base_temp <- input$base_temp

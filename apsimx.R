@@ -169,7 +169,9 @@ for (id in ids_needs_soil){
     initwat$Thickness <- horizon$Thickness
     soil_profile_tmp[[1]]$initialwater <- initwat
     
-    #set minimum root weight
+    rwt_min <- 0.001 #set minimum root weight
+    given_rwt <- soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt
+    soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < rwt_min, rwt_min, given_rwt) 
     
     oc_min <- 0.001 #set minimum carbon content in soils
     given_oc <- soil_profile_tmp[[1]][["soil"]]$Carbon
@@ -353,11 +355,11 @@ daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, Sta
 daily_output <- mutate(daily_output, Date = as_date(Date))
 
 # Create trial_info from trial-specific information
-yields <- group_by(daily_output, ID) %>% summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
+#yields <- group_by(daily_output, ID) %>% summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
 res <- group_by(daily_output, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
 trial_info <- rename(trials_df, Latitude = Y, Longitude = X)
 trial_info <- trial_info %>% select(-sim_start, -sim_end) %>% 
-  left_join(yields, by = join_by(ID)) %>% 
+  #left_join(yields, by = join_by(ID)) %>% 
   left_join(simdates, by = join_by(ID)) %>% 
   left_join(res, by = join_by(ID)) 
 trial_info <- mutate(trial_info, DTM_Sim = as.numeric(SimMatDate - SimSowDate)) %>%
@@ -403,7 +405,7 @@ daily_output <- daily_output %>% group_by(ID) %>% mutate(AccRain = cumsum(Rain),
 #   mutate(Period = factor(Period, ordered = T, levels = as.character(1:11)))
 
 seasonal_data <- daily_output %>% 
-  group_by(Period, ID) %>% select(-Yieldkgha, -Stage) %>% 
+  group_by(Period, ID) %>% select(-any_of(c("Yieldkgha", "Stage"))) %>% 
   summarize(across(where(is.numeric) & !c(DOY,AccRain,AccTT,AccEmTT), function(x){mean(x,na.omit=T)}), 
             AccRain = sum(Rain), AccTT = sum(ThermalTime), AccEmTT = max(AccEmTT),
             Period_Start_Date = min(Date), Period_End_Date = max(Date)) %>% 

@@ -76,7 +76,7 @@ For any cultivar in the input file within maturity designations 000 -- VII ("Gen
 
 **Because the soybean RM handling uses a decimal system, when entering a soybean cultivar which broadly belongs to a maturity group (e.g., a "maturity two"), it's more appropriate to enter the value incremented by 0.5 (e.g., 2.5, a "mid" maturity two) than the exact value (e.g., 2.0, an early maturity two).**
 
-For maturities VIII -- X, the SCE's template soybean model uses the APSIM generic cultivars that match those maturities. For maturities 000 -- VII, however, the template soybean model uses a set of custom cultivars with new maturity parameters. These maturity parameters were calibrated from phenological data shared by GDM Seeds Inc., from the records of their North American soybean breeding program.
+The early and late variants of each cultivar were created by linear interpolation from the coefficients of neighboring Generic APSIM cultivars.
 
 ### 3.3.3. Direct Maturity Handling
 
@@ -167,7 +167,7 @@ The final result of the analysis are five output files. These can be downloaded 
 ## 5.1. Output Files
 
 |                         |                                                                                                                                                                                                                                                                                                           |
-|------------------|------------------------------------------------------|
+|-------------------|-----------------------------------------------------|
 | **File Name**           | **Contents**                                                                                                                                                                                                                                                                                              |
 | "daily_sim_outputs.csv" | The combined total output of the APSIM simulations. This file contains the recorded values of the reporting variables for each day of each simulation. This data is available for users who wish to access the raw outputs of the tool.                                                                   |
 | "seasonal_data.csv"     | The seasonal profiles. Contains the seasonal covariates for each trial (environmental and biological parameters summarized by period) as well as parameters which describe the periods themselves, such as starting and end date. This data is in long format by ID and period.                           |
@@ -180,7 +180,7 @@ The final result of the analysis are five output files. These can be downloaded 
 The default reporting variables of seasonal_data are:
 
 |                   |                  |                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-|---------------|---------------|------------------------------------------|
+|-----------------|-----------------|---------------------------------------|
 | Name              | Unit             | Description                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ID                | (unitless)       | ID of the simulation. This matches the row number of the input file.                                                                                                                                                                                                                                                                                                                                                               |
 | Period            | (unitless)       | Period of development. Equivalent to APSIM stages of development.                                                                                                                                                                                                                                                                                                                                                                  |
@@ -214,7 +214,7 @@ The default reporting variables of seasonal_data are:
 The default reporting variables of trial_info are:
 
 |                  |                    |                                                                                                                                                                                                                                       |
-|---------------|---------------|------------------------------------------|
+|-----------------|-----------------|---------------------------------------|
 | Name             | Unit               | Description                                                                                                                                                                                                                           |
 | ID               | (unitless)         | ID of the simulation. This matches the row number of the input file.                                                                                                                                                                  |
 | Site             | (unitless)         | "Site", from the input file. A tag for the location of the trial.                                                                                                                                                                     |
@@ -225,7 +225,6 @@ The default reporting variables of trial_info are:
 | ID_Loc           | (unitless)         | The location ID for the simulation, which is used to retrieve the matching .met and soil profile files.                                                                                                                               |
 | Year             | YYYY               | Year in which the simulated trial was planted.                                                                                                                                                                                        |
 | Mat              | (unitless)         | Internal name of the cultivar used to set the maturity parameters of the simulation.                                                                                                                                                  |
-| Yield_Sim        | kg/ha              | Simulated yield.                                                                                                                                                                                                                      |
 | MaxStage         | (unitless)         | The final period of development that the crop reached within the simulation.                                                                                                                                                          |
 | StartDate        | YYYY-MM-DD         | First day of the simulation, two weeks before planting.                                                                                                                                                                               |
 | PlantingDate_Sim | YYYY-MM-DD         | Date on which the simulated trial was planted.                                                                                                                                                                                        |
@@ -365,7 +364,7 @@ Below the plot of the seasonal profile correlations, the user has an option to d
 The seasonal analogues report gives you the similarity of the seasonal profiles (within a cultivar maturity) summarized over the matching simulations of each year. This is taken from pivoting the seasonal correlation matrix to a long form dataframe, finding the correlations of seasonal profiles for matching years, and taking the mean of correlations of matching years.
 
 | Name                                 | Unit                  | Description                                                                                                               |
-|-----------------|-----------------|--------------------------------------|
+|------------------|------------------|-------------------------------------|
 | ID.x                                 | (unitless)            | The ID \# of the first trial in the comparison.                                                                           |
 | ID.y                                 | (unitless)            | The ID \# of the second trial in the comparison.                                                                          |
 | Site.x                               | (unitless)            | The name of the site for the first trial.                                                                                 |
@@ -486,9 +485,9 @@ Example input files are available in the "example_input_files" folder, and can b
 
 ### 8.2.1. Example One
 
-Let's try building an input file. Our first example will use data from the Northern Region Uniform Soybean Tests, a multi-environment trial of soybean varieties in North America. This is from the same larger dataset which was used to build the soybean example file. The specific data we'll be using is available through the SoyURT package. 
+Let's try building an input file. Our first example will use data from the Northern Region Uniform Soybean Tests, a multi-environment trial of soybean varieties in North America. This is from the same larger dataset which was used to build the soybean example file. The specific data we'll be using is available through the SoyURT package.
 
-Source: Using soybean historical field trial data to study genotype by environment variation and identify mega-environments with the integration of genetic and non-genetic factors. Matheus D Krause, Kaio O G Dias, Asheesh K Singh, William D Beavis. bioRxiv 2022.04.11.487885; doi: https://doi.org/10.1101/2022.04.11.487885 
+Source: Using soybean historical field trial data to study genotype by environment variation and identify mega-environments with the integration of genetic and non-genetic factors. Matheus D Krause, Kaio O G Dias, Asheesh K Singh, William D Beavis. bioRxiv 2022.04.11.487885; doi: <https://doi.org/10.1101/2022.04.11.487885>
 
 ```{r}
 library(SoyURT)
@@ -499,7 +498,7 @@ glimpse(pheno)
 soy.input <- rename(pheno, Site = location, Longitude = longitude, Latitude = latitude) 
 ```
 
-First we assess the data to see what information we're missing for the input file. Thankfully, we seem to have everything already. The "Site", "Latitude", and "Longitude" columns can be obtained by simply renaming two existing columns, while "Genetics" and "Planting" can be derived from "maturity_group" and "average_planting_date" / "year" respectively.  
+First we assess the data to see what information we're missing for the input file. Thankfully, we seem to have everything already. The "Site", "Latitude", and "Longitude" columns can be obtained by simply renaming two existing columns, while "Genetics" and "Planting" can be derived from "maturity_group" and "average_planting_date" / "year" respectively.
 
 ```{r}
 soy.input <- mutate(soy.input, Genetics = maturity_group + 0.5) # We'll use the maturity group of the test as a proxy for genetic maturity of these cultivars, since we don't have more information on them. We add 0.5 to set the genetic maturity within the middle of that maturity group, as opposed to an early or late variant. 2.5 = "a standard MG II", 3.5 = "a standard MG III".
@@ -509,14 +508,15 @@ soy.input <- mutate(soy.input, Planting = as.character(as.Date(average_planting_
 soy.input <- mutate(soy.input, Planting = ifelse(is.na(Planting), year, Planting)) # Some entries only have a year, and no planting date. For these, we will assign "Planting" as the year they were planted, and leave the planting date up to the simulation's determination. 
 ```
 
-We subset to the necessary columns to get a valid input file. 
+We subset to the necessary columns to get a valid input file.
 
 ```{r}
 soy.input <- select(soy.input, Site, Latitude, Longitude, Planting, Genetics) 
 
 glimpse(soy.input)
 ```
-Our input file here has 39006 rows, or 39006 sets of trial parameters. That's a lot. Thankfully, we only need to run the analysis for unique combinations of starting parameters. 
+
+Our input file here has 39006 rows, or 39006 sets of trial parameters. That's a lot. Thankfully, we only need to run the analysis for unique combinations of starting parameters.
 
 ```{r}
 soy.input_full <- soy.input # We can save a full version of the input, and use it later to join our final results back to our original data. The indices of this copy match the indices of the original data. 
@@ -526,12 +526,11 @@ soy.input <- distinct(soy.input) # Filter to distinct combinations of trial para
 head(soy.input)
 ```
 
-Our final input file is 1591 rows long. The SCE will generate 1591 unique seasonal profiles for this data. 
-
+Our final input file is 1591 rows long. The SCE will generate 1591 unique seasonal profiles for this data.
 
 ### 8.2.2. Example Two
 
-Let's try a second example. We will create a custom input file using datasets from a multi-environment trial of maize conducted in Yunnan, China. This data is available through the agridat package. 
+Let's try a second example. We will create a custom input file using datasets from a multi-environment trial of maize conducted in Yunnan, China. This data is available through the agridat package.
 
 Source: Fan, X.M. and Kang, M.S. and Chen, H. and Zhang, Y. and Tan, J. and Xu, C. (2007). Yield stability of maize hybrids evaluated in multi-environment trials in Yunnan, China. Agronomy Journal, 99, 220-228. <https://doi.org/10.2134/agronj2006.0144>
 
@@ -542,14 +541,14 @@ fan.input <- fan.stability
 glimpse(fan.stability)
 ```
 
-We need "Site", "Latitude", "Longitude", "Genetics," and "Planting". Looking at this data, we could derive Site from "loc", Genetics from "mat", and Planting from "year". Unfortunately, this dataset doesn't have the site coordinates. Fortunately, that data is available in the paper's supplementary material-- which also includes exact planting dates. 
+We need "Site", "Latitude", "Longitude", "Genetics," and "Planting". Looking at this data, we could derive Site from "loc", Genetics from "mat", and Planting from "year". Unfortunately, this dataset doesn't have the site coordinates. Fortunately, that data is available in the paper's supplementary material-- which also includes exact planting dates.
 
 ```{r}
 fan.supplement <- read_csv("fan.supplement.csv")
 glimpse(fan.supplement)
 ```
 
-We need to do some manipulation to get this data into the correct formatting. We'll then join the main and supplementary datasets together. 
+We need to do some manipulation to get this data into the correct formatting. We'll then join the main and supplementary datasets together.
 
 ```{r}
 #Coordinates should be in decimal format. Convert them. 
@@ -585,7 +584,7 @@ fan.input <- left_join(fan.input, fan.supplement)
 glimpse(fan.input)
 ```
 
-We subset the data to the columns that we'll use to build the input file. 
+We subset the data to the columns that we'll use to build the input file.
 
 ```{r}
 fan.input <- select(fan.input, Site, Latitude, Longitude, Planting, Genetics)
@@ -593,7 +592,7 @@ fan.input <- select(fan.input, Site, Latitude, Longitude, Planting, Genetics)
 glimpse(fan.input)
 ```
 
-We can save a copy of this data as the full version of the input which matches the indices of the original file (fan.stability). We can then use a version of the input with only unique combinations of our trial parameters as the actual input to the analysis. This prevents redundant simulations and greatly saves on analysis time. 
+We can save a copy of this data as the full version of the input which matches the indices of the original file (fan.stability). We can then use a version of the input with only unique combinations of our trial parameters as the actual input to the analysis. This prevents redundant simulations and greatly saves on analysis time.
 
 ```{r}
 fan.input_full <- fan.input
@@ -604,27 +603,25 @@ head(fan.input)
 
 ## 8.3 Creating a Custom Template Model
 
-You can generally create a custom template file for maize / soybean by editing any of the template files provided with the SCE and saving it as a new .apsimx. 
+You can generally create a custom template file for maize / soybean by editing any of the template files provided with the SCE and saving it as a new .apsimx.
 
-The parameters of the simulation scripts and modules can be freely edited, which is helpful for customizing a simulation to more closely resemble the known conditions of an actual trial. (Ex: modifying fertilizer inputs, tillage, row spacing, etc.) Adding your own manager scripts is also possible, although their compatibility isn't guaranteed. At minimum, the Sowing and ReaperMan manager scripts from the template files need to maintain their paths and reporting variables so the analysis can set and retrieve simulation timing. 
+The parameters of the simulation scripts and modules can be freely edited, which is helpful for customizing a simulation to more closely resemble the known conditions of an actual trial. (Ex: modifying fertilizer inputs, tillage, row spacing, etc.) Adding your own manager scripts is also possible, although their compatibility isn't guaranteed. At minimum, the Sowing and ReaperMan manager scripts from the template files need to maintain their paths and reporting variables so the analysis can set and retrieve simulation timing.
 
-Because this is an APSIM file, you can also customize the outputs of the simulations through the Reporting Variables module. This allows you to create a seasonal covariate, reported at each stage of development, for practically any parameter within the APSIM model. At minimum, Date, DOY, Stage, SimSowDate, SimMatDate, SimHarvestDate, Yieldkgha, Rain, ThermalTime, AccEmTT, and Result need to be included in the template's reporting variables or else later analysis will break. 
+Because this is an APSIM file, you can also customize the outputs of the simulations through the Reporting Variables module. This allows you to create a seasonal covariate, reported at each stage of development, for practically any parameter within the APSIM model. At minimum, Date, DOY, Stage, SimSowDate, SimMatDate, SimHarvestDate, Rain, ThermalTime, AccEmTT, and Result need to be included in the template's reporting variables or else later analysis will break.
 
 ### 8.3.1 Creating a Template Model for a New Crop
 
-Open one of the template models provided with the tool, either "Soybean_Template.apsimx" or "Maize_Template.apsimx". Save it under a new name. This will be the basis of your new crop model. 
+Open one of the template models provided with the tool, either "Soybean_Template.apsimx" or "Maize_Template.apsimx". Save it under a new name. This will be the basis of your new crop model.
 
-From the front page of APSIM, click "Open an Example" and open the example for the crop of your choosing. Copy and paste the internal crop model from the example file (ex: "Sorghum", "Rice", "Wheat") into the Field area of your new model. You may delete the old crop model ("Soybean" or "Maize"). 
+From the front page of APSIM, click "Open an Example" and open the example for the crop of your choosing. Copy and paste the internal crop model from the example file (ex: "Sorghum", "Rice", "Wheat") into the Field area of your new model. You may delete the old crop model ("Soybean" or "Maize").
 
-In the Sowing module, set Crop to the new crop. In the Fertilize at sowing module, set Crop to be fertilized to the new crop. 
+In the Sowing module, set Crop to the new crop. In the Fertilize at sowing module, set Crop to be fertilized to the new crop.
 
-At lines 14, 15, and 22 of the Report module, substitute the new crop in the variable path (ex: "[Maize].Phenology.ThermalTime as ThermalTime" becomes "[Wheat].Phenology.ThermalTime as ThermalTime").
+You may adjust any other of the model's parameters as you'd like. Save the new crop model.
 
-You may adjust any other of the model's parameters as you'd like. Save the new crop model. 
+### 8.3.2. Sorghum Demonstration
 
-### 8.3.2. Sorghum Demonstration 
-
-In the "SCE/www" folder, we've saved a template model for Sorghum that was created according to the procedure above. The input file below can be used to test and run it. 
+In the "SCE/www" folder, we've saved a template model for Sorghum that was created according to the procedure above. The input file below can be used to test and run it.
 
 ```{r}
 #Creating an example input file for Sorghum
