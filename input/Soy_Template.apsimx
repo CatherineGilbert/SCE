@@ -12,8 +12,8 @@
       "Children": [
         {
           "$type": "Models.Clock, Models",
-          "Start": "2018-01-01T00:00:00",
-          "End": "2018-12-31T00:00:00",
+          "Start": "2001-01-01T00:00:00",
+          "End": "2001-12-31T00:00:00",
           "Name": "Clock",
           "ResourceName": null,
           "Children": [],
@@ -32,7 +32,7 @@
         {
           "$type": "Models.Climate.Weather, Models",
           "ConstantsFile": null,
-          "FileName": "C:/Users/cmg3/Documents/GitHub/SCE/output_files/met/loc_4.met",
+          "FileName": "z_12.met",
           "ExcelWorkSheetName": "",
           "Latitude": 40.763960462877,
           "Tav": 10.5701490713587,
@@ -53,14 +53,14 @@
         },
         {
           "$type": "Models.MicroClimate, Models",
-          "a_interception": 0,
-          "b_interception": 1,
-          "c_interception": 0,
-          "d_interception": 0,
-          "SoilHeatFluxFraction": 0,
-          "MinimumHeightDiffForNewLayer": 0,
-          "NightInterceptionFraction": 0,
-          "ReferenceHeight": 2,
+          "a_interception": 0.0,
+          "b_interception": 1.0,
+          "c_interception": 0.0,
+          "d_interception": 0.0,
+          "SoilHeatFluxFraction": 0.0,
+          "MinimumHeightDiffForNewLayer": 0.0,
+          "NightInterceptionFraction": 0.0,
+          "ReferenceHeight": 2.0,
           "Name": "MicroClimate",
           "ResourceName": "MicroClimate",
           "Children": [],
@@ -69,10 +69,10 @@
         },
         {
           "$type": "Models.Core.Zone, Models",
-          "Area": 1,
-          "Slope": 0,
-          "AspectAngle": 0,
-          "Altitude": 50,
+          "Area": 1.0,
+          "Slope": 0.0,
+          "AspectAngle": 0.0,
+          "Altitude": 50.0,
           "Name": "Field",
           "ResourceName": null,
           "Children": [
@@ -110,13 +110,13 @@
                 {
                   "$type": "Models.Soils.Physical, Models",
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "ParticleSizeSand": null,
                   "ParticleSizeSilt": null,
@@ -124,17 +124,17 @@
                   "Rocks": null,
                   "Texture": null,
                   "BD": [
-                    1.01056473311131,
-                    1.07145631083388,
-                    1.09393858528057,
-                    1.15861335018721,
-                    1.17301160318016,
-                    1.16287303586874,
-                    1.18749547755906
+                    1.011,
+                    1.071,
+                    1.094,
+                    1.159,
+                    1.173,
+                    1.163,
+                    1.187
                   ],
                   "AirDry": [
-                    0.130250054518252,
-                    0.198689390775399,
+                    0.13,
+                    0.199,
                     0.28,
                     0.28,
                     0.28,
@@ -142,8 +142,8 @@
                     0.28
                   ],
                   "LL15": [
-                    0.260500109036505,
-                    0.248361738469248,
+                    0.261,
+                    0.248,
                     0.28,
                     0.28,
                     0.28,
@@ -151,31 +151,31 @@
                     0.28
                   ],
                   "DUL": [
-                    0.52100021807301,
-                    0.496723476938497,
-                    0.488437607673005,
-                    0.480296969355493,
-                    0.471583596524955,
-                    0.457070570557793,
-                    0.452331759845006
+                    0.521,
+                    0.497,
+                    0.488,
+                    0.48,
+                    0.472,
+                    0.457,
+                    0.452
                   ],
                   "SAT": [
-                    0.588654817693846,
-                    0.565676863836273,
-                    0.557192986686577,
-                    0.532787415023694,
-                    0.527354112007486,
-                    0.531179986464627,
-                    0.521888499034317
+                    0.589,
+                    0.566,
+                    0.557,
+                    0.533,
+                    0.527,
+                    0.531,
+                    0.522
                   ],
                   "KS": [
-                    20,
-                    20,
-                    20,
-                    20,
-                    20,
-                    20,
-                    20
+                    20.0,
+                    20.0,
+                    20.0,
+                    20.0,
+                    20.0,
+                    20.0,
+                    20.0
                   ],
                   "BDMetadata": null,
                   "AirDryMetadata": null,
@@ -212,18 +212,18 @@
                         0.01
                       ],
                       "XF": [
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1,
-                        1
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
                       ],
                       "LLMetadata": null,
                       "KLMetadata": null,
                       "XFMetadata": null,
-                      "Name": "MaizeSoil",
+                      "Name": "SoybeanSoil",
                       "ResourceName": null,
                       "Children": [],
                       "Enabled": true,
@@ -235,29 +235,29 @@
                 },
                 {
                   "$type": "Models.WaterModel.WaterBalance, Models",
-                  "SummerDate": "1-Nov",
-                  "SummerU": 5,
-                  "SummerCona": 5,
-                  "WinterDate": "1-Apr",
-                  "WinterU": 5,
-                  "WinterCona": 5,
-                  "DiffusConst": 40,
-                  "DiffusSlope": 16,
-                  "Salb": 0.12,
-                  "CN2Bare": 73,
-                  "CNRed": 20,
+                  "SummerDate": "1-Jun",
+                  "SummerU": 9.05,
+                  "SummerCona": 4.0,
+                  "WinterDate": "1-Nov",
+                  "WinterU": 9.05,
+                  "WinterCona": 4.0,
+                  "DiffusConst": 40.0,
+                  "DiffusSlope": 16.0,
+                  "Salb": 0.15,
+                  "CN2Bare": 78.0,
+                  "CNRed": 20.0,
                   "CNCov": 0.8,
                   "DischargeWidth": "NaN",
                   "CatchmentArea": "NaN",
-                  "PSIDul": -100,
+                  "PSIDul": -100.0,
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "SWCON": [
                     0.3,
@@ -277,15 +277,15 @@
                 },
                 {
                   "$type": "Models.Soils.Organic, Models",
-                  "FOMCNRatio": 40,
+                  "FOMCNRatio": 40.0,
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "Carbon": [
                     1.2,
@@ -298,13 +298,13 @@
                   ],
                   "CarbonUnits": 0,
                   "SoilCNRatio": [
-                    12,
-                    12,
-                    12,
-                    12,
-                    12,
-                    12,
-                    12
+                    12.0,
+                    12.0,
+                    12.0,
+                    12.0,
+                    12.0,
+                    12.0,
+                    12.0
                   ],
                   "FBiom": [
                     0.04,
@@ -319,19 +319,19 @@
                     0.4,
                     0.6,
                     0.8,
-                    1,
-                    1,
-                    1,
-                    1
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
                   ],
                   "FOM": [
-                    347.129032312756,
-                    270.344362191994,
-                    163.972144349901,
-                    99.4541328870406,
-                    60.3219808311247,
-                    36.5871308286749,
-                    22.1912165985086
+                    347.129,
+                    270.344,
+                    163.972,
+                    99.454,
+                    60.322,
+                    36.587,
+                    22.191
                   ],
                   "CarbonMetadata": null,
                   "FOMMetadata": null,
@@ -344,22 +344,22 @@
                 {
                   "$type": "Models.Soils.Chemical, Models",
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "PH": [
-                    8,
-                    8,
-                    8,
-                    8,
-                    8,
-                    8,
-                    8
+                    8.0,
+                    8.0,
+                    8.0,
+                    8.0,
+                    8.0,
+                    8.0,
+                    8.0
                   ],
                   "PHUnits": 0,
                   "EC": null,
@@ -379,24 +379,24 @@
                 {
                   "$type": "Models.Soils.Water, Models",
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "InitialValues": [
-                    0.52100021807301,
-                    0.496723476938497,
-                    0.488437607673005,
-                    0.480296969355493,
-                    0.471583596524955,
-                    0.457070570557793,
-                    0.452331759845006
+                    0.521,
+                    0.497,
+                    0.488,
+                    0.48,
+                    0.472,
+                    0.457,
+                    0.452
                   ],
-                  "InitialPAWmm": 361.245428312739,
+                  "InitialPAWmm": 361.0499999999999,
                   "RelativeTo": "LL15",
                   "FilledFromTop": false,
                   "Name": "Water",
@@ -416,32 +416,32 @@
                 {
                   "$type": "Models.Soils.Solute, Models",
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "InitialValues": [
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0
                   ],
                   "InitialValuesUnits": 0,
-                  "WaterTableConcentration": 0,
-                  "D0": 0,
+                  "WaterTableConcentration": 0.0,
+                  "D0": 0.0,
                   "Exco": null,
                   "FIP": null,
-                  "DepthConstant": 0,
-                  "MaxDepthSoluteAccessible": 0,
-                  "RunoffEffectivenessAtMovingSolute": 0,
-                  "MaxEffectiveRunoff": 0,
+                  "DepthConstant": 0.0,
+                  "MaxDepthSoluteAccessible": 0.0,
+                  "RunoffEffectivenessAtMovingSolute": 0.0,
+                  "MaxEffectiveRunoff": 0.0,
                   "ConcInSolution": null,
                   "Name": "NO3",
                   "ResourceName": null,
@@ -452,13 +452,13 @@
                 {
                   "$type": "Models.Soils.Solute, Models",
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "InitialValues": [
                     0.1,
@@ -470,14 +470,14 @@
                     0.1
                   ],
                   "InitialValuesUnits": 0,
-                  "WaterTableConcentration": 0,
-                  "D0": 0,
+                  "WaterTableConcentration": 0.0,
+                  "D0": 0.0,
                   "Exco": null,
                   "FIP": null,
-                  "DepthConstant": 0,
-                  "MaxDepthSoluteAccessible": 0,
-                  "RunoffEffectivenessAtMovingSolute": 0,
-                  "MaxEffectiveRunoff": 0,
+                  "DepthConstant": 0.0,
+                  "MaxDepthSoluteAccessible": 0.0,
+                  "RunoffEffectivenessAtMovingSolute": 0.0,
+                  "MaxEffectiveRunoff": 0.0,
                   "ConcInSolution": null,
                   "Name": "NH4",
                   "ResourceName": null,
@@ -488,32 +488,32 @@
                 {
                   "$type": "Models.Soils.Solute, Models",
                   "Thickness": [
-                    150,
-                    150,
-                    300,
-                    300,
-                    300,
-                    300,
-                    300
+                    150.0,
+                    150.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0,
+                    300.0
                   ],
                   "InitialValues": [
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
                   ],
                   "InitialValuesUnits": 1,
-                  "WaterTableConcentration": 0,
-                  "D0": 0,
+                  "WaterTableConcentration": 0.0,
+                  "D0": 0.0,
                   "Exco": null,
                   "FIP": null,
-                  "DepthConstant": 0,
-                  "MaxDepthSoluteAccessible": 0,
-                  "RunoffEffectivenessAtMovingSolute": 0,
-                  "MaxEffectiveRunoff": 0,
+                  "DepthConstant": 0.0,
+                  "MaxDepthSoluteAccessible": 0.0,
+                  "RunoffEffectivenessAtMovingSolute": 0.0,
+                  "MaxEffectiveRunoff": 0.0,
                   "ConcInSolution": null,
                   "Name": "Urea",
                   "ResourceName": null,
@@ -537,9 +537,490 @@
             },
             {
               "$type": "Models.PMF.Plant, Models",
-              "Name": "Maize",
-              "ResourceName": "Maize",
-              "Children": [],
+              "Name": "Soybean",
+              "ResourceName": "Soybean",
+              "Children": [
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 310",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.475",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 590",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.6, 22.35",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.6, 22.35"
+                  ],
+                  "Name": "early000",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 310",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.475",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 590",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.6, 22.35",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.6, 22.35"
+                  ],
+                  "Name": "mid000",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 312",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.47372",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 592",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.56, 22.15",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.56, 22.15"
+                  ],
+                  "Name": "late000",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 318",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.46836",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 598",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.39, 21.32",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.39, 21.32"
+                  ],
+                  "Name": "early00",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 320",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.467",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 600",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.35, 21.11",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.35, 21.11"
+                  ],
+                  "Name": "mid00",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 323",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 103",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.4598",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 603",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.31, 20.92",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.31, 20.92"
+                  ],
+                  "Name": "late00",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 333",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 117",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.42965",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 613",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.14, 20.15",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.14, 20.15"
+                  ],
+                  "Name": "early0",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 336",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.422",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 616",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.1, 19.95",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.1, 19.95"
+                  ],
+                  "Name": "mid0",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 337",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.42024",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 619",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.06, 19.76",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.06, 19.76"
+                  ],
+                  "Name": "late0",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 339",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.41287",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 629",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.88, 18.97",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.88, 18.97"
+                  ],
+                  "Name": "early1",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 340",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.411",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 632",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.84, 18.77",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.84, 18.77"
+                  ],
+                  "Name": "mid1",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 341",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.407",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 635",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.8, 18.58",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.8, 18.58"
+                  ],
+                  "Name": "late1",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 347",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.39025",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 645",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.63, 17.81",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.63, 17.81"
+                  ],
+                  "Name": "early2",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 348",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.386",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 648",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.59, 17.61",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.59, 17.61"
+                  ],
+                  "Name": "mid2",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 353",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.382",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 651",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.56, 17.5",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.56, 17.5"
+                  ],
+                  "Name": "late2",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 375",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.36525",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 661",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.43, 17.03",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.43, 17.03"
+                  ],
+                  "Name": "early3",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 380",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.361",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.4, 16.91",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.4, 16.91"
+                  ],
+                  "Name": "mid3",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 381",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 123",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.35508",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.35, 16.84",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.35, 16.84"
+                  ],
+                  "Name": "late3",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 387",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 137",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.33029",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.15, 16.56",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.15, 16.56"
+                  ],
+                  "Name": "early4",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 388",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 140",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.324",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.1, 16.49",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.1, 16.49"
+                  ],
+                  "Name": "mid4",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 389",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 143",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.28368",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 669",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.06, 16.43",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.06, 16.43"
+                  ],
+                  "Name": "late4",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 395",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 157",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.11484",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 691",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.88, 16.19",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.88, 16.19"
+                  ],
+                  "Name": "early5",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 396",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 160",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.072",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 696",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.83, 16.13",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.83, 16.13"
+                  ],
+                  "Name": "mid5",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 397",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 163",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.06944",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 699",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.79, 16.08",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.79, 16.08"
+                  ],
+                  "Name": "late5",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 403",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 177",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05872",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 709",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.62, 15.86",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.62, 15.86"
+                  ],
+                  "Name": "early6",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 404",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 180",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.056",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 712",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.58, 15.8",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.58, 15.8"
+                  ],
+                  "Name": "mid6",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 406",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 183",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05584",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 715",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.54, 15.75",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.54, 15.75"
+                  ],
+                  "Name": "late6",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 414",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 197",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05517",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 725",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.37, 15.52",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.37, 15.52"
+                  ],
+                  "Name": "early7",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 416",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 200",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.055",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 728",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.33, 15.46",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.33, 15.46"
+                  ],
+                  "Name": "mid7",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                },
+                {
+                  "$type": "Models.PMF.Cultivar, Models",
+                  "Command": [
+                    "[Phenology].Vegetative.Target.FixedValue = 418",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 200",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05484",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 731",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.29, 15.4",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.29, 15.4"
+                  ],
+                  "Name": "late7",
+                  "ResourceName": null,
+                  "Children": [],
+                  "Enabled": true,
+                  "ReadOnly": false
+                }
+              ],
               "Enabled": true,
               "ReadOnly": false
             },
@@ -549,10 +1030,10 @@
               "Canopies": [],
               "InitialResidueName": "soybean",
               "InitialResidueType": "soybean",
-              "InitialResidueMass": 2000,
+              "InitialResidueMass": 2000.0,
               "InitialStandingFraction": 0.2,
-              "InitialCPR": 0,
-              "InitialCNR": 20,
+              "InitialCPR": 0.0,
+              "InitialCNR": 20.0,
               "Name": "SurfaceOrganicMatter",
               "ResourceName": "SurfaceOrganicMatter",
               "Children": [],
@@ -679,7 +1160,7 @@
               "Parameters": [
                 {
                   "Key": "Crop",
-                  "Value": "[Maize]"
+                  "Value": "[Soybean]"
                 },
                 {
                   "Key": "SowDate",
@@ -711,19 +1192,19 @@
                 },
                 {
                   "Key": "CultivarName",
-                  "Value": "B_80"
+                  "Value": "Generic_MG1"
                 },
                 {
                   "Key": "SowingDepth",
-                  "Value": "50"
+                  "Value": "30"
                 },
                 {
                   "Key": "RowSpacing",
-                  "Value": "500"
+                  "Value": "750"
                 },
                 {
                   "Key": "Population",
-                  "Value": "8"
+                  "Value": "6"
                 }
               ],
               "Name": "Sowing",
@@ -770,7 +1251,7 @@
               "Parameters": [
                 {
                   "Key": "Crop",
-                  "Value": "[Maize]"
+                  "Value": "[Soybean]"
                 },
                 {
                   "Key": "FertiliserType",
@@ -877,7 +1358,7 @@
                 "        ",
                 "        [Description(\"Number of days to wait before killing unemerged plants\")] ",
                 "        public int EmergWait { get; set; }  ",
-                "         ",
+                "        ",
                 "        [Description(\"Number of days to wait before killing stalled plants\")] ",
                 "        public int MaxStall { get; set; }  ",
                 "        public double PrevStage {get; set;}",
@@ -1069,11 +1550,11 @@
                   "FactorToVaryLines": null,
                   "Marker": 0,
                   "MarkerSize": 0,
-                  "Line": 2,
+                  "Line": 0,
                   "LineThickness": 0,
                   "TableName": "Report",
                   "XFieldName": "Date",
-                  "YFieldName": "ThermalTime",
+                  "YFieldName": "Stage",
                   "X2FieldName": null,
                   "Y2FieldName": null,
                   "ShowInLegend": false,
@@ -1115,6 +1596,7 @@
                 "sum([Soil].NO3.kgha) as NO3",
                 "sum([Soil].Urea.kgha) as Urea",
                 "sum([Nutrient].Organic.C) as OrganicC",
+                "[Leaf].FRGR as FracGrowthRate",
                 "[Photosynthesis].FN as NutrientStress",
                 "[Photosynthesis].FT as TempStress",
                 "[Photosynthesis].FW as WaterStress",
