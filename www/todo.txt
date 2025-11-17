@@ -1,7 +1,3 @@
-- figure out why soils progress is not updating
-
-- add high quality figures to paper
 - make the "start..." progress text appear immediately
-
 - update citation
 - freeze code, push final version to github, server, and dockerhub

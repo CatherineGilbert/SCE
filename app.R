@@ -1,29 +1,12 @@
-library(shiny)
-library(shinydashboard)
-library(shinyWidgets)
-library(shinyBS)
-library(shinyjs)
-library(DT)
-library(geosphere)
-library(pheatmap)
-library(apsimx)
-library(tidyverse)
-library(daymetr)
-library(data.table)
-library(RColorBrewer)
-library(janitor)
-library(tidyr)
-library(zip)
-library(here)
-library(future)
-library(promises)
-library(lubridate)
-library(ggplot2)
-library(viridisLite)
-library(dendextend)
-library(scales)
-library(grid)
-library(leaflet)
+if (!require("pacman")) install.packages("pacman")
+pkg <- c("shiny", "shinydashboard", "shinyWidgets", "shinyBS", 
+"shinyjs", "DT", "geosphere", "pheatmap", "apsimx", "tidyverse",
+"daymetr", "data.table", "RColorBrewer", "janitor", "tidyr",
+"zip", "here", "future", "promises", "lubridate", "ggplot2",
+"viridisLite", "dendextend", "scales", "grid", "leaflet", 
+"apsimx", "tidyverse", "daymetr", "chirps", "nasapower", 
+"soilDB", "spData", "tools", "parallel", "beepr")
+p_load(char = pkg)
 
 plan(multisession, workers = 2)
 
@@ -212,16 +195,16 @@ ui <- dashboardPage(
                   ),
                   selectInput(
                     "weatherAquis",
-                    "Select Weather Aquisition:",
+                    "Select Weather Acquisition:",
                     choices = c(
+                      "NASAPOWER" = "NASAPOWER",
                       "DAYMET" = "DAYMET",
-                      "CHIRPS" = "CHIRPS",
-                      "NASAPOWER" = "NASAPOWER"
+                      "CHIRPS" = "CHIRPS"
                     )
                   ),
                   selectInput(
                     "soilAquis",
-                    "Select Soil Aquisition:",
+                    "Select Soil Acquisition:",
                     choices = c("ISRIC" = "ISRIC","SSURGO" = "SSURGO")
                   )
                 ),
@@ -628,14 +611,14 @@ ui <- dashboardPage(
 # Define server logic ----
 server <- function(input, output, session) {
   
-  codes_dir <- here()
+  codes_dir <- getwd()
   input_dir <- paste0(codes_dir,"/input")
   unlink(input_dir,recursive = T) ; dir.create(input_dir)
   
   # Reactive values for storing the analysis state and the selected variable
-  #analysisDone <- reactiveVal(FALSE)
+  analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
+  #analysisDone <- reactiveVal(TRUE)
   analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
@@ -721,7 +704,7 @@ server <- function(input, output, session) {
   })
   
   ## set parameters -------
-  weather_aquis <- reactiveVal("DAYMET")
+  weather_aquis <- reactiveVal("NASAPOWER")
   soil_aquis <- reactiveVal("SSURGO")
   mat_handling <- reactiveVal("Soy")
   
@@ -978,6 +961,7 @@ server <- function(input, output, session) {
     
     #### error messages in the progress log ----------------
     if (analysisFailed()) {
+      beep()
       logs <- c(logs, "\nERROR ///////////")
       if (!is.na(prog_error())) {logs <- c(logs, prog_error())}
       if (nloc() > 0 & ntrials() > 0){
@@ -1002,6 +986,7 @@ server <- function(input, output, session) {
   ## immediately after analysis ----
   observe({
     req(analysisDone())
+    beep()
     shinyjs::hide("runSpinner")
     shinyjs::show("sidebar_spinner")
     
@@ -1063,7 +1048,7 @@ server <- function(input, output, session) {
     })
     bigmet <- bind_rows(met_list)
     
-    bigmet <- bigmet %>% left_join(distinct(trial_info, Site, ID_Loc), by = "ID_Loc") 
+    bigmet <- bigmet %>% left_join(distinct(trial_info, Site, ID_Loc), by = "ID_Loc", relationship = "many-to-many") 
     
     max_temp <- input$max_temp
     base_temp <- input$base_temp
@@ -1272,6 +1257,8 @@ server <- function(input, output, session) {
       colnames(var_mat) <- 1:ncol(var_mat)
       var_mat <- remove_empty(var_mat, which = "rows") %>% as.matrix()
       var_mat[is.nan(var_mat)] <- NA
+      
+      print(var_mat)
       
       if (all(var_mat == var_mat[1,1], na.rm = T)){  #check if matrix is constant
         heatmap <- pheatmap(var_mat, angle_col = 0,
