@@ -1300,7 +1300,7 @@ server <- function(input, output, session) {
       var_mat <- remove_empty(var_mat, which = "rows") %>% as.matrix()
       var_mat[is.nan(var_mat)] <- NA
       
-      print(var_mat)
+      #print(var_mat)
       
       if (all(var_mat == var_mat[1,1], na.rm = T)){  #check if matrix is constant
         heatmap <- pheatmap(var_mat, angle_col = 0,
@@ -1513,8 +1513,8 @@ server <- function(input, output, session) {
                       nzv_chk = 1e-6, empty_chk = 0.9, var_chk = 0.9,
                       param_overrides = list()) {
     
-    print("Running ID_corr Analysis")
-    print(paste("matselin ID_corr function:", matsel))
+    #print("Running ID_corr Analysis")
+    #print(paste("matselin ID_corr function:", matsel))
     trialcex <- input$trial_cex
 
     #generic remove periods that don't have enough data to be used (remove 6 in this case)
@@ -1895,7 +1895,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       param_out <- as_tibble(get_current_param_table())
-      print(param_out)
+      #print(param_out)
       write.csv(param_out, file)
     }
   )
@@ -1916,7 +1916,7 @@ server <- function(input, output, session) {
       if (is.null(out_id_corr_pheatmap())) {
         print("Heatmap object is NULL")}
       else {
-        print("Plotting heatmap")
+        #print("Plotting heatmap")
         plot(out_id_corr_pheatmap())
       }
     })
@@ -2057,7 +2057,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       vardates <- make_vardates()
-      print("made vardates")
+      #print("made vardates")
       write_csv(vardates, file)
     }
   )
