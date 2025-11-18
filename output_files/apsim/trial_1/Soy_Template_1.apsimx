@@ -12,8 +12,8 @@
       "Children": [
         {
           "$type": "Models.Clock, Models",
-          "Start": "2017-01-01T00:00:00",
-          "End": "2017-12-31T00:00:00",
+          "Start": "2019-04-17T00:00:00",
+          "End": "2020-03-17T00:00:00",
           "Name": "Clock",
           "ResourceName": null,
           "Children": [],
@@ -1164,7 +1164,7 @@
                 },
                 {
                   "Key": "SowDate",
-                  "Value": "NA"
+                  "Value": "17-May"
                 },
                 {
                   "Key": "StartDate",
@@ -1192,7 +1192,7 @@
                 },
                 {
                   "Key": "CultivarName",
-                  "Value": "early3"
+                  "Value": "mid00"
                 },
                 {
                   "Key": "SowingDepth",

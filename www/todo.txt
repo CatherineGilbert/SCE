@@ -2,9 +2,14 @@
 - update citation
 - freeze code, push final version to github, server, and dockerhub
 
-- allow custom height and width for charts
+- allow custom plot height 
 - allow users to select ALL for maturities 
+- no more columns listed when files read in
+- trial labels list maturity when maturity ALL is selected (for seasonal heatmaps, trial sim matrix, dendro)
+- expand graph margins for TT/Precip plots
+
+- when matrices are downloaded, have them have columns corresponding to the columns of the nametag
+- reflect custom height/width in download dimensions
 - add loading symbols for graphs
 - add error message when graphs can't load because only a single record is being used
-- expand graph margins
 - have maturity handling autoselect as appropriate when template model is chosen
