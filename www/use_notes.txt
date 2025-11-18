@@ -66,10 +66,10 @@ docker run -p 3838:3838 your_image_name
 # 1. Save changes in code
 # 2. In Docker Desktop:
  cd C:\Users\cmg3\Documents\GitHub\SCE
- docker build -t sce:first_attempt .
- docker run -p 3838:3838 sce:first_attempt
+ docker build -t sce:tag_name .
+ docker run -p 3838:3838 sce:tag_name
  docker login
- docker tag sce:first_attempt catherinegilbert/sce:latest
+ docker tag sce:tag_name catherinegilbert/sce:latest
  docker push catherinegilbert/sce:latest
 
 # 3. Starting the app from SSH into the instance.  

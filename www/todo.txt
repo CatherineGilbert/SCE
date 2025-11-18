@@ -1,3 +1,10 @@
 - make the "start..." progress text appear immediately
 - update citation
 - freeze code, push final version to github, server, and dockerhub
+
+- allow custom height and width for charts
+- allow users to select ALL for maturities 
+- add loading symbols for graphs
+- add error message when graphs can't load because only a single record is being used
+- expand graph margins
+- have maturity handling autoselect as appropriate when template model is chosen
