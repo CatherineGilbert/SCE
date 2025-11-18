@@ -1103,9 +1103,10 @@ server <- function(input, output, session) {
   }, {
     base_temp(input$base_temp)
     max_temp(input$max_temp)
-    bigmet_gdd <- mutate(bigmet, tt = max((min(maxt,input$max_temp) + max(mint,input$base_temp))/2 - input$base_temp,0)) %>% ungroup()
+    bigmet_gdd <- mutate(bigmet, tt = pmax((pmin(maxt,input$max_temp) + pmax(mint,input$base_temp))/2 - input$base_temp,0)) %>% ungroup()
     bigmet_gdd <- bigmet_gdd %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
     filtmet(bigmet_gdd)
+    print(head(filtmet()))
   })
   
   ## download results ----

@@ -2,12 +2,7 @@
 - update citation
 - freeze code, push final version to github, server, and dockerhub
 
-- allow custom plot height 
-- allow users to select ALL for maturities 
-- no more columns listed when files read in
-- trial labels list maturity when maturity ALL is selected (for seasonal heatmaps, trial sim matrix, dendro)
-- expand graph margins for TT/Precip plots
-
+- recalculating daily GDD does not work
 - when matrices are downloaded, have them have columns corresponding to the columns of the nametag
 - reflect custom height/width in download dimensions
 - add loading symbols for graphs
