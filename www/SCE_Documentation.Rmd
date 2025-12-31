@@ -167,7 +167,7 @@ The final result of the analysis are five output files. These can be downloaded 
 ## 5.1. Output Files
 
 |                         |                                                                                                                                                                                                                                                                                                           |
-|-------------------|-----------------------------------------------------|
+|--------------------|----------------------------------------------------|
 | **File Name**           | **Contents**                                                                                                                                                                                                                                                                                              |
 | "daily_sim_outputs.csv" | The combined total output of the APSIM simulations. This file contains the recorded values of the reporting variables for each day of each simulation. This data is available for users who wish to access the raw outputs of the tool.                                                                   |
 | "seasonal_data.csv"     | The seasonal profiles. Contains the seasonal covariates for each trial (environmental and biological parameters summarized by period) as well as parameters which describe the periods themselves, such as starting and end date. This data is in long format by ID and period.                           |
@@ -180,7 +180,7 @@ The final result of the analysis are five output files. These can be downloaded 
 The default reporting variables of seasonal_data are:
 
 |                   |                  |                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-|-----------------|-----------------|---------------------------------------|
+|------------------|------------------|-------------------------------------|
 | Name              | Unit             | Description                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ID                | (unitless)       | ID of the simulation. This matches the row number of the input file.                                                                                                                                                                                                                                                                                                                                                               |
 | Period            | (unitless)       | Period of development. Equivalent to APSIM stages of development.                                                                                                                                                                                                                                                                                                                                                                  |
@@ -214,7 +214,7 @@ The default reporting variables of seasonal_data are:
 The default reporting variables of trial_info are:
 
 |                  |                    |                                                                                                                                                                                                                                       |
-|-----------------|-----------------|---------------------------------------|
+|------------------|------------------|-------------------------------------|
 | Name             | Unit               | Description                                                                                                                                                                                                                           |
 | ID               | (unitless)         | ID of the simulation. This matches the row number of the input file.                                                                                                                                                                  |
 | Site             | (unitless)         | "Site", from the input file. A tag for the location of the trial.                                                                                                                                                                     |
@@ -364,7 +364,7 @@ Below the plot of the seasonal profile correlations, the user has an option to d
 The seasonal analogues report gives you the similarity of the seasonal profiles (within a cultivar maturity) summarized over the matching simulations of each year. This is taken from pivoting the seasonal correlation matrix to a long form dataframe, finding the correlations of seasonal profiles for matching years, and taking the mean of correlations of matching years.
 
 | Name                                 | Unit                  | Description                                                                                                               |
-|------------------|------------------|-------------------------------------|
+|------------------|------------------|------------------------------------|
 | ID.x                                 | (unitless)            | The ID \# of the first trial in the comparison.                                                                           |
 | ID.y                                 | (unitless)            | The ID \# of the second trial in the comparison.                                                                          |
 | Site.x                               | (unitless)            | The name of the site for the first trial.                                                                                 |
@@ -443,11 +443,11 @@ This selection can be used to make comparisons between sites in terms of their t
 # 7. Full Anatomy Diagram
 
 ::: {style="text-align: center; font-size: 90%; margin-top: 0.5em; margin-bottom: 1.5em;"}
-<img src="pictures/fig6_colored_combined.png" style="width: 100%;"/>
+<a href="pictures/fig6b_colored_combined.png" target="_blank">
+  <img src="pictures/fig6b_colored_combined.png" style="width: 100%; cursor: zoom-in;" />
+</a>
 
 Behold!
-
-</p>
 :::
 
 # 8. Tutorials
