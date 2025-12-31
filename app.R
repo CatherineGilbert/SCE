@@ -142,7 +142,8 @@ ui <- dashboardPage(
           box(
             width = 12,
           p(tags$b("Citation:")),
-          p("Gilbert, C. (2025). CatherineGilbert/SCE [R]. https://github.com/CatherineGilbert/SCE (Original work published 2024)
+          p("Gilbert, C., Mandrini, G., Ersoz, E., & Martin, N. (2026). The seasonal characterization engine, an application for describing environment from the perspective of crop development. SoftwareX, 33, 102477. https://doi.org/10.1016/j.softx.2025.102477
+
 ")
           )
         )      
