@@ -1,10 +1,10 @@
-- make the "start..." progress text appear immediately
 - update citation
-- freeze code, push final version to github, server, and dockerhub
 
-- recalculating daily GDD does not work
+- recalculating daily GDD works again
+
 - when matrices are downloaded, have them have columns corresponding to the columns of the nametag
-- reflect custom height/width in download dimensions
+- reflect custom height/width in download dimensions??
+  - OR: allow plots to be popped out in a separate window and resized
 - add loading symbols for graphs
 - add error message when graphs can't load because only a single record is being used
 - have maturity handling autoselect as appropriate when template model is chosen
