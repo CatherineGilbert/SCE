@@ -1,10 +1,10 @@
-- update citation
-
-- recalculating daily GDD works again
-
+- add advanced option to not trim the simulations
+- have maturity handling autoselect as appropriate when template model is chosen
 - when matrices are downloaded, have them have columns corresponding to the columns of the nametag
-- reflect custom height/width in download dimensions??
-  - OR: allow plots to be popped out in a separate window and resized
 - add loading symbols for graphs
 - add error message when graphs can't load because only a single record is being used
-- have maturity handling autoselect as appropriate when template model is chosen
+
+- fixed the trial sim heatmap download (hacky (as if many parts of this aren't hacky))
+- you can select plot height now and that carries over to the download
+
+

@@ -142,7 +142,8 @@ ui <- dashboardPage(
           box(
             width = 12,
           p(tags$b("Citation:")),
-          p("Gilbert, C. (2025). CatherineGilbert/SCE [R]. https://github.com/CatherineGilbert/SCE (Original work published 2024)
+          p("Gilbert, C., Mandrini, G., Ersoz, E., & Martin, N. (2026). The seasonal characterization engine, an application for describing environment from the perspective of crop development. SoftwareX, 33, 102477. https://doi.org/10.1016/j.softx.2025.102477
+
 ")
           )
         )      
@@ -1397,7 +1398,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       # Use the stored heatmap for the download
-      png(file, width = 1400, height = 1000)
+      png(file, width = 1400, height = input$season_h)
       
       side_label <- if (input$season_heatBy == "By Site") "Sites" else "Trials"
       
@@ -1565,7 +1566,8 @@ server <- function(input, output, session) {
     
     #remove parameters that intersect with periods before / after growing season
     if (exclude_startend) {
-      startend_vars <- names(final_dt)[!names(final_dt) %in% names(select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period))))))]
+      startend_vars <- names(final_dt)[!names(final_dt) %in% 
+            names(select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period))))))]
       final_dt <- select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period)))))
     } else {
       startend_vars <- c("")
@@ -1702,6 +1704,8 @@ server <- function(input, output, session) {
       pdend <- NULL
     }
     
+    trial_sim_heatmap_hack <<- p3
+    
     out_IDs(colnames(id_cor)) #trial IDs
     out_nametag(nametag) #used for labels. it's ID/Site/Planting DOY/Year
     out_used_params(param_status)
@@ -1713,6 +1717,50 @@ server <- function(input, output, session) {
     out_id_corr_pheatmap(p3$gtable)
     out_id_dend_obj(pdend)
   }
+  
+  
+  ## render trial comp heatmap ----
+  observe({
+    output$comp_heatmapPlotUI <- renderUI({
+      graphics.off()
+      plotOutput("comp_heatmapPlot", height = paste0(input$trial_h,"px"), width = "100%")
+    })
+  })
+  
+  output$comp_heatmapPlot <- renderPlot(
+    {
+      req(analysisDone())
+      
+      if (is.null(out_id_corr_pheatmap())) {
+        print("Heatmap object is NULL")}
+      else {
+        #print("Plotting heatmap")
+        plot(out_id_corr_pheatmap())
+      }
+    })
+  
+  ## trial comp heatmap / matrix downloads ----
+  output$trial_downloadHeatmap <- downloadHandler(
+    filename = function() {
+      paste0("sim-heatmap-", input$trial_matSelect, "-", Sys.Date(), ".png")
+    },
+    content = function(file) {
+      # Use the stored heatmap for the download
+      png(file, width = 1400, height = input$trial_h)
+      grid::grid.draw(trial_sim_heatmap_hack$gtable)  # Draw the stored heatmap
+      dev.off()
+    }
+  )
+  
+  output$downloadEnvMatrix <- downloadHandler(
+    filename = function() {
+      paste0("sim-matrix", input$trial_matSelect, "-", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(out_id_cor(), file)
+    }
+  )
+  
   
   ## function to run ID_corr -----
   run_ID_corr <- function() {
@@ -1901,89 +1949,106 @@ server <- function(input, output, session) {
     }
   )
   
+
   
-  ## render trial comp heatmap ----
-  observe({
-    output$comp_heatmapPlotUI <- renderUI({
-      graphics.off()
-      plotOutput("comp_heatmapPlot", height = paste0(input$trial_h,"px"), width = "100%")
-    })
-  })
   
-  output$comp_heatmapPlot <- renderPlot(
-    {
-      req(analysisDone())
-      
-      if (is.null(out_id_corr_pheatmap())) {
-        print("Heatmap object is NULL")}
-      else {
-        #print("Plotting heatmap")
-        plot(out_id_corr_pheatmap())
-      }
-    })
-  
-  ## trial comp heatmap / matrix downloads ----
-  output$trial_downloadHeatmap <- downloadHandler(
-    filename = function() {
-      paste0("sim-heatmap-", input$trial_matSelect, "-", Sys.Date(), ".png")
-    },
-    content = function(file) {
-      # Use the stored heatmap for the download
-      png(file, width = 1400, height = 1000)
-      grid::grid.draw(out_id_corr_pheatmap()$gtable)  # Draw the stored heatmap
-      dev.off()
-    }
-  )
-  
-  output$downloadEnvMatrix <- downloadHandler(
-    filename = function() {
-      paste0("sim-matrix", input$trial_matSelect, "-", Sys.Date(), ".csv")
-    },
-    content = function(file) {
-      write.csv(out_id_cor(), file)
-    }
-  )
   
   ## render dendrograms -----
-  output$dendroPlot <- renderPlot({
-    if (is.null(out_id_dend_obj())) {
-      print("Dendrogram object is NULL")
+  
+  draw_dendrogram <- function(
+    dend,
+    nametag,
+    trial_matSelect,
+    k_val,
+    dendro_cex
+  ) {
+    req(dend, dendro_cex)
+    
+    par(mar = c(5, 2, 2, 15))
+    
+    ## Label lookup
+    dend_labels <- nametag[as.character(nametag$ID) %in% labels(dend), ]
+    dend_labels <- dend_labels[
+      match(labels(dend), as.character(dend_labels$ID)),
+    ]
+    
+    if (trial_matSelect == "ALL") {
+      labels(dend) <- dplyr::pull(dend_labels, mtag)
     } else {
-      req(input$dendro_cex)
-      
-      par(mar = c(5,2,2,15))
-      dend <- out_id_dend_obj()
-      dend_labels <- nametag[as.character(nametag$ID) %in% labels(dend), ]
-      dend_labels <- dend_labels[match(labels(dend), as.character(dend_labels$ID)), ]
-      if (input$trial_matSelect == "ALL") {
-        labels(dend) <- pull(dend_labels, mtag)
-      } else {
-        labels(dend) <- pull(dend_labels, tag)
-      }
-
-      dend %>% 
-        set("branches_k_color", k=input$k_val) %>% 
-        set("labels_cex", input$dendro_cex) %>%
-        plot(horiz = TRUE)
-      dend %>% rect.dendrogram(k=input$k_val, horiz = TRUE, border = 8, lty = 5, lwd = 2)
+      labels(dend) <- dplyr::pull(dend_labels, tag)
     }
+    
+    ## Styling
+    dend_styled <- dend %>%
+      dendextend::set("branches_k_color", k = k_val) %>%
+      dendextend::set("labels_cex", dendro_cex)
+    
+    ## Draw
+    plot(dend_styled, horiz = TRUE)
+    
+    dendextend::rect.dendrogram(
+      dend_styled,
+      k = k_val,
+      horiz = TRUE,
+      border = 8,
+      lty = 5,
+      lwd = 2
+    )
+    
+    invisible(dend_styled)
+  }
+  
+  output$dendroPlot <- renderPlot({
+    dend <- out_id_dend_obj()
+    
+    if (is.null(dend)) {
+      plot.new()
+      text(0.5, 0.5, "Dendrogram object is NULL")
+      return()
+    }
+    
+    draw_dendrogram(
+      dend             = dend,
+      nametag          = nametag,
+      trial_matSelect  = input$trial_matSelect,
+      k_val            = input$k_val,
+      dendro_cex       = input$dendro_cex
+    )
   })
   
-  observe({
-    output$dendroPlotUI <- renderUI({
-      plotOutput("dendroPlot", height = paste0(input$dendro_h,"px"), width = "100%")
-    })
+  output$dendroPlotUI <- renderUI({
+    plotOutput(
+      "dendroPlot",
+      height = paste0(input$dendro_h, "px"),
+      width  = "100%"
+    )
   })
   
-  ## dendrogram downloads ------
+## dendrogram downloads ------
   output$trial_downloadDendro <- downloadHandler(
     filename = function() {
-      paste0("dendrogram-plot_", input$trial_matSelect, "_", Sys.Date(),".png")
+      paste0(
+        "dendrogram-plot_",
+        input$trial_matSelect, "_",
+        Sys.Date(), ".png"
+      )
     },
     content = function(file) {
-      # Use the stored heatmap for the download
-      png(file, width = 1400, height = 1000)
-      grid::grid.draw(out_id_dend_obj())  # Draw the stored heatmap
+      
+      png(
+        file,
+        width  = 1400,
+        height = input$dendro_h
+      )
+      
+      draw_dendrogram(
+        dend             = out_id_dend_obj(),
+        nametag          = nametag,
+        trial_matSelect  = input$trial_matSelect,
+        k_val            = input$k_val,
+        dendro_cex       = input$dendro_cex
+      )
+      
       dev.off()
     }
   )
