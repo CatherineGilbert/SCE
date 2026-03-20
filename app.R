@@ -207,7 +207,13 @@ ui <- dashboardPage(
                     "soilAquis",
                     "Select Soil Acquisition:",
                     choices = c("ISRIC" = "ISRIC","SSURGO" = "SSURGO")
-                  )
+                  ),
+                  checkboxInput("no_trim", 
+                              tagList(
+                                "Advanced: Do Not Trim Sim Outputs", 
+                                shiny::span(icon("info-circle"), id = "tip_no_trim")
+                              ), 
+                              value = FALSE),
                 ),
                 box(
                   background = "green",
@@ -233,7 +239,8 @@ ui <- dashboardPage(
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
               bsTooltip("tip_tempmodel", "The template model provided here-- its crop module, reporting variables, and management controls-- will be used as the basis for all trial simulations.", "right", options = list(container = "body")),
-              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. Soy and Maize are intended to be used with the template models provided. See documentation for more information on these functions. Choosing Direct handling will set the phenology for the simulation using whatever APSIM cultivar name is in the Genetics column.", "right", options = list(container = "body"))
+              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. Soy and Maize are intended to be used with the template models provided. See documentation for more information on these functions. Choosing Direct handling will set the phenology for each simulation using the APSIM cultivar names in the Genetics column.", "right", options = list(container = "body")),
+              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to two weeks before planting and after harvest. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
               ),
       ### result view UI ----
       tabItem(tabName = "results",
@@ -513,7 +520,7 @@ ui <- dashboardPage(
           )
         ),
         bsTooltip("tip_report", "Report comparing seasonal conditions for different site and planting date combinations. Gives the similarity and stability of that similarity over the simulated years. See documentation for specifics.", "below", options = list(container = "body")),
-        bsTooltip("tip_exclude_startend", "Remove seasonal covariates outside the strict duration of crop development. Drops seasonal covariates associated with the first and last phenological periods, which contain the two weeks before sowing and the two weeks after harvest respectively.", "right", options = list(container = "body")),
+        bsTooltip("tip_exclude_startend", "Remove seasonal covariates outside the strict duration of crop development. Drops seasonal covariates associated with the first and last phenological periods, which contain the periods before sowing and after harvest.", "right", options = list(container = "body")),
         bsTooltip("tip_min_dur", "Drop seasonal covariates associated with periods that have a mean duration shorter than this value (in days). Useful for removing shortened periods (such as those a day or less in length) which may be part of the APSIM model definition but may not be relevant to the seasonal profile.", "right", options = list(container = "body")),
         bsTooltip("tip_nzv_chk", "Drop seasonal covariates with a variance lower than this value. Used to remove variables with near-zero variance, which are likely uninformative.", "right", options = list(container = "body")),
         bsTooltip("tip_empty_chk", "Drop trials with too much missing data (less than this proportion of their seasonal data is available). In the case that a simulation fails or is cut short, this can be used to remove suspicious trial data.", "right", options = list(container = "body")),
@@ -649,9 +656,9 @@ server <- function(input, output, session) {
   unlink(input_dir,recursive = T) ; dir.create(input_dir)
   
   # Reactive values for storing the analysis state and the selected variable
-  #analysisDone <- reactiveVal(FALSE)
+  analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
+  #analysisDone <- reactiveVal(TRUE)
   analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
@@ -740,6 +747,7 @@ server <- function(input, output, session) {
   weather_aquis <- reactiveVal("NASAPOWER")
   soil_aquis <- reactiveVal("SSURGO")
   mat_handling <- reactiveVal("Soy")
+  no_trim <- reactiveVal("FALSE")
   
   observeEvent(input$matType, {
     mat_handling(input$matType)
@@ -749,6 +757,9 @@ server <- function(input, output, session) {
   })
   observeEvent(input$weatherAquis,{
     weather_aquis(input$weatherAquis)
+  })
+  observeEvent(input$no_trim,{
+    no_trim(input$no_trim)
   })
   
   ## set progress counters -------
@@ -826,7 +837,8 @@ server <- function(input, output, session) {
     #set parameters
     parms <- tibble(mat_handling = mat_handling(), 
                     weather_aquis = weather_aquis(), 
-                    soil_aquis = soil_aquis())
+                    soil_aquis = soil_aquis(),
+                    no_trim = no_trim())
     write_csv(parms, paste0(codes_dir,"/output_files/parameters.csv"))
     
     ### upload template model -----

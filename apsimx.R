@@ -35,6 +35,7 @@ parms <- read_csv("parameters.csv", progress = F, show_col_types = F) #pull tria
 mat_handling <- pull(parms, mat_handling)
 weather_aquis <- pull(parms, weather_aquis)
 soil_aquis <- pull(parms, soil_aquis)
+no_trim <- pull(parms, no_trim)
 
 templ_model_path <- list.files(paste0(codes_dir,"/input"), pattern = ".apsimx", full.names = TRUE)[1]
 templ_model <- file_path_sans_ext(basename(templ_model_path))
@@ -58,7 +59,7 @@ trials_df <- mutate(trials_df,
   Year = ifelse(is.na(Year), prev_year, Year), #if no year, use last year with full data
   # if no planting date, use beginning and end of year as boundaries
   sim_start = if_else(is.na(PlantingDate), as_date(paste0(as.character(Year),"-01-01")), as_date(PlantingDate %m-% months(1))), 
-  sim_end = if_else(is.na(PlantingDate), as_date(paste0(as.character(Year),"-12-31")), as_date(PlantingDate %m+% months(10))))
+  sim_end = if_else(is.na(PlantingDate), as_date(paste0(as.character(as.numeric(Year)+1),"-12-31")), as_date(PlantingDate %m+% months(24))))
 trials_df <- trials_df %>% group_by(ID) %>% mutate(sim_end = min(sim_end, as_date(yesterday))) %>% ungroup()
 
 print("Handle Crop Maturities ...")
@@ -348,8 +349,13 @@ simdates <- left_join(simsows, simmats, by = join_by(ID)) %>% left_join(simharvs
 daily_output <- select(daily_output, -SimSowDate, -SimMatDate, -SimHarvestDate)
 
 # Trim season (daily_output) to two weeks before planting and two weeks after death / harvest
-simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndDate = date(SimHarvestDate) %m+% weeks(2)) %>%
-  select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
+if(no_trim){ #if you don't want to trim to two weeks
+  simstartend <- select(daily_output, ID, Date) %>% group_by(ID) %>% summarize(StartDate = min(Date), EndDate = max(Date)) 
+  simdates <- left_join(simstartend, simdates) %>% select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
+} else { # trim outputs to two weeks either side of planting and harvest
+  simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndDate = date(SimHarvestDate) %m+% weeks(2)) %>%
+    select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
+}
 daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, StartDate, EndDate), by = join_by(ID)) %>%
   filter(Date >= StartDate & Date <= EndDate) %>% select(-StartDate,-EndDate)
 daily_output <- mutate(daily_output, Date = as_date(Date))
@@ -450,8 +456,8 @@ period_key <- daily_sim_outputs %>% ungroup() %>%
   rename("APSIM StageName" = StageName)
 
 period_key <- mutate(period_key, Notes = case_match(Period,
-                                      min(Period) ~ "includes two weeks pre-planting",
-                                      max(Period) ~ "includes two weeks post-harvest",
+                                      min(Period) ~ ifelse(no_trim, "pre-planting period","includes two weeks pre-planting"),
+                                      max(Period) ~ ifelse(no_trim, "post-harvest period","includes two weeks post-harvest"),
                                       .default = NA
                                       
 )) %>% select(Period, `APSIM StageName`, Notes)
