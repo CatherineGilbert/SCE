@@ -207,7 +207,13 @@ ui <- dashboardPage(
                     "soilAquis",
                     "Select Soil Acquisition:",
                     choices = c("ISRIC" = "ISRIC","SSURGO" = "SSURGO")
-                  )
+                  ),
+                  checkboxInput("no_trim", 
+                              tagList(
+                                "Advanced: Do Not Trim Sim Outputs", 
+                                shiny::span(icon("info-circle"), id = "tip_no_trim")
+                              ), 
+                              value = FALSE),
                 ),
                 box(
                   background = "green",
@@ -233,7 +239,8 @@ ui <- dashboardPage(
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
               bsTooltip("tip_tempmodel", "The template model provided here-- its crop module, reporting variables, and management controls-- will be used as the basis for all trial simulations.", "right", options = list(container = "body")),
-              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. Soy and Maize are intended to be used with the template models provided. See documentation for more information on these functions. Choosing Direct handling will set the phenology for the simulation using whatever APSIM cultivar name is in the Genetics column.", "right", options = list(container = "body"))
+              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. Soy and Maize are intended to be used with the template models provided. See documentation for more information on these functions. Choosing Direct handling will set the phenology for each simulation using the APSIM cultivar names in the Genetics column.", "right", options = list(container = "body")),
+              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to two weeks before planting and after harvest. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
               ),
       ### result view UI ----
       tabItem(tabName = "results",
@@ -327,20 +334,21 @@ ui <- dashboardPage(
             and trial. If sites are chosen this will be the means of the same values for each site."
           ),
           p("The X axis of the plot is the developmental period and the Y axis of the plot is the trial/site. 
-            Trials are labeled in the format '[Trial ID]: [Site Name] [Date Planted]'.
-            Trials/sites are ordered on the Y axis according to hierarchical clustering of the chosen variable,
-            as indicated by the dendrogram on the plot's left margin. Cells are colored by value, red/high to blue/low.
-            The coloring is scaled relative to the other values recorded in that period for the trials/sites compared (column-wise).
+            Trials are labeled in the format '[Trial ID]: [Site Name] [Date Planted]'. [Genetic Maturity] is appended 
+            if you are viewing all maturities at once. Trials/sites are ordered on the Y axis according to hierarchical
+            clustering of the chosen variable, as indicated by the dendrogram on the plot's left margin. 
+            Cells are colored by value, red/high to blue/low. The coloring is scaled relative to the other
+            values recorded in that period for the trials/sites compared (column-wise).
           "),
           fluidRow(
-            column(width = 3,
+            column(width = 2,
                    uiOutput("season_matSelectUI")),
-            column(width = 3,
+            column(width = 2,
                    uiOutput("season_varHeatmapUI")),
             column(width = 3,
                    selectInput(inputId = "season_heatBy", label = "By Trial or by Site?", choices = c("By Trial","By Site"), selected = "By Trial")
             ),
-            column(width = 3,
+            column(width = 2,
                    numericInput(
                      inputId = "season_cex",
                      label = "Adjust Label Size",
@@ -348,6 +356,16 @@ ui <- dashboardPage(
                      min = 0,          
                      max = 50,          
                      step = 1        
+                   ))
+            ,
+            column(width = 2,
+                   numericInput(
+                     inputId = "season_h",
+                     label = "Height (px)",
+                     value = 600,        
+                     min = 0,          
+                     max = 10000,          
+                     step = 100        
                    ))
           ),
           uiOutput("season_heatmapPlotUI"),
@@ -378,6 +396,16 @@ ui <- dashboardPage(
                      max = 50,          
                      step = 1        
                    ))
+            ,
+            column(width = 3,
+                   numericInput(
+                     inputId = "trial_h",
+                     label = "Height (px)",
+                     value = 800,        
+                     min = 0,          
+                     max = 10000,          
+                     step = 100        
+                   ))
           ),
           uiOutput("comp_heatmapPlotUI"),
           downloadButton(
@@ -393,7 +421,8 @@ ui <- dashboardPage(
           p("
             Above is a heatmap showing a similarity matrix created from the correlation of trial seasonal profiles. 
             The matrix is symmetrical: the columns are labeled below with the trial ID, and the rows are labeled to the 
-            right in the format [Trial ID:] [Site Name] [Date Planted]. 
+            right in the format '[Trial ID:] [Site Name] [Date Planted]', followed by '[Genetic Maturity]' 
+            if more than one maturity is being viewed at once. 
           "),
           h3("Dendrogram of Seasonal Similarities"),
           fluidRow(
@@ -408,6 +437,16 @@ ui <- dashboardPage(
                      min = 0,          
                      max = 2,          
                      step = 0.1        
+                   ))
+            ,
+            column(width = 3,
+                   numericInput(
+                     inputId = "dendro_h",
+                     label = "Height (px)",
+                     value = 400,        
+                     min = 0,          
+                     max = 10000,          
+                     step = 100        
                    ))
           ),
           uiOutput("dendroPlotUI"),
@@ -481,7 +520,7 @@ ui <- dashboardPage(
           )
         ),
         bsTooltip("tip_report", "Report comparing seasonal conditions for different site and planting date combinations. Gives the similarity and stability of that similarity over the simulated years. See documentation for specifics.", "below", options = list(container = "body")),
-        bsTooltip("tip_exclude_startend", "Remove seasonal covariates outside the strict duration of crop development. Drops seasonal covariates associated with the first and last phenological periods, which contain the two weeks before sowing and the two weeks after harvest respectively.", "right", options = list(container = "body")),
+        bsTooltip("tip_exclude_startend", "Remove seasonal covariates outside the strict duration of crop development. Drops seasonal covariates associated with the first and last phenological periods, which contain the periods before sowing and after harvest.", "right", options = list(container = "body")),
         bsTooltip("tip_min_dur", "Drop seasonal covariates associated with periods that have a mean duration shorter than this value (in days). Useful for removing shortened periods (such as those a day or less in length) which may be part of the APSIM model definition but may not be relevant to the seasonal profile.", "right", options = list(container = "body")),
         bsTooltip("tip_nzv_chk", "Drop seasonal covariates with a variance lower than this value. Used to remove variables with near-zero variance, which are likely uninformative.", "right", options = list(container = "body")),
         bsTooltip("tip_empty_chk", "Drop trials with too much missing data (less than this proportion of their seasonal data is available). In the case that a simulation fails or is cut short, this can be used to remove suspicious trial data.", "right", options = list(container = "body")),
@@ -659,7 +698,7 @@ server <- function(input, output, session) {
   
   ## UI for example files --------
   ## Disable/enable fileInput 
-  observe({
+  observeEvent(input$useExampleInput, {
     if (input$useExampleInput) {
       shinyjs::disable("fileUpload")
     } else {
@@ -682,7 +721,7 @@ server <- function(input, output, session) {
   })
   
     ## Disable/enable template upload
-  observe({
+  observeEvent(input$useExampleTemplate, {
     if (input$useExampleTemplate) {
       shinyjs::disable("templateUpload")
     } else {
@@ -708,6 +747,7 @@ server <- function(input, output, session) {
   weather_aquis <- reactiveVal("NASAPOWER")
   soil_aquis <- reactiveVal("SSURGO")
   mat_handling <- reactiveVal("Soy")
+  no_trim <- reactiveVal("FALSE")
   
   observeEvent(input$matType, {
     mat_handling(input$matType)
@@ -717,6 +757,9 @@ server <- function(input, output, session) {
   })
   observeEvent(input$weatherAquis,{
     weather_aquis(input$weatherAquis)
+  })
+  observeEvent(input$no_trim,{
+    no_trim(input$no_trim)
   })
   
   ## set progress counters -------
@@ -794,7 +837,8 @@ server <- function(input, output, session) {
     #set parameters
     parms <- tibble(mat_handling = mat_handling(), 
                     weather_aquis = weather_aquis(), 
-                    soil_aquis = soil_aquis())
+                    soil_aquis = soil_aquis(),
+                    no_trim = no_trim())
     write_csv(parms, paste0(codes_dir,"/output_files/parameters.csv"))
     
     ### upload template model -----
@@ -864,7 +908,7 @@ server <- function(input, output, session) {
     ### call analysis script  -----
       
       #get the input and set associated progress counters
-      input <- read_csv(list.files(input_dir, pattern = ".csv", full.names = TRUE))
+      input <- read_csv(list.files(input_dir, pattern = ".csv", full.names = TRUE), show_col_types = FALSE)
       nloc(nrow(distinct(select(input, Latitude, Longitude))))
       ntrials(nrow(input))
       
@@ -971,7 +1015,7 @@ server <- function(input, output, session) {
         if (sim_count() == 0){logs <- c(logs, ".apsimx files could not be generated.")}
         if (out_count() == 0){logs <- c(logs, "No simulations ran successfully.")}
         if (met_count() != 0 & soil_count() != 0 & sim_count() != 0 & out_count() != 0) {
-           logs <- c(logs, "Something went wrong processing the results.")
+           logs <- c(logs, "Something went wrong while processing the results.")
          }
       }
     }
@@ -991,15 +1035,15 @@ server <- function(input, output, session) {
     shinyjs::hide("runSpinner")
     shinyjs::show("sidebar_spinner")
     
-    trial_info <<- read_csv(paste0(results_dir, "/trial_info.csv"))
-    final_x <<- read_csv(paste0(results_dir, "/final_x.csv"))
-    seasonal_data <<- read_csv(paste0(results_dir, "/seasonal_data.csv"))
-    daily_sim_outputs <<- read_csv(paste0(results_dir, "/daily_sim_outputs.csv"))
-    period_key <<- read_csv(paste0(results_dir, "/period_key.csv"))
+    trial_info <<- read_csv(paste0(results_dir, "/trial_info.csv"), show_col_types = FALSE)
+    final_x <<- read_csv(paste0(results_dir, "/final_x.csv"), show_col_types = FALSE)
+    seasonal_data <<- read_csv(paste0(results_dir, "/seasonal_data.csv"), show_col_types = FALSE)
+    daily_sim_outputs <<- read_csv(paste0(results_dir, "/daily_sim_outputs.csv"), show_col_types = FALSE)
+    period_key <<- read_csv(paste0(results_dir, "/period_key.csv"), show_col_types = FALSE)
     
     nametag <<- select(final_x, ID, Site, PlantingDate_Sim, Mat) %>% 
       mutate(tag = paste0(ID,": ", Site, " ", PlantingDate_Sim),
-             mtag = paste0(ID,": ", Mat, " ", Site, " ", PlantingDate_Sim))
+             mtag = paste0(ID,": ", Site, " ", PlantingDate_Sim, " ", Mat))
     
     ### refresh progress counters again ----
     nloc(nrow(distinct(select(trial_info, Latitude, Longitude))))
@@ -1075,6 +1119,7 @@ server <- function(input, output, session) {
     bigmet_gdd <- mutate(bigmet, tt = pmax((pmin(maxt,input$max_temp) + pmax(mint,input$base_temp))/2 - input$base_temp,0)) %>% ungroup()
     bigmet_gdd <- bigmet_gdd %>% left_join(mean_startend) %>% filter(day >= first_doy & day <= final_doy)
     filtmet(bigmet_gdd)
+    print(head(filtmet()))
   })
   
   ## download results ----
@@ -1215,7 +1260,7 @@ server <- function(input, output, session) {
   ## select maturity for heatmap -----
   output$season_matSelectUI <- renderUI({
     req(analysisDone())
-    gen_choices <- unique(trial_info$Mat)
+    gen_choices <- c(unique(trial_info$Mat), "ALL")
     selectInput(inputId = "season_matSelect", label = "Select Maturity", choices = gen_choices, selected = gen_choices[1])
   })
   
@@ -1235,22 +1280,32 @@ server <- function(input, output, session) {
       req(input$season_matSelect)
       matsel <- input$season_matSelect 
       var <- input$season_varSelect
-      heatby <- input$season_heatBy
       heatcex <- input$season_cex
       
-      if (heatby == "By Site") {
-        var_mat <- filter(final_x, Mat == matsel) %>% select(ID, Site, starts_with(var)) %>% select(-ID) %>%
+      #create base matrix from final_x, filter to maturity selection if necessary
+      if(matsel == "ALL"){var_mat <- final_x} else {var_mat <- filter(final_x, Mat == matsel)}
+      
+      #if by site, aggregate by site
+      if (input$season_heatBy == "By Site") {
+        var_mat <- select(var_mat, ID, Site, starts_with(var)) %>% select(-ID) %>%
           group_by(Site) %>% summarize(across(where(is.numeric), function(x){mean(x,na.rm=T)})) %>%
           column_to_rownames("Site") %>%
           remove_empty(which = "rows") %>%
           as.matrix()
         paste1 <- "Recorded Means of "
         paste2 <- " by Site (Maturity: "
-      } else {
-        var_mat <- filter(final_x, Mat == matsel) %>% select(ID, starts_with(var)) %>%
-          group_by(ID) %>% summarize(across(where(is.numeric), function(x){mean(x,na.rm=T)})) %>%
-          left_join(., select(nametag, ID, tag), by = join_by(ID)) %>% 
-          select(-ID) %>% column_to_rownames("tag")
+        
+      } else { #else use the trial records directly
+        var_mat <- select(var_mat, ID, starts_with(var)) %>%
+          group_by(ID) %>% summarize(across(where(is.numeric), function(x){mean(x,na.rm=T)}))
+        
+        if (matsel == "ALL") { #if maturity is set to "ALL", include maturity in labels
+          var_mat <- left_join(var_mat, select(nametag, ID, mtag), by = join_by(ID)) %>% 
+            select(-ID) %>% column_to_rownames("mtag")
+        } else {
+          var_mat <- left_join(var_mat, select(nametag, ID, tag), by = join_by(ID)) %>% 
+            select(-ID) %>% column_to_rownames("tag")
+        }
         paste1 <- "Recorded Values of "
         paste2 <- " by Trial (Maturity: "
       }
@@ -1259,7 +1314,7 @@ server <- function(input, output, session) {
       var_mat <- remove_empty(var_mat, which = "rows") %>% as.matrix()
       var_mat[is.nan(var_mat)] <- NA
       
-      print(var_mat)
+      #print(var_mat)
       
       if (all(var_mat == var_mat[1,1], na.rm = T)){  #check if matrix is constant
         heatmap <- pheatmap(var_mat, angle_col = 0,
@@ -1344,7 +1399,7 @@ server <- function(input, output, session) {
   output$season_heatmapPlotUI <- renderUI({
     graphics.off()
     req(input$season_varSelect)  # Ensure there's a selected value
-    plotOutput("season_heatmapPlot", height = "600px", width = "100%")
+    plotOutput("season_heatmapPlot", height = paste0(input$season_h,"px"), width = "100%")
   })
   
   ## heatmap download handler ----
@@ -1355,7 +1410,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       # Use the stored heatmap for the download
-      png(file, width = 1400, height = 1000)
+      png(file, width = 1400, height = input$season_h)
       
       side_label <- if (input$season_heatBy == "By Site") "Sites" else "Trials"
       
@@ -1458,7 +1513,7 @@ server <- function(input, output, session) {
   ## maturity selection UI ---- 
   output$trial_matSelectUI <- renderUI({
     req(analysisDone())
-    gen_choices <- unique(trial_info$Mat)
+    gen_choices <- c(unique(trial_info$Mat),"ALL")
     current_val <- isolate(input$trial_matSelect)
     if (is.null(current_val) || !(current_val %in% gen_choices)) {
       current_val <- gen_choices[1]
@@ -1472,8 +1527,8 @@ server <- function(input, output, session) {
                       nzv_chk = 1e-6, empty_chk = 0.9, var_chk = 0.9,
                       param_overrides = list()) {
     
-    print("Running ID_corr Analysis")
-    print(paste("matselin ID_corr function:", matsel))
+    #print("Running ID_corr Analysis")
+    #print(paste("matselin ID_corr function:", matsel))
     trialcex <- input$trial_cex
 
     #generic remove periods that don't have enough data to be used (remove 6 in this case)
@@ -1491,11 +1546,16 @@ server <- function(input, output, session) {
     }
     
     #get names of variables to use for comparison
-    varn <- seasonal_data %>% ungroup() %>% select(where(is.numeric) & 
-                                                     !c(ID, Period, Period_Start_DOY, Duration, Period_End_DOY)) %>% names()
+    varn <- seasonal_data %>% ungroup() %>%
+      select(where(is.numeric) & !c(ID, Period, Period_Start_DOY, Duration, Period_End_DOY)) %>% names()
     
-    final_dt <- filter(final_x, Mat == matsel) %>% 
-      select(ID, starts_with(varn)) %>% 
+    if (matsel == "ALL"){
+      final_dt <- final_x
+    } else {
+      final_dt <- filter(final_x, Mat == matsel)
+    }
+    
+    final_dt <- select(final_dt, ID, starts_with(varn)) %>% 
       
       #grab only numeric variables (no dates)
       select(where(is.numeric))
@@ -1518,7 +1578,8 @@ server <- function(input, output, session) {
     
     #remove parameters that intersect with periods before / after growing season
     if (exclude_startend) {
-      startend_vars <- names(final_dt)[!names(final_dt) %in% names(select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period))))))]
+      startend_vars <- names(final_dt)[!names(final_dt) %in% 
+            names(select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period))))))]
       final_dt <- select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period)))))
     } else {
       startend_vars <- c("")
@@ -1590,7 +1651,11 @@ server <- function(input, output, session) {
     #plot heatmap of correlation of trials by those parameters
     id_cor <- cor(t(scfinal_dt), use = "pairwise.complete.obs")
     
-    tagnames <- filter(nametag, ID %in% id_list) %>% pull(tag)
+    if (matsel == "ALL") {
+      tagnames <- filter(nametag, ID %in% id_list) %>% pull(mtag)
+    } else {
+      tagnames <- filter(nametag, ID %in% id_list) %>% pull(tag)
+    }
     
     if (nrow(id_cor) > 2 & !any(is.na(id_cor))){ #prevent errors when trying to generate small plots
       
@@ -1651,6 +1716,8 @@ server <- function(input, output, session) {
       pdend <- NULL
     }
     
+    trial_sim_heatmap_hack <<- p3
+    
     out_IDs(colnames(id_cor)) #trial IDs
     out_nametag(nametag) #used for labels. it's ID/Site/Planting DOY/Year
     out_used_params(param_status)
@@ -1662,6 +1729,50 @@ server <- function(input, output, session) {
     out_id_corr_pheatmap(p3$gtable)
     out_id_dend_obj(pdend)
   }
+  
+  
+  ## render trial comp heatmap ----
+  observe({
+    output$comp_heatmapPlotUI <- renderUI({
+      graphics.off()
+      plotOutput("comp_heatmapPlot", height = paste0(input$trial_h,"px"), width = "100%")
+    })
+  })
+  
+  output$comp_heatmapPlot <- renderPlot(
+    {
+      req(analysisDone())
+      
+      if (is.null(out_id_corr_pheatmap())) {
+        print("Heatmap object is NULL")}
+      else {
+        #print("Plotting heatmap")
+        plot(out_id_corr_pheatmap())
+      }
+    })
+  
+  ## trial comp heatmap / matrix downloads ----
+  output$trial_downloadHeatmap <- downloadHandler(
+    filename = function() {
+      paste0("sim-heatmap-", input$trial_matSelect, "-", Sys.Date(), ".png")
+    },
+    content = function(file) {
+      # Use the stored heatmap for the download
+      png(file, width = 1400, height = input$trial_h)
+      grid::grid.draw(trial_sim_heatmap_hack$gtable)  # Draw the stored heatmap
+      dev.off()
+    }
+  )
+  
+  output$downloadEnvMatrix <- downloadHandler(
+    filename = function() {
+      paste0("sim-matrix", input$trial_matSelect, "-", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(out_id_cor(), file)
+    }
+  )
+  
   
   ## function to run ID_corr -----
   run_ID_corr <- function() {
@@ -1680,7 +1791,7 @@ server <- function(input, output, session) {
         param_overrides = reactiveValuesToList(param_overrides)
       )
     }, error = function(e) {
-      message("Error when running ID_corr:", e$message)
+      message("Error when running ID_corr: ", e$message)
     })
   }
   
@@ -1845,90 +1956,111 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       param_out <- as_tibble(get_current_param_table())
-      print(param_out)
+      #print(param_out)
       write.csv(param_out, file)
     }
   )
   
+
   
-  ## render trial comp heatmap ----
-  observe({
-    output$comp_heatmapPlotUI <- renderUI({
-      graphics.off()
-      plotOutput("comp_heatmapPlot", height = "600px", width = "100%")
-    })
-  })
   
-  output$comp_heatmapPlot <- renderPlot(
-    {
-      req(analysisDone())
-      
-      if (is.null(out_id_corr_pheatmap())) {
-        print("Heatmap object is NULL")}
-      else {
-        print("Plotting heatmap")
-        plot(out_id_corr_pheatmap())
-      }
-    })
-  
-  ## trial comp heatmap / matrix downloads ----
-  output$trial_downloadHeatmap <- downloadHandler(
-    filename = function() {
-      paste0("sim-heatmap-", input$trial_matSelect, "-", Sys.Date(), ".png")
-    },
-    content = function(file) {
-      # Use the stored heatmap for the download
-      png(file, width = 1400, height = 1000)
-      grid::grid.draw(out_id_corr_pheatmap()$gtable)  # Draw the stored heatmap
-      dev.off()
-    }
-  )
-  
-  output$downloadEnvMatrix <- downloadHandler(
-    filename = function() {
-      paste0("sim-matrix", input$trial_matSelect, "-", Sys.Date(), ".csv")
-    },
-    content = function(file) {
-      write.csv(out_id_cor(), file)
-    }
-  )
   
   ## render dendrograms -----
-  output$dendroPlot <- renderPlot({
-    if (is.null(out_id_dend_obj())) {
-      print("Dendrogram object is NULL")
+  
+  draw_dendrogram <- function(
+    dend,
+    nametag,
+    trial_matSelect,
+    k_val,
+    dendro_cex
+  ) {
+    req(dend, dendro_cex)
+    
+    par(mar = c(5, 2, 2, 15))
+    
+    ## Label lookup
+    dend_labels <- nametag[as.character(nametag$ID) %in% labels(dend), ]
+    dend_labels <- dend_labels[
+      match(labels(dend), as.character(dend_labels$ID)),
+    ]
+    
+    if (trial_matSelect == "ALL") {
+      labels(dend) <- dplyr::pull(dend_labels, mtag)
     } else {
-      req(input$dendro_cex)
-      
-      par(mar = c(5,2,2,15))
-      dend <- out_id_dend_obj()
-      dend_labels <- nametag[as.character(nametag$ID) %in% labels(dend), ]
-      dend_labels <- dend_labels[match(labels(dend), as.character(dend_labels$ID)), ]
-      labels(dend) <- pull(dend_labels, tag)
-      
-      dend %>% 
-        set("branches_k_color", k=input$k_val) %>% 
-        set("labels_cex", input$dendro_cex) %>%
-        plot(horiz = TRUE)
-      dend %>% rect.dendrogram(k=input$k_val, horiz = TRUE, border = 8, lty = 5, lwd = 2)
+      labels(dend) <- dplyr::pull(dend_labels, tag)
     }
+    
+    ## Styling
+    dend_styled <- dend %>%
+      dendextend::set("branches_k_color", k = k_val) %>%
+      dendextend::set("labels_cex", dendro_cex)
+    
+    ## Draw
+    plot(dend_styled, horiz = TRUE)
+    
+    dendextend::rect.dendrogram(
+      dend_styled,
+      k = k_val,
+      horiz = TRUE,
+      border = 8,
+      lty = 5,
+      lwd = 2
+    )
+    
+    invisible(dend_styled)
+  }
+  
+  output$dendroPlot <- renderPlot({
+    dend <- out_id_dend_obj()
+    
+    if (is.null(dend)) {
+      plot.new()
+      text(0.5, 0.5, "Dendrogram object is NULL")
+      return()
+    }
+    
+    draw_dendrogram(
+      dend             = dend,
+      nametag          = nametag,
+      trial_matSelect  = input$trial_matSelect,
+      k_val            = input$k_val,
+      dendro_cex       = input$dendro_cex
+    )
   })
   
-  observe({
-    output$dendroPlotUI <- renderUI({
-      plotOutput("dendroPlot", height = "400px", width = "100%")
-    })
+  output$dendroPlotUI <- renderUI({
+    plotOutput(
+      "dendroPlot",
+      height = paste0(input$dendro_h, "px"),
+      width  = "100%"
+    )
   })
   
-  ## dendrogram downloads ------
+## dendrogram downloads ------
   output$trial_downloadDendro <- downloadHandler(
     filename = function() {
-      paste0("dendrogram-plot_", input$trial_matSelect, "_", Sys.Date(),".png")
+      paste0(
+        "dendrogram-plot_",
+        input$trial_matSelect, "_",
+        Sys.Date(), ".png"
+      )
     },
     content = function(file) {
-      # Use the stored heatmap for the download
-      png(file, width = 1400, height = 1000)
-      grid::grid.draw(out_id_dend_obj())  # Draw the stored heatmap
+      
+      png(
+        file,
+        width  = 1400,
+        height = input$dendro_h
+      )
+      
+      draw_dendrogram(
+        dend             = out_id_dend_obj(),
+        nametag          = nametag,
+        trial_matSelect  = input$trial_matSelect,
+        k_val            = input$k_val,
+        dendro_cex       = input$dendro_cex
+      )
+      
       dev.off()
     }
   )
@@ -2003,7 +2135,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       vardates <- make_vardates()
-      print("made vardates")
+      #print("made vardates")
       write_csv(vardates, file)
     }
   )
@@ -2199,7 +2331,9 @@ output$current_GDD_settings <- renderText({
       facet_wrap(vars(Site)) +
       theme_minimal() +
       theme(legend.position = "none",
-            text = element_text(size = 15))
+            text = element_text(size = 15)) +
+      scale_x_continuous(expand = expansion(mult = 0.1)) +
+      scale_y_continuous(expand = expansion(mult = 0.1))
     
     faceted_comparison_plot_data(p)  # Store the plot in a reactive value
     print(p)  # Render the plot
@@ -2245,7 +2379,9 @@ output$current_GDD_settings <- renderText({
       labs(x = "Acc. Precipitation (mm)", y = "Acc. Thermal Time (GDD)", 
            title = "Ten Year Site Averages for a Typical Growing Season") +
       theme(legend.position = "none",
-            text = element_text(size = 15))
+            text = element_text(size = 15)) +
+      scale_x_continuous(expand = expansion(mult = 0.1)) +
+      scale_y_continuous(expand = expansion(mult = 0.1))
     
     between_sites_plot_data(p)  # Store the plot in a reactive value
     print(p)  # Render the plot

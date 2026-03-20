@@ -1,10 +1,8 @@
-- make the "start..." progress text appear immediately
-- update citation
-- freeze code, push final version to github, server, and dockerhub
-
-- allow custom height and width for charts
-- allow users to select ALL for maturities 
+- have maturity handling autoselect as appropriate when template model is chosen
+- when matrices are downloaded, have them have columns corresponding to the columns of the nametag
 - add loading symbols for graphs
 - add error message when graphs can't load because only a single record is being used
-- expand graph margins
-- have maturity handling autoselect as appropriate when template model is chosen
+
+- fixed the trial sim heatmap download (hacky (as if many parts of this aren't hacky))
+- you can select plot height now and that carries over to the download
+- added advanced option to not trim the simulations to two weeks before planting / after harvest
