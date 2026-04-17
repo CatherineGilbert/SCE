@@ -7,6 +7,7 @@ library(nasapower)
 library(data.table)
 library(soilDB)
 library(spData)
+library(xml2)
 library(here)
 library(tools)
 library(parallel)  # For parallel computing
@@ -178,7 +179,10 @@ for (id in ids_needs_soil){
     given_oc <- soil_profile_tmp[[1]][["soil"]]$Carbon
     soil_profile_tmp[[1]][["soil"]]$Carbon <- ifelse(given_oc < oc_min, oc_min, given_oc) 
     
-    write_rds(soil_profile_tmp, file = paste0("soils/soil_profile_",id,".soils"))
+   write_apsim
+    
+    file = paste0("soils/soil_profile_",id,".soils")) 
+    
     soil_profile_list[[as.character(id)]] <- soil_profile_tmp[[1]]
     locs_df[locs_df$ID_Loc == id,"got_soil"] <- T
     print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4)))
@@ -239,9 +243,11 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   edit_apsimx(filename, src.dir = source_dir,  wrt.dir = write_dir, overwrite = T,
               node = "Crop", parm = "CultivarName", value = trial_tmp$Mat, verbose = F)
   tryCatch({
+    soil_profile_tmp <- read(paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".soils"))
     edit_apsimx_replace_soil_profile(file = filename, src.dir = source_dir, wrt.dir = write_dir, overwrite = T,
-                                     soil.profile = soil_profile_list[[as.character(trial_tmp$ID_Loc)]], verbose = F)
-  }, error = function(e){})
+                                     soil.profile = paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".soils"), 
+                                     verbose = F)
+  }, error = function(e){print("Failed to attach soil profile.")})
   invisible()
 })
 
@@ -460,7 +466,7 @@ period_key <- mutate(period_key, Notes = case_match(Period,
                                       max(Period) ~ ifelse(no_trim, "post-harvest period","includes two weeks post-harvest"),
                                       .default = NA
                                       
-)) %>% select(Period, `APSIM StageName`, Notes)
+)) %>% select(Period, `APSIM StageName`, Notes) %>% arrange(as.numeric(Period))
 write_csv(period_key, "results/period_key.csv")
 
 

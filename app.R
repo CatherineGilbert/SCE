@@ -189,9 +189,9 @@ ui <- dashboardPage(
                       shiny::span(icon("info-circle"), id = "tip_mat_hndl")
                     ), 
                     choices = c(
-                      "Soy" = "Soy",
-                      "Maize" = "Maize",
-                      "Direct" = "Direct"
+                      "Soybean RM" = "Soy",
+                      "Maize RM" = "Maize",
+                      "Use given APSIM cultivars" = "Direct"
                     )
                   ),
                   selectInput(
@@ -239,7 +239,7 @@ ui <- dashboardPage(
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
               bsTooltip("tip_tempmodel", "The template model provided here-- its crop module, reporting variables, and management controls-- will be used as the basis for all trial simulations.", "right", options = list(container = "body")),
-              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. Soy and Maize are intended to be used with the template models provided. See documentation for more information on these functions. Choosing Direct handling will set the phenology for each simulation using the APSIM cultivar names in the Genetics column.", "right", options = list(container = "body")),
+              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` are intended to be used with the template models provided. See documentation for more information on these functions.", "right", options = list(container = "body")),
               bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to two weeks before planting and after harvest. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
               ),
       ### result view UI ----
@@ -656,9 +656,9 @@ server <- function(input, output, session) {
   unlink(input_dir,recursive = T) ; dir.create(input_dir)
   
   # Reactive values for storing the analysis state and the selected variable
-  analysisDone <- reactiveVal(FALSE)
+  #analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
-  #analysisDone <- reactiveVal(TRUE)
+  analysisDone <- reactiveVal(TRUE)
   analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
@@ -2379,7 +2379,7 @@ output$current_GDD_settings <- renderText({
       labs(x = "Acc. Precipitation (mm)", y = "Acc. Thermal Time (GDD)", 
            title = "Ten Year Site Averages for a Typical Growing Season") +
       theme(legend.position = "none",
-            text = element_text(size = 15)) +
+            text = element_text(size = 25)) +
       scale_x_continuous(expand = expansion(mult = 0.1)) +
       scale_y_continuous(expand = expansion(mult = 0.1))
     
