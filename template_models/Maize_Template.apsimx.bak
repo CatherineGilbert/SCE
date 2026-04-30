@@ -118,10 +118,42 @@
                     300.0,
                     300.0
                   ],
-                  "ParticleSizeSand": null,
-                  "ParticleSizeSilt": null,
-                  "ParticleSizeClay": null,
-                  "Rocks": null,
+                  "ParticleSizeSand": [
+                    5.0,
+                    5.0,
+                    5.0,
+                    5.0,
+                    5.0,
+                    5.0,
+                    5.0
+                  ],
+                  "ParticleSizeSilt": [
+                    65.0,
+                    65.0,
+                    65.0,
+                    65.0,
+                    65.0,
+                    65.0,
+                    65.0
+                  ],
+                  "ParticleSizeClay": [
+                    30.0,
+                    30.0,
+                    30.0,
+                    30.0,
+                    30.0,
+                    30.0,
+                    30.0
+                  ],
+                  "Rocks": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
                   "Texture": null,
                   "BD": [
                     1.01056473311131,
@@ -183,11 +215,43 @@
                   "DULMetadata": null,
                   "SATMetadata": null,
                   "KSMetadata": null,
-                  "RocksMetadata": null,
+                  "RocksMetadata": [
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated"
+                  ],
                   "TextureMetadata": null,
-                  "ParticleSizeSandMetadata": null,
-                  "ParticleSizeSiltMetadata": null,
-                  "ParticleSizeClayMetadata": null,
+                  "ParticleSizeSandMetadata": [
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated"
+                  ],
+                  "ParticleSizeSiltMetadata": [
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated"
+                  ],
+                  "ParticleSizeClayMetadata": [
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated"
+                  ],
                   "Name": "Physical",
                   "ResourceName": null,
                   "Children": [
@@ -220,9 +284,33 @@
                         1.0,
                         1.0
                       ],
-                      "LLMetadata": null,
-                      "KLMetadata": null,
-                      "XFMetadata": null,
+                      "LLMetadata": [
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                      ],
+                      "KLMetadata": [
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                      ],
+                      "XFMetadata": [
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                      ],
                       "Name": "MaizeSoil",
                       "ResourceName": null,
                       "Children": [],
@@ -353,7 +441,7 @@
                     300.0
                   ],
                   "PH": [
-                    8.0,
+                    14.0,
                     8.0,
                     8.0,
                     8.0,
@@ -364,12 +452,30 @@
                   "PHUnits": 0,
                   "EC": null,
                   "ESP": null,
-                  "CEC": null,
+                  "CEC": [
+                    11.045,
+                    10.505,
+                    9.695,
+                    9.020000000000001,
+                    8.75,
+                    8.615,
+                    8.615
+                  ],
                   "ECMetadata": null,
                   "CLMetadata": null,
-                  "CECMetadata": null,
+                  "CECMetadata": [
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated",
+                    "Calculated"
+                  ],
                   "ESPMetadata": null,
-                  "PHMetadata": null,
+                  "PHMetadata": [
+                    null
+                  ],
                   "Name": "Chemical",
                   "ResourceName": null,
                   "Children": [],

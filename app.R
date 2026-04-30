@@ -927,7 +927,7 @@ server <- function(input, output, session) {
         cat("Error in analysis:", err$message, "\n")
         analysisInProgress(FALSE)
         analysisFailed(TRUE)
-      })
+      }, seed = TRUE)
       
       observe({
         req(analysisInProgress())  # Only count while analysis is running
@@ -948,15 +948,7 @@ server <- function(input, output, session) {
       met_count(length(list.files(met_dir, pattern = "\\.met$", recursive = FALSE))) 
     } 
     if (soil_count() != nloc()) {
-      # this one's different because soils aren't parallelized and missing soils aren't added as files
-      valid_soils <- list.files(soil_dir, pattern = "\\.soils$", recursive = FALSE) 
-      if (length(valid_soils) == 0){
-        newest_soil <- 0
-      } else {
-        newest_soil <- unlist(regmatches(valid_soils, gregexpr(pattern = "\\d+", valid_soils))) %>%
-          as.numeric() %>% max(na.rm = TRUE)
-      }
-      soil_count(newest_soil)  
+      soil_count(length(list.files(soil_dir, pattern = "\\.rds$", recursive = FALSE))) 
     } 
     if (sim_count() != ntrials()) {
       sim_count(length(list.files(apsim_dir, pattern = "\\.apsimx$", recursive = TRUE)))
@@ -974,12 +966,12 @@ server <- function(input, output, session) {
     
     if (ntrials() >= 1) {
     
-      if (met_count() > 0) {
+      if (met_count() > 0 | sim_count() > 0) {
         logs <- c(logs, sprintf("%d .met files collected (%.1f%%)", 
                                 met_count(), 100 * met_count() / nloc()))
       }
       
-      if (soil_count() > 0) {
+      if (soil_count() > 0 | sim_count() > 0) {
         logs <- c(logs, sprintf("%d soil profiles collected (%.1f%%)", 
                                 soil_count(), 100 * soil_count() / nloc()))
       }
