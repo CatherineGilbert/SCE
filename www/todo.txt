@@ -1,3 +1,14 @@
+- FIX SOILS AQUISITION!
+- allow periods to be summarized and reported in an intuitive way
+- allow people to automate inputs of a range of planting dates and genetics 
+- add 3D plotly plots for maturity date, planting date, and genetics
+ - toggle for frost date
+- add direct controls for ReaperMan and Sowing scripts
+- add timeline plots
+- fix progress counter not resetting when running new trial after failed trial (clear output files immediately)
+
+
+- turn things into functions instead of one chunk of code
 - have maturity handling autoselect as appropriate when template model is chosen
 - when matrices are downloaded, have them have columns corresponding to the columns of the nametag
 - add loading symbols for graphs
@@ -5,4 +16,3 @@
 
 - fixed the trial sim heatmap download (hacky (as if many parts of this aren't hacky))
 - you can select plot height now and that carries over to the download
-- added advanced option to not trim the simulations to two weeks before planting / after harvest

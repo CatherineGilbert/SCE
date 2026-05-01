@@ -16,7 +16,7 @@ start_time <- Sys.time() # track running time
 print("Starting ...")
 
 #debug
-if (FALSE){
+if (TRUE){
  output_dir <- "C:/Users/cmg3/Documents/GitHub/SCE/output_files"
  setwd(output_dir) 
  codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCE"
@@ -247,9 +247,9 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   edit_apsimx(filename, src.dir = source_dir,  wrt.dir = write_dir, overwrite = T,
               node = "Crop", parm = "CultivarName", value = trial_tmp$Mat, verbose = F)
   tryCatch({
-    soil_profile_tmp <- read(paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".rds"))
+    soil_profile_tmp <- readRDS(paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".rds"))
     edit_apsimx_replace_soil_profile(file = filename, src.dir = source_dir, wrt.dir = write_dir, overwrite = T,
-                                     soil.profile = paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".rds"), 
+                                     soil.profile = soil_profile_tmp[[1]], 
                                      verbose = F)
   }, error = function(e){print("Failed to attach soil profile.")})
   #invisible()

@@ -656,9 +656,9 @@ server <- function(input, output, session) {
   unlink(input_dir,recursive = T) ; dir.create(input_dir)
   
   # Reactive values for storing the analysis state and the selected variable
-  #analysisDone <- reactiveVal(FALSE)
+  analysisDone <- reactiveVal(FALSE)
   analysisInProgress <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
+  #analysisDone <- reactiveVal(TRUE)
   analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
@@ -914,7 +914,7 @@ server <- function(input, output, session) {
       
       prog_m(c(prog_m(), "Getting trial parameters ..."))
       
-      future({
+      future(seed = TRUE, {
         cat("Running analysis ...")
         source(paste0(codes_dir,"/apsimx.R"))  # Run the APSIMX analysis
       }) %>% then(function() {
@@ -927,7 +927,7 @@ server <- function(input, output, session) {
         cat("Error in analysis:", err$message, "\n")
         analysisInProgress(FALSE)
         analysisFailed(TRUE)
-      }, seed = TRUE)
+      })
       
       observe({
         req(analysisInProgress())  # Only count while analysis is running
