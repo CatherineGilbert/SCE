@@ -1,4 +1,6 @@
-- FIX SOILS AQUISITION!
+- FIXed SOILS AQUISITION!
+
+
 - allow periods to be summarized and reported in an intuitive way
 - allow people to automate inputs of a range of planting dates and genetics 
 - add 3D plotly plots for maturity date, planting date, and genetics
