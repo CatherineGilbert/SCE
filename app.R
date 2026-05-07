@@ -189,9 +189,9 @@ ui <- dashboardPage(
                       shiny::span(icon("info-circle"), id = "tip_mat_hndl")
                     ), 
                     choices = c(
-                      "Soy" = "Soy",
-                      "Maize" = "Maize",
-                      "Direct" = "Direct"
+                      "Soybean RM" = "Soy",
+                      "Maize RM" = "Maize",
+                      "Use given APSIM cultivars" = "Direct"
                     )
                   ),
                   selectInput(
@@ -239,7 +239,7 @@ ui <- dashboardPage(
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
               bsTooltip("tip_tempmodel", "The template model provided here-- its crop module, reporting variables, and management controls-- will be used as the basis for all trial simulations.", "right", options = list(container = "body")),
-              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. Soy and Maize are intended to be used with the template models provided. See documentation for more information on these functions. Choosing Direct handling will set the phenology for each simulation using the APSIM cultivar names in the Genetics column.", "right", options = list(container = "body")),
+              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` are intended to be used with the template models provided. See documentation for more information on these functions.", "right", options = list(container = "body")),
               bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to two weeks before planting and after harvest. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
               ),
       ### result view UI ----
@@ -914,7 +914,7 @@ server <- function(input, output, session) {
       
       prog_m(c(prog_m(), "Getting trial parameters ..."))
       
-      future({
+      future(seed = TRUE, {
         cat("Running analysis ...")
         source(paste0(codes_dir,"/apsimx.R"))  # Run the APSIMX analysis
       }) %>% then(function() {
@@ -948,15 +948,7 @@ server <- function(input, output, session) {
       met_count(length(list.files(met_dir, pattern = "\\.met$", recursive = FALSE))) 
     } 
     if (soil_count() != nloc()) {
-      # this one's different because soils aren't parallelized and missing soils aren't added as files
-      valid_soils <- list.files(soil_dir, pattern = "\\.soils$", recursive = FALSE) 
-      if (length(valid_soils) == 0){
-        newest_soil <- 0
-      } else {
-        newest_soil <- unlist(regmatches(valid_soils, gregexpr(pattern = "\\d+", valid_soils))) %>%
-          as.numeric() %>% max(na.rm = TRUE)
-      }
-      soil_count(newest_soil)  
+      soil_count(length(list.files(soil_dir, pattern = "\\.rds$", recursive = FALSE))) 
     } 
     if (sim_count() != ntrials()) {
       sim_count(length(list.files(apsim_dir, pattern = "\\.apsimx$", recursive = TRUE)))
@@ -974,12 +966,12 @@ server <- function(input, output, session) {
     
     if (ntrials() >= 1) {
     
-      if (met_count() > 0) {
+      if (met_count() > 0 | sim_count() > 0) {
         logs <- c(logs, sprintf("%d .met files collected (%.1f%%)", 
                                 met_count(), 100 * met_count() / nloc()))
       }
       
-      if (soil_count() > 0) {
+      if (soil_count() > 0 | sim_count() > 0) {
         logs <- c(logs, sprintf("%d soil profiles collected (%.1f%%)", 
                                 soil_count(), 100 * soil_count() / nloc()))
       }
@@ -2379,7 +2371,7 @@ output$current_GDD_settings <- renderText({
       labs(x = "Acc. Precipitation (mm)", y = "Acc. Thermal Time (GDD)", 
            title = "Ten Year Site Averages for a Typical Growing Season") +
       theme(legend.position = "none",
-            text = element_text(size = 15)) +
+            text = element_text(size = 25)) +
       scale_x_continuous(expand = expansion(mult = 0.1)) +
       scale_y_continuous(expand = expansion(mult = 0.1))
     

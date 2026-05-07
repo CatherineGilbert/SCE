@@ -7,6 +7,7 @@ library(nasapower)
 library(data.table)
 library(soilDB)
 library(spData)
+library(xml2)
 library(here)
 library(tools)
 library(parallel)  # For parallel computing
@@ -15,7 +16,7 @@ start_time <- Sys.time() # track running time
 print("Starting ...")
 
 #debug
-if (FALSE){
+if (TRUE){
  output_dir <- "C:/Users/cmg3/Documents/GitHub/SCE/output_files"
  setwd(output_dir) 
  codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCE"
@@ -145,7 +146,6 @@ check_time2 <- Sys.time()
 # Get soil, make soil file -----
 print("Get Soil Data ...")
 
-soil_profile_list = list()
 unlink("soils",recursive = T) ; dir.create("soils")
 locs_df$got_soil <- NA
 
@@ -153,33 +153,42 @@ ids_needs_soil <- locs_df[locs_df$got_soil == F | is.na(locs_df$got_soil),]$ID_L
 for (id in ids_needs_soil){
   locs_tmp <- locs_df[locs_df$ID_Loc == id,]
   tryCatch({
-    if (soil_aquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T)}
+    if (soil_aquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
     if (soil_aquis == "ISRIC") {soil_profile_tmp <- get_worldmodeler_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y))}
+    
+    #check_apsimx_soil_profile(soil_profile_tmp)   #for debugging
     
     horizon <- soil_profile_tmp[[1]]$soil 
     
-    soilwat <- soilwat_parms() #creating SWCON in SoilWater parameters
+    #create SWCON in SoilWater parameters
+    soilwat <- soilwat_parms() 
     PO <- 1-horizon$BD/2.65
     soilwat$SWCON <- (PO-horizon$DUL)/PO
-    soilwat$SWCON <- ifelse(soilwat$SWCON < 0, 0, soilwat$SWCON)
+    soilwat$SWCON <- ifelse(soilwat$SWCON < 0, 0.001, soilwat$SWCON)
     soilwat$Thickness <- horizon$Thickness 
     soil_profile_tmp[[1]]$soilwat <- soilwat
     
-    initwat <- initialwater_parms() #set initial water to reasonable values
+    #set initial water to reasonable values
+    initwat <- initialwater_parms() 
     initwat$InitialValues <- horizon$DUL
     initwat$Thickness <- horizon$Thickness
     soil_profile_tmp[[1]]$initialwater <- initwat
     
-    rwt_min <- 0.001 #set minimum root weight
+    #provide soil organic matter table if none exists
+    if (is.na(soil_profile_tmp[[1]][["soilorganicmatter"]])) {
+      soil_profile_tmp[[1]][["soilorganicmatter"]] <- soilorganicmatter_parms()
+    }
+    
+    #constrain minimum root weight
     given_rwt <- soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt
-    soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < rwt_min, rwt_min, given_rwt) 
+    soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < 0.001, 0.001, given_rwt) 
     
-    oc_min <- 0.001 #set minimum carbon content in soils
+    #constrain minimum soil organic carbon content
     given_oc <- soil_profile_tmp[[1]][["soil"]]$Carbon
-    soil_profile_tmp[[1]][["soil"]]$Carbon <- ifelse(given_oc < oc_min, oc_min, given_oc) 
+    soil_profile_tmp[[1]][["soil"]]$Carbon <- ifelse(given_oc < 0.001, 0.001, given_oc) 
     
-    write_rds(soil_profile_tmp, file = paste0("soils/soil_profile_",id,".soils"))
-    soil_profile_list[[as.character(id)]] <- soil_profile_tmp[[1]]
+    write_rds(soil_profile_tmp, paste0(output_dir,"/soils/soil_profile_",id,".rds"))
+    
     locs_df[locs_df$ID_Loc == id,"got_soil"] <- T
     print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4)))
   }, error = function(e){
@@ -187,7 +196,6 @@ for (id in ids_needs_soil){
     print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4),"  FAIL"))
   })
 }
-write_rds(soil_profile_list, "soils/soil_profile_list.rds")
 
 check_time3 <- Sys.time() 
 
@@ -204,7 +212,7 @@ if (paste0(templ_model_path) != paste0(codes_dir,"/input/", templ_model, ".apsim
 
 # Prepare for parallel processing
 
-clusterExport(cl, c("trials_df", "codes_dir", "mat_handling", "templ_model", "edit_apsimx", "output_dir", "soil_profile_list",
+clusterExport(cl, c("trials_df", "codes_dir", "mat_handling", "templ_model", "edit_apsimx", "output_dir", 
                     "edit_apsimx_replace_soil_profile", "paste0", "dir.create", "file.copy", "tryCatch", "print"))
 
 # Parallel APSIM files creation
@@ -239,10 +247,12 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   edit_apsimx(filename, src.dir = source_dir,  wrt.dir = write_dir, overwrite = T,
               node = "Crop", parm = "CultivarName", value = trial_tmp$Mat, verbose = F)
   tryCatch({
+    soil_profile_tmp <- readRDS(paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".rds"))
     edit_apsimx_replace_soil_profile(file = filename, src.dir = source_dir, wrt.dir = write_dir, overwrite = T,
-                                     soil.profile = soil_profile_list[[as.character(trial_tmp$ID_Loc)]], verbose = F)
-  }, error = function(e){})
-  invisible()
+                                     soil.profile = soil_profile_tmp[[1]], 
+                                     verbose = F)
+  }, error = function(e){print("Failed to attach soil profile.")})
+  #invisible()
 })
 
 check_time4 <- Sys.time() 
@@ -460,7 +470,7 @@ period_key <- mutate(period_key, Notes = case_match(Period,
                                       max(Period) ~ ifelse(no_trim, "post-harvest period","includes two weeks post-harvest"),
                                       .default = NA
                                       
-)) %>% select(Period, `APSIM StageName`, Notes)
+)) %>% select(Period, `APSIM StageName`, Notes) %>% arrange(as.numeric(Period))
 write_csv(period_key, "results/period_key.csv")
 
 
