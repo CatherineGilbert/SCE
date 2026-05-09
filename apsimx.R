@@ -334,9 +334,9 @@ clusterExport(cl, c("read_csv"))
 
 # Merge Outputs
 outfiles <- list.files("apsim/", pattern = "_out", recursive = T)
-daily_output <- parLapply(cl, outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}) %>% 
+daily_sim_outputs <- parLapply(cl, outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}) %>% 
   data.table::rbindlist(.,use.names = T)
-daily_output <- select(daily_output, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
+daily_sim_outputs <- select(daily_sim_outputs, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
 
 # Stop the cluster
 stopCluster(cl)
@@ -344,35 +344,33 @@ stopCluster(cl)
 # For Debugging:
 if (FALSE){
   outfiles <- list.files("apsim/", pattern = "_out", recursive = T)
-  daily_output <- lapply(outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}) %>% 
+  daily_sim_outputs <- lapply(outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}) %>% 
     data.table::rbindlist(.,use.names = T)
-  daily_output <- select(daily_output, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
+  daily_sim_outputs <- select(daily_sim_outputs, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
 }
 
-
-
 # Get simulated sowing and harvest dates
-simsows <- select(daily_output, ID, SimSowDate) %>% filter(!is.na(SimSowDate)) 
-simmats <- select(daily_output, ID, SimMatDate) %>% filter(!is.na(SimMatDate)) 
-simharvs <- select(daily_output, ID, SimHarvestDate) %>% filter(!is.na(SimHarvestDate)) 
+simsows <- select(daily_sim_outputs, ID, SimSowDate) %>% filter(!is.na(SimSowDate)) 
+simmats <- select(daily_sim_outputs, ID, SimMatDate) %>% filter(!is.na(SimMatDate)) 
+simharvs <- select(daily_sim_outputs, ID, SimHarvestDate) %>% filter(!is.na(SimHarvestDate)) 
 simdates <- left_join(simsows, simmats, by = join_by(ID)) %>% left_join(simharvs, by = join_by(ID))
-daily_output <- select(daily_output, -SimSowDate, -SimMatDate, -SimHarvestDate)
+daily_sim_outputs <- select(daily_sim_outputs, -SimSowDate, -SimMatDate, -SimHarvestDate)
 
-# Trim season (daily_output) to two weeks before planting and two weeks after death / harvest
+# Trim season (daily_sim_outputs) to two weeks before planting and two weeks after death / harvest
 if(no_trim){ #if you don't want to trim to two weeks
-  simstartend <- select(daily_output, ID, Date) %>% group_by(ID) %>% summarize(StartDate = min(Date), EndDate = max(Date)) 
+  simstartend <- select(daily_sim_outputs, ID, Date) %>% group_by(ID) %>% summarize(StartDate = min(Date), EndDate = max(Date)) 
   simdates <- left_join(simstartend, simdates) %>% select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
 } else { # trim outputs to two weeks either side of planting and harvest
   simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndDate = date(SimHarvestDate) %m+% weeks(2)) %>%
     select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
 }
-daily_output <- group_by(daily_output, ID) %>% left_join(select(simdates,ID, StartDate, EndDate), by = join_by(ID)) %>%
+daily_sim_outputs <- group_by(daily_sim_outputs, ID) %>% left_join(select(simdates,ID, StartDate, EndDate), by = join_by(ID)) %>%
   filter(Date >= StartDate & Date <= EndDate) %>% select(-StartDate,-EndDate)
-daily_output <- mutate(daily_output, Date = as_date(Date))
+daily_sim_outputs <- mutate(daily_sim_outputs, Date = as_date(Date))
 
 # Create trial_info from trial-specific information
-maxstage <- group_by(daily_output, ID) %>% summarize(MaxStage = max(Stage)) #summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
-res <- group_by(daily_output, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
+maxstage <- group_by(daily_sim_outputs, ID) %>% summarize(MaxStage = max(Stage)) #summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
+res <- group_by(daily_sim_outputs, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
 trial_info <- rename(trials_df, Latitude = Y, Longitude = X)
 trial_info <- trial_info %>% select(-sim_start, -sim_end) %>% 
   left_join(maxstage, by = join_by(ID)) %>% 
@@ -389,10 +387,10 @@ trial_info <- select(trial_info, -any_of("...1"))
 if (mat_handling %in% c("Soy","Maize")) {
   max_stage <- 11
 } else {
-  max_stage <- max(daily_output$Stage)
+  max_stage <- max(daily_sim_outputs$Stage)
 }
 
-daily_output <- daily_output %>% left_join(select(trial_info, ID, HarvestDate_Sim, PlantingDate_Sim), by = join_by(ID)) %>% 
+daily_sim_outputs <- daily_sim_outputs %>% left_join(select(trial_info, ID, HarvestDate_Sim, PlantingDate_Sim), by = join_by(ID)) %>% 
    mutate(Period = case_when(
    Stage == 1 & (Date < PlantingDate_Sim) ~ 1,
    Stage == 1 & (Date >= HarvestDate_Sim) ~ max_stage,
@@ -400,10 +398,30 @@ daily_output <- daily_output %>% left_join(select(trial_info, ID, HarvestDate_Si
  )) %>% select(-PlantingDate_Sim, -HarvestDate_Sim) %>% 
    mutate(Period = factor(Period, ordered = T, levels = as.character(1:max_stage)))
 
-# Add cumulative precipitation and thermal time
-daily_output <- daily_output %>% group_by(ID) %>% mutate(AccRain = cumsum(Rain), AccTT = cumsum(ThermalTime))
+period_key <- daily_sim_outputs %>% ungroup() %>%
+  select(PhaseName, Period) %>% distinct() %>%
+  filter(!is.na(PhaseName)) %>%
+  group_by(Period) %>%
+  summarise(
+    Label                   = first(PhaseName),
+    `APSIM Phases Included` = paste(PhaseName, collapse = " → "),
+    `Original Periods`      = paste(Period,    collapse = ", "),
+    .groups = "drop"
+  ) %>% ungroup() %>%
+  mutate(
+    Period = as.character(Period)
+    # Notes = case_match(
+    #   Period,
+    #   min(Period) ~ ifelse(no_trim, "pre-planting period", "includes two weeks pre-planting"),
+    #   max(Period) ~ ifelse(no_trim, "post-harvest period", "includes two weeks post-harvest"),
+    #   .default = NA_character_
+    # )
+  ) %>%
+  select(Period, Label, `APSIM Phases Included`, `Original Periods`) %>%
+  arrange(as.numeric(Period))
 
-# daily_output <- daily_output %>% left_join(select(trial_info, ID, MatDate_Sim, Planting)) %>% 
+
+# daily_sim_outputs <- daily_sim_outputs %>% left_join(select(trial_info, ID, MatDate_Sim, Planting)) %>% 
 #   mutate(Stage = case_match(
 #     Period,
 #     "1" ~ "Pre-planting", #germinating
@@ -420,9 +438,9 @@ daily_output <- daily_output %>% group_by(ID) %>% mutate(AccRain = cumsum(Rain),
 #   )) %>% select(-MatDate_Sim) %>% 
 #   mutate(Period = factor(Period, ordered = T, levels = as.character(1:11)))
 
-seasonal_data <- daily_output %>% 
-  group_by(Period, ID) %>% select(-any_of(c("Yieldkgha", "Stage"))) %>% 
-  summarize(across(where(is.numeric) & !c(DOY,AccRain,AccTT,AccEmTT), function(x){mean(x,na.omit=T)}), 
+seasonal_data <- daily_sim_outputs %>% 
+  group_by(Period, ID) %>% select(-any_of(c("Stage"))) %>% 
+  summarize(across(where(is.numeric) & !c(DOY,AccEmTT), function(x){mean(x,na.omit=T)}), 
             AccRain = sum(Rain), AccTT = sum(ThermalTime), AccEmTT = max(AccEmTT),
             Period_Start_Date = min(Date), Period_End_Date = max(Date)) %>% 
   mutate(Duration = as.numeric(as.period(Period_End_Date - Period_Start_Date, "days"))/86400 + 1, 
@@ -446,8 +464,6 @@ if (nrow(idp > 0)){
   seasonal_data <- bind_rows(seasonal_data, idp) %>% arrange(ID, Period)
 }
 
-daily_sim_outputs <- daily_output
-
 print("Writing Results ...")
 
 unlink("results",recursive = T) ; dir.create("results")
@@ -455,24 +471,10 @@ unlink("results",recursive = T) ; dir.create("results")
 write_csv(trial_info, "results/trial_info.csv")
 write_csv(seasonal_data, "results/seasonal_data.csv")
 write_csv(daily_sim_outputs, "results/daily_sim_outputs.csv")
+write_csv(period_key, "results/period_key.csv")
 
 final_x <- pivot_wider(seasonal_data, names_from = Period, values_from = Rain:Period_End_DOY) %>% right_join(trial_info,.,by = join_by(ID))
 write_csv(final_x, "results/final_x.csv")
-
-
-period_key <- daily_sim_outputs %>% ungroup() %>%
-  select(StageName, Period) %>% distinct() %>%
-  filter(!is.na(StageName)) %>%
-  rename("APSIM StageName" = StageName)
-
-period_key <- mutate(period_key, Notes = case_match(Period,
-                                      min(Period) ~ ifelse(no_trim, "pre-planting period","includes two weeks pre-planting"),
-                                      max(Period) ~ ifelse(no_trim, "post-harvest period","includes two weeks post-harvest"),
-                                      .default = NA
-                                      
-)) %>% select(Period, `APSIM StageName`, Notes) %>% arrange(as.numeric(Period))
-write_csv(period_key, "results/period_key.csv")
-
 
 #calculate time duration for running the code:
 end_time <- Sys.time()

@@ -1684,7 +1684,7 @@
                 "[Clock].Today as Date",
                 "[Clock].Today.Year as Year",
                 "[Clock].Today.DayOfYear as DOY",
-                "[Phenology].CurrentPhaseName as StageName",
+                "[Phenology].CurrentPhaseName as PhaseName",
                 "[Phenology].Stage as Stage",
                 "[Sowing].Script.SimSowDate as SimSowDate",
                 "[ReaperMan].Script.SimMatDate as SimMatDate",

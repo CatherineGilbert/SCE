@@ -1,20 +1,33 @@
-- FIXed SOILS AQUISITION!
-
-
 - allow periods to be summarized and reported in an intuitive way
-- allow people to automate inputs of a range of planting dates and genetics 
-- add 3D plotly plots for maturity date, planting date, and genetics
- - toggle for frost date
-- add direct controls for ReaperMan and Sowing scripts
-- add timeline plots
-- fix progress counter not resetting when running new trial after failed trial (clear output files immediately)
+  - figure out why summarization is broken (TT is the same as AccTT in outputs) and correct it
+  - if you summarize the periods, close the app, then reopen it, you can't regenerate a period_key with the original periods from the daily sim outputs
+  - pull the summarization / creation of output files other than the daily_outputs into its own function
+  - have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables 2from the tempate files be recognized as summed by default
+  - can i replace "configured_" reactives with their regular counterparts?
+  - allow people to download the period_key / upload their own period_key to set summarization parameters
+  
+- change buffer from two weeks default to something customizable
+  
+  ??? have the period_key creation read phases from the APSIM model internals directly rather than infer them from the outputs
+  these values aren't stored in the template simulations unfortunately
 
+- allow people to automate inputs of a range of planting dates and genetics 
+
+- sheila's lovely contributions
+  - add 3D plotly plots for maturity date, planting date, and genetics
+  - add timeline plots
+  - look into other sheila plots and code
+  - add sheila to application credits
+
+- have the function to run the analysis wipe the outputs folder before the files are counted by the progress counter / fix progress counter not resetting when running new trial after failed trial (clear output files immediately)
+
+- add direct controls for ReaperMan and Sowing scripts
+ - toggle for frost date
+
+- add search bar to seasonal covariates selector
 
 - turn things into functions instead of one chunk of code
 - have maturity handling autoselect as appropriate when template model is chosen
 - when matrices are downloaded, have them have columns corresponding to the columns of the nametag
 - add loading symbols for graphs
 - add error message when graphs can't load because only a single record is being used
-
-- fixed the trial sim heatmap download (hacky (as if many parts of this aren't hacky))
-- you can select plot height now and that carries over to the download

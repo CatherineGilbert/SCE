@@ -543,14 +543,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 249",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 272",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 216",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 130",
-                    "[Phenology].Maturing.Target.FixedValue = 138",
-                    "[Phenology].Ripening.Target.FixedValue = 132",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.69, 23.08",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.69, 23.08"
+                    "[Phenology].Vegetative.Target.FixedValue = 310",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.475",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 590",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.6, 22.35",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.6, 22.35"
                   ],
                   "Name": "early000",
                   "ResourceName": null,
@@ -561,14 +559,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 258",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 262",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 207",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 133",
-                    "[Phenology].Maturing.Target.FixedValue = 142",
-                    "[Phenology].Ripening.Target.FixedValue = 132",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.61, 22.57",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.61, 22.57"
+                    "[Phenology].Vegetative.Target.FixedValue = 310",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.475",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 590",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.6, 22.35",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.6, 22.35"
                   ],
                   "Name": "mid000",
                   "ResourceName": null,
@@ -579,14 +575,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 268",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 250",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 197",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 138",
-                    "[Phenology].Maturing.Target.FixedValue = 148",
-                    "[Phenology].Ripening.Target.FixedValue = 131",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.52, 22.07",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.52, 22.07"
+                    "[Phenology].Vegetative.Target.FixedValue = 312",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.47372",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 592",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.56, 22.15",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.56, 22.15"
                   ],
                   "Name": "late000",
                   "ResourceName": null,
@@ -597,14 +591,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 278",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 235",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 187",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 143",
-                    "[Phenology].Maturing.Target.FixedValue = 157",
-                    "[Phenology].Ripening.Target.FixedValue = 129",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.44, 21.59",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.44, 21.59"
+                    "[Phenology].Vegetative.Target.FixedValue = 318",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.46836",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 598",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.39, 21.32",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.39, 21.32"
                   ],
                   "Name": "early00",
                   "ResourceName": null,
@@ -615,14 +607,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 289",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 218",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 178",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 151",
-                    "[Phenology].Maturing.Target.FixedValue = 168",
-                    "[Phenology].Ripening.Target.FixedValue = 125",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.36, 21.12",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.36, 21.12"
+                    "[Phenology].Vegetative.Target.FixedValue = 320",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 100",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.467",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 600",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.35, 21.11",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.35, 21.11"
                   ],
                   "Name": "mid00",
                   "ResourceName": null,
@@ -633,14 +623,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 300",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 198",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 169",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 160",
-                    "[Phenology].Maturing.Target.FixedValue = 183",
-                    "[Phenology].Ripening.Target.FixedValue = 119",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.27, 20.68",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.27, 20.68"
+                    "[Phenology].Vegetative.Target.FixedValue = 323",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 103",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.4598",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 603",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.31, 20.92",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.31, 20.92"
                   ],
                   "Name": "late00",
                   "ResourceName": null,
@@ -651,14 +639,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 310",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 175",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 163",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 169",
-                    "[Phenology].Maturing.Target.FixedValue = 200",
-                    "[Phenology].Ripening.Target.FixedValue = 110",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.19, 20.25",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.19, 20.25"
+                    "[Phenology].Vegetative.Target.FixedValue = 333",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 117",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.42965",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 613",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.14, 20.15",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.14, 20.15"
                   ],
                   "Name": "early0",
                   "ResourceName": null,
@@ -669,14 +655,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 315",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 154",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 162",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 178",
-                    "[Phenology].Maturing.Target.FixedValue = 218",
-                    "[Phenology].Ripening.Target.FixedValue = 102",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.1, 19.85",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.1, 19.85"
+                    "[Phenology].Vegetative.Target.FixedValue = 336",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.422",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 616",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.1, 19.95",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.1, 19.95"
                   ],
                   "Name": "mid0",
                   "ResourceName": null,
@@ -687,14 +671,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 314",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 138",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 165",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 185",
-                    "[Phenology].Maturing.Target.FixedValue = 234",
-                    "[Phenology].Ripening.Target.FixedValue = 95",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.02, 19.46",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.02, 19.46"
+                    "[Phenology].Vegetative.Target.FixedValue = 337",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.42024",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 619",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 14.06, 19.76",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 14.06, 19.76"
                   ],
                   "Name": "late0",
                   "ResourceName": null,
@@ -705,14 +687,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 314",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 125",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 173",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 189",
-                    "[Phenology].Maturing.Target.FixedValue = 248",
-                    "[Phenology].Ripening.Target.FixedValue = 86",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.94, 19.09",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.94, 19.09"
+                    "[Phenology].Vegetative.Target.FixedValue = 339",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.41287",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 629",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.88, 18.97",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.88, 18.97"
                   ],
                   "Name": "early1",
                   "ResourceName": null,
@@ -723,14 +703,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 315",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 114",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 184",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 192",
-                    "[Phenology].Maturing.Target.FixedValue = 260",
-                    "[Phenology].Ripening.Target.FixedValue = 75",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.85, 18.74",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.85, 18.74"
+                    "[Phenology].Vegetative.Target.FixedValue = 340",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.411",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 632",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.84, 18.77",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.84, 18.77"
                   ],
                   "Name": "mid1",
                   "ResourceName": null,
@@ -741,14 +719,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 316",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 110",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 196",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 192",
-                    "[Phenology].Maturing.Target.FixedValue = 265",
-                    "[Phenology].Ripening.Target.FixedValue = 66",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.77, 18.41",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.77, 18.41"
+                    "[Phenology].Vegetative.Target.FixedValue = 341",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.407",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 635",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.8, 18.58",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.8, 18.58"
                   ],
                   "Name": "late1",
                   "ResourceName": null,
@@ -759,14 +735,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 316",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 110",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 208",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 191",
-                    "[Phenology].Maturing.Target.FixedValue = 265",
-                    "[Phenology].Ripening.Target.FixedValue = 63",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.68, 18.09",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.68, 18.09"
+                    "[Phenology].Vegetative.Target.FixedValue = 347",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.39025",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 645",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.63, 17.81",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.63, 17.81"
                   ],
                   "Name": "early2",
                   "ResourceName": null,
@@ -777,14 +751,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 307",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 118",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 219",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 191",
-                    "[Phenology].Maturing.Target.FixedValue = 258",
-                    "[Phenology].Ripening.Target.FixedValue = 73",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.6, 17.8",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.6, 17.8"
+                    "[Phenology].Vegetative.Target.FixedValue = 348",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.386",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 648",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.59, 17.61",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.59, 17.61"
                   ],
                   "Name": "mid2",
                   "ResourceName": null,
@@ -795,14 +767,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 291",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 129",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 226",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 191",
-                    "[Phenology].Maturing.Target.FixedValue = 249",
-                    "[Phenology].Ripening.Target.FixedValue = 94",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.51, 17.52",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.51, 17.52"
+                    "[Phenology].Vegetative.Target.FixedValue = 353",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.382",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 651",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.56, 17.5",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.56, 17.5"
                   ],
                   "Name": "late2",
                   "ResourceName": null,
@@ -813,14 +783,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 272",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 139",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 229",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 193",
-                    "[Phenology].Maturing.Target.FixedValue = 244",
-                    "[Phenology].Ripening.Target.FixedValue = 120",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.43, 17.26",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.43, 17.26"
+                    "[Phenology].Vegetative.Target.FixedValue = 375",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.36525",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 661",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.43, 17.03",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.43, 17.03"
                   ],
                   "Name": "early3",
                   "ResourceName": null,
@@ -831,14 +799,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 255",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 147",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 229",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 196",
-                    "[Phenology].Maturing.Target.FixedValue = 246",
-                    "[Phenology].Ripening.Target.FixedValue = 145",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.35, 17.02",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.35, 17.02"
+                    "[Phenology].Vegetative.Target.FixedValue = 380",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 120",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.361",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.4, 16.91",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.4, 16.91"
                   ],
                   "Name": "mid3",
                   "ResourceName": null,
@@ -849,14 +815,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 247",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 154",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 226",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 200",
-                    "[Phenology].Maturing.Target.FixedValue = 254",
-                    "[Phenology].Ripening.Target.FixedValue = 165",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.26, 16.8",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.26, 16.8"
+                    "[Phenology].Vegetative.Target.FixedValue = 381",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 123",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.35508",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.35, 16.84",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.35, 16.84"
                   ],
                   "Name": "late3",
                   "ResourceName": null,
@@ -867,14 +831,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 247",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 167",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 221",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 203",
-                    "[Phenology].Maturing.Target.FixedValue = 263",
-                    "[Phenology].Ripening.Target.FixedValue = 182",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.18, 16.6",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.18, 16.6"
+                    "[Phenology].Vegetative.Target.FixedValue = 387",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 137",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.33029",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.15, 16.56",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.15, 16.56"
                   ],
                   "Name": "early4",
                   "ResourceName": null,
@@ -885,14 +847,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 257",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 185",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 214",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 206",
-                    "[Phenology].Maturing.Target.FixedValue = 272",
-                    "[Phenology].Ripening.Target.FixedValue = 196",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.09, 16.42",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.09, 16.42"
+                    "[Phenology].Vegetative.Target.FixedValue = 388",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 140",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.324",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 664",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.1, 16.49",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.1, 16.49"
                   ],
                   "Name": "mid4",
                   "ResourceName": null,
@@ -903,14 +863,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 275",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 205",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 206",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 208",
-                    "[Phenology].Maturing.Target.FixedValue = 278",
-                    "[Phenology].Ripening.Target.FixedValue = 204",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.01, 16.25",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.01, 16.25"
+                    "[Phenology].Vegetative.Target.FixedValue = 389",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 143",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.28368",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 669",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 13.06, 16.43",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 13.06, 16.43"
                   ],
                   "Name": "late4",
                   "ResourceName": null,
@@ -921,14 +879,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 298",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 224",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 198",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 209",
-                    "[Phenology].Maturing.Target.FixedValue = 280",
-                    "[Phenology].Ripening.Target.FixedValue = 210",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.93, 16.11",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.93, 16.11"
+                    "[Phenology].Vegetative.Target.FixedValue = 395",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 157",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.11484",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 691",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.88, 16.19",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.88, 16.19"
                   ],
                   "Name": "early5",
                   "ResourceName": null,
@@ -939,14 +895,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 320",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 238",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 191",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 211",
-                    "[Phenology].Maturing.Target.FixedValue = 282",
-                    "[Phenology].Ripening.Target.FixedValue = 213",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.84, 15.98",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.84, 15.98"
+                    "[Phenology].Vegetative.Target.FixedValue = 396",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 160",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.072",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 696",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.83, 16.13",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.83, 16.13"
                   ],
                   "Name": "mid5",
                   "ResourceName": null,
@@ -957,14 +911,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 334",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 243",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 185",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 213",
-                    "[Phenology].Maturing.Target.FixedValue = 281",
-                    "[Phenology].Ripening.Target.FixedValue = 217",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.76, 15.87",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.76, 15.87"
+                    "[Phenology].Vegetative.Target.FixedValue = 397",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 163",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.06944",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 699",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.79, 16.08",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.79, 16.08"
                   ],
                   "Name": "late5",
                   "ResourceName": null,
@@ -975,14 +927,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 336",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 238",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 180",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 215",
-                    "[Phenology].Maturing.Target.FixedValue = 280",
-                    "[Phenology].Ripening.Target.FixedValue = 221",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.67, 15.78",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.67, 15.78"
+                    "[Phenology].Vegetative.Target.FixedValue = 403",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 177",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05872",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 709",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.62, 15.86",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.62, 15.86"
                   ],
                   "Name": "early6",
                   "ResourceName": null,
@@ -993,14 +943,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 327",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 226",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 176",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 218",
-                    "[Phenology].Maturing.Target.FixedValue = 279",
-                    "[Phenology].Ripening.Target.FixedValue = 227",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.59, 15.7",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.59, 15.7"
+                    "[Phenology].Vegetative.Target.FixedValue = 404",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 180",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.056",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 712",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.58, 15.8",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.58, 15.8"
                   ],
                   "Name": "mid6",
                   "ResourceName": null,
@@ -1011,14 +959,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 308",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 210",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 174",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 220",
-                    "[Phenology].Maturing.Target.FixedValue = 279",
-                    "[Phenology].Ripening.Target.FixedValue = 233",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.5, 15.65",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.5, 15.65"
+                    "[Phenology].Vegetative.Target.FixedValue = 406",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 183",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05584",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 715",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.54, 15.75",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.54, 15.75"
                   ],
                   "Name": "late6",
                   "ResourceName": null,
@@ -1029,14 +975,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 277",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 198",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 176",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 221",
-                    "[Phenology].Maturing.Target.FixedValue = 278",
-                    "[Phenology].Ripening.Target.FixedValue = 238",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.42, 15.61",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.42, 15.61"
+                    "[Phenology].Vegetative.Target.FixedValue = 414",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 197",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05517",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 725",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.37, 15.52",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.37, 15.52"
                   ],
                   "Name": "early7",
                   "ResourceName": null,
@@ -1047,14 +991,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 236",
-                    "[Phenology].EarlyFlowering.Target.FixedValue = 194",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 183",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 219",
-                    "[Phenology].Maturing.Target.FixedValue = 273",
-                    "[Phenology].Ripening.Target.FixedValue = 242",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.34, 15.6",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.34, 15.6"
+                    "[Phenology].Vegetative.Target.FixedValue = 416",
+                    "[Phenology].EarlyFlowering.Target.FixedValue = 200",
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.055",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 728",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.33, 15.46",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.33, 15.46"
                   ],
                   "Name": "mid7",
                   "ResourceName": null,
@@ -1065,14 +1007,12 @@
                 {
                   "$type": "Models.PMF.Cultivar, Models",
                   "Command": [
-                    "[Phenology].Vegetative.Target.FixedValue = 190",
+                    "[Phenology].Vegetative.Target.FixedValue = 418",
                     "[Phenology].EarlyFlowering.Target.FixedValue = 200",
-                    "[Phenology].EarlyPodDevelopment.Target.FixedValue = 193",
-                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 216",
-                    "[Phenology].Maturing.Target.FixedValue = 265",
-                    "[Phenology].Ripening.Target.FixedValue = 244",
-                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.25, 15.6",
-                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.25, 15.6"
+                    "[Phenology].EarlyGrainFilling.Target.FractionofGrainfilling.FixedValue = 0.05484",
+                    "[Phenology].LateGrainFilling.Target.EntireGrainfillPeriod.FixedValue = 731",
+                    "[Phenology].VegetativePhotoperiodModifier.XYPairs.X = 12.29, 15.4",
+                    "[Phenology].ReproductivePhotoperiodModifier.XYPairs.X = 12.29, 15.4"
                   ],
                   "Name": "late7",
                   "ResourceName": null,
@@ -1543,19 +1483,19 @@
               "Parameters": [
                 {
                   "Key": "GermWait",
-                  "Value": "30"
+                  "Value": "365"
                 },
                 {
                   "Key": "EmergWait",
-                  "Value": "30"
+                  "Value": "365"
                 },
                 {
                   "Key": "MaxStall",
-                  "Value": "14"
+                  "Value": "365"
                 },
                 {
                   "Key": "LethalFrost",
-                  "Value": "-2.5"
+                  "Value": "-100"
                 }
               ],
               "Name": "ReaperMan",
@@ -1638,7 +1578,7 @@
                 "[Clock].Today as Date",
                 "[Clock].Today.Year as Year",
                 "[Clock].Today.DayOfYear as DOY",
-                "[Phenology].CurrentPhaseName as PhaseName",
+                "[Phenology].CurrentPhaseName as StageName",
                 "[Phenology].Stage as Stage",
                 "[Sowing].Script.SimSowDate as SimSowDate",
                 "[ReaperMan].Script.SimMatDate as SimMatDate",
