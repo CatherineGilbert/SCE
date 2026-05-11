@@ -1,10 +1,14 @@
 - allow periods to be summarized and reported in an intuitive way
   - figure out why summarization is broken (TT is the same as AccTT in outputs) and correct it
   - if you summarize the periods, close the app, then reopen it, you can't regenerate a period_key with the original periods from the daily sim outputs
-  - pull the summarization / creation of output files other than the daily_outputs into its own function
+  - pull the summarization / creation of output files other than the daily_outputs into its own function. the functions to generate period_key, seasonal_data, and final_x from the original daily_sim_outputs should be identical between the apsimx script and the app script
   - have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables 2from the tempate files be recognized as summed by default
   - can i replace "configured_" reactives with their regular counterparts?
-  - allow people to download the period_key / upload their own period_key to set summarization parameters
+  
+///consolidated some redundant bits of UI code
+///consolidated how reactive values from ID_corr() are saved
+///changed "apply overrides" and "reset overrides" on the table to match the formatting of our favorite new tab
+///the heading of the seasonal covariates controls table is now pinned in place
   
 - change buffer from two weeks default to something customizable
   

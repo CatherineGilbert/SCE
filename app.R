@@ -9,6 +9,7 @@ pkg <- c("shiny", "shinydashboard", "shinycssloaders", "shinyWidgets", "shinyBS"
 p_load(char = pkg)
 
 plan(multisession, workers = 2)
+options(dplyr.summarise.inform = FALSE)
 
 # Define UI ----
 ui <- dashboardPage(
@@ -243,6 +244,55 @@ ui <- dashboardPage(
               bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` are intended to be used with the template models provided. See documentation for more information on these functions.", "right", options = list(container = "body")),
               bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to two weeks before planting and after harvest. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
               ),
+    ###config periods UI -----
+    tabItem(tabName = "config_periods",
+            fluidPage(
+              h3("Configure Phenological Periods"),
+              p(
+                "Here you can rename each APSIM phenological period and optionally merge",
+                "any set of periods into a single combined period.",
+                "Changes take effect when you click ", tags$b("Apply Configuration"), "."
+              ),
+              p(
+                tags$b("Renaming:"),
+                " Type a custom label in the 'Custom Name' column.",
+                " Leave a cell blank to keep the default APSIM phase name."
+              ),
+              p(
+                tags$b("Merging:"),
+                " Assign the same 'Merge Group' number to all periods you want to combine.",
+                " Periods with unique or blank merge group values are kept as-is.",
+                " Accumulation variables (AccRain, AccTT, AccEmTT, Duration)",
+                " are", tags$em("summed"), "within a merge group; all other variables are",
+                tags$em("averaged"), "."
+              ),
+              
+              # ── Action buttons ──────────────────────────────────────────────────────
+              fluidRow(
+                column(width = 12,
+                       div(style = "display: flex; gap: 10px; margin-bottom: 15px;",
+                           actionButton("apply_period_config",  "Apply Configuration",
+                                        icon = icon("check"),
+                                        style = "font-weight: bold; background-color: #4CAF50;
+                                color: white; border: none;"),
+                           actionButton("reset_period_config",  "Reset to Defaults",
+                                        icon = icon("rotate-left"))
+                       )
+                )
+              ),
+              
+              # ── Per-period configuration table ──────────────────────────────────────
+              # Rendered dynamically once analysis is complete
+              uiOutput("period_config_tableUI"),
+              
+              # ── Live preview of the resulting period key ─────────────────────────────
+              br(),
+              h4("Preview: Resulting Period Key"),
+              p(em("This reflects your pending configuration before Apply is clicked
+          only the first time; after clicking Apply it shows the active state.")),
+              DTOutput("period_config_preview")
+            )
+    ),
       ### result view UI ----
       tabItem(tabName = "results",
               fluidPage(
@@ -467,7 +517,6 @@ ui <- dashboardPage(
             on what criteria. The last column, 'Override', gives you the option to override whatever other criteria you set and 
             forcibly include or exclude the seasonal covariate from the analysis. 
           "),
-          p("The 'Apply Overrides' button", tags$i("must"), "be used to apply changes."),
           fluidRow(
             column(width = 4,
                    checkboxInput("exclude_startend", 
@@ -508,16 +557,19 @@ ui <- dashboardPage(
                    downloadButton("downloadParamTable", "Download SC Selections Table (.csv)")
             ),
             column(width = 8, 
+                   div(style = "display: flex; gap: 10px; margin-bottom: 15px;",
+                       actionButton("apply_overrides",  "Apply Overrides",
+                                    icon = icon("check"),
+                                    style = "font-weight: bold; background-color: #4CAF50;
+                                color: white; border: none;"),
+                       actionButton("reset_overrides",  "Reset to Defaults",
+                                    icon = icon("rotate-left"))
+                   ),
                    div(
                      id = "scroll-container",
                      withSpinner(uiOutput("customParamTableUI"), type = 4)
-                   ),
-                   fluidRow(
-                     column(width = 6, actionButton("apply_overrides","Apply Overrides", 
-                                                    style = "width: 100%; text-align: center;font-weight: bold;")),
-                     column(width = 6, actionButton("reset_overrides","Reset Overrides", 
-                                                    style = "width: 100%; text-align: center;font-weight: bold;"))
-                   ))
+                   )
+                  )
           )
         ),
         bsTooltip("tip_report", "Report comparing seasonal conditions for different site and planting date combinations. Gives the similarity and stability of that similarity over the simulated years. See documentation for specifics.", "below", options = list(container = "body")),
@@ -644,55 +696,7 @@ ui <- dashboardPage(
                     downloadButton("downloadBetweenSitesPlot", "Download Plot (.png)")
                   )
                 )
-              )),
-    tabItem(tabName = "config_periods",
-            fluidPage(
-              h3("Configure Phenological Periods"),
-              p(
-                "Here you can rename each APSIM phenological period and optionally merge",
-                "any set of periods into a single combined period.",
-                "Changes take effect when you click ", tags$b("Apply Configuration"), "."
-              ),
-              p(
-                tags$b("Renaming:"),
-                " Type a custom label in the 'Custom Name' column.",
-                " Leave a cell blank to keep the default APSIM phase name."
-              ),
-              p(
-                tags$b("Merging:"),
-                " Assign the same 'Merge Group' number to all periods you want to combine.",
-                " Periods with unique or blank merge group values are kept as-is.",
-                " Accumulation variables (AccRain, AccTT, AccEmTT, Duration)",
-                " are", tags$em("summed"), "within a merge group; all other variables are",
-                tags$em("averaged"), "."
-              ),
-              
-              # ── Action buttons ──────────────────────────────────────────────────────
-              fluidRow(
-                column(width = 12,
-                       div(style = "display: flex; gap: 10px; margin-bottom: 15px;",
-                           actionButton("apply_period_config",  "Apply Configuration",
-                                        icon = icon("check"),
-                                        style = "font-weight: bold; background-color: #4CAF50;
-                                color: white; border: none;"),
-                           actionButton("reset_period_config",  "Reset to Defaults",
-                                        icon = icon("rotate-left"))
-                       )
-                )
-              ),
-              
-              # ── Per-period configuration table ──────────────────────────────────────
-              # Rendered dynamically once analysis is complete
-              uiOutput("period_config_tableUI"),
-              
-              # ── Live preview of the resulting period key ─────────────────────────────
-              br(),
-              h4("Preview: Resulting Period Key"),
-              p(em("This reflects your pending configuration before Apply is clicked
-          only the first time; after clicking Apply it shows the active state.")),
-              DTOutput("period_config_preview")
-            )
-    )
+              ))
     )
   )
 )
@@ -798,18 +802,14 @@ server <- function(input, output, session) {
   mat_handling <- reactiveVal("Soy")
   no_trim <- reactiveVal("FALSE")
   
-  observeEvent(input$matType, {
-    mat_handling(input$matType)
-  })
-  observeEvent(input$soilAquis,{
-    soil_aquis(input$soilAquis)
-  })
-  observeEvent(input$weatherAquis,{
-    weather_aquis(input$weatherAquis)
-  })
-  observeEvent(input$no_trim,{
-    no_trim(input$no_trim)
-  })
+  for (par in c("matType","soilAquis","weatherAquis","no_trim")) {
+    local({
+      p <- par
+      rv <- switch(p, matType=mat_handling, soilAquis=soil_aquis,
+                   weatherAquis=weather_aquis, no_trim=no_trim)
+      observeEvent(input[[p]], rv(input[[p]]))
+    })
+  }
   
   ## set progress counters -------
   nloc <- reactiveVal(0)
@@ -1169,10 +1169,6 @@ server <- function(input, output, session) {
     filename = function() {
       paste0("results_", Sys.Date(), ".zip")  # Name the zip file
     },
-    
-    content = function(file) {
-      # Create a temporary directory to store the files
-      temp_dir <- tempdir()
       content = function(file) {
            temp_dir <- tempdir()
         
@@ -1182,21 +1178,11 @@ server <- function(input, output, session) {
            write_csv(configured_seasonal_data(),  file.path(temp_dir, "seasonal_data.csv"))
            write_csv(configured_final_x(),        file.path(temp_dir, "final_x.csv"))
            write_csv(configured_period_key(),     file.path(temp_dir, "period_key.csv"))
-        
-           file_paths <- file.path(temp_dir,
-             c("trial_info.csv","daily_sim_outputs.csv",
-               "seasonal_data.csv","final_x.csv","period_key.csv"))
-           zip::zipr(file, files = file_paths)
-         }
-        
-      
-      # Copy the selected files to the temporary directory
-      file_paths <- file.path(temp_dir, basename(files))
-      file.copy(files, file_paths)
-      
-      # Create a zip file from the files in the temporary directory
-      zip::zipr(file, files = file_paths)
-    }
+
+           zip::zipr(file, files = file.path(temp_dir,
+                                             c("trial_info.csv","daily_sim_outputs.csv",
+                                               "seasonal_data.csv","final_x.csv","period_key.csv")))
+      }
   )
   
   ## disable downloads button if no analysis ----
@@ -1259,9 +1245,9 @@ server <- function(input, output, session) {
     
     # Header row
     header <- fluidRow(
-      column(2, strong("Period")),
+      column(2, strong("Original Period")),
       column(3, strong("APSIM Phase Name")),
-      column(4, strong("Custom Name")),
+      column(4, strong("Custom Label")),
       column(3, strong("Merge Group"))
     )
     
@@ -1839,15 +1825,7 @@ server <- function(input, output, session) {
   
   # Trial Comparisons ----  
   
-  out_IDs <- reactiveVal(NULL)
-  out_nametag <- reactiveVal(NULL)
-  out_used_params <- reactiveVal(NULL)
-  out_final_dt <- reactiveVal(NULL)
-  out_scfinal_dt <- reactiveVal(NULL)
-  out_id_cor <- reactiveVal(NULL)
-  out_used_params_corr_pheatmap <- reactiveVal(NULL)
-  out_id_corr_pheatmap <- reactiveVal(NULL)
-  out_id_dend_obj <- reactiveVal(NULL)
+  corr_results <- reactiveVal(list())
   
   pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
   palette <- rev(pal_f(50)[1:50])
@@ -2063,15 +2041,15 @@ server <- function(input, output, session) {
     
     trial_sim_heatmap_hack <<- p3
     
-    out_IDs(colnames(id_cor)) #trial IDs
-    out_nametag(nametag) #used for labels. it's ID/Site/Planting DOY/Year
-    out_used_params(param_status)
-    out_final_dt(final_dt) #unscaled parameters used for seasonal correlations
-    out_scfinal_dt(scfinal_dt) #scaled parameters used for seasonal correlations
-    out_id_cor(id_cor)
-    out_id_corr_pheatmap(NULL)  # Force a change by clearing first
-    out_id_corr_pheatmap(p3$gtable)
-    out_id_dend_obj(pdend)
+    corr_results(list(IDs = colnames(id_cor), #trial IDs
+                      nametag = nametag, #used for labels. it's ID/Site/Planting DOY/Year
+                      used_params = param_status, 
+                      final_dt = final_dt, #unscaled parameters used for seasonal correlations
+                      scfinal_dt = scfinal_dt, #scaled parameters used for seasonal correlations
+                      id_cor = id_cor,
+                      id_corr_pheatmap = p3$gtable,
+                      id_dend_obj = pdend
+                      ))
   }
   
   
@@ -2087,11 +2065,11 @@ server <- function(input, output, session) {
     {
       req(analysisDone())
       
-      if (is.null(out_id_corr_pheatmap())) {
+      if (is.null(corr_results()$id_corr_pheatmap)) {
         print("Heatmap object is NULL")}
       else {
         #print("Plotting heatmap")
-        plot(out_id_corr_pheatmap())
+        plot(corr_results()$id_corr_pheatmap)
       }
     })
   
@@ -2113,7 +2091,7 @@ server <- function(input, output, session) {
       paste0("sim-matrix", input$trial_matSelect, "-", Sys.Date(), ".csv")
     },
     content = function(file) {
-      write.csv(out_id_cor(), file)
+      write.csv(corr_results()$id_cor, file)
     }
   )
   
@@ -2155,40 +2133,40 @@ server <- function(input, output, session) {
   
   ## param table container ----
   output$customParamTableUI <- renderUI({
-    req(out_used_params())
-    
-    header <- fluidRow(
-      column(4, strong("Seasonal Covariate")),
-      column(4, strong("Status")),
-      column(4, strong("Override"))
-    )
+    req(corr_results()$used_params)
     
     # dynamically create uiOutput placeholders for each row
-    row_outputs <- lapply(out_used_params()$Parameter, function(param_name) {
+    row_outputs <- lapply(corr_results()$used_params$Parameter, function(param_name) {
       uiOutput(outputId = paste0("param_row_", param_name))
     })
     
     div(
-      id = "scroll-container",
-      style = "
-      height: 500px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      border: 1px solid #ccc;
-      padding: 10px;
-      white-space: normal;
-    ",
-      tagList(header, tags$hr(), row_outputs)
+      div(
+        style = "border: 1px solid #ccc; border-bottom: none; padding: 10px; background: white;",
+        fluidRow(
+          column(4, strong("Seasonal Covariate")),
+          column(4, strong("Status")),
+          column(4, strong("Override"))
+        ),
+        tags$hr(style = "margin: 6px 0;")
+      ),
+      div(
+        id = "scroll-container",
+        style = "height:500px; overflow-y:auto; overflow-x:hidden;
+               border:1px solid #ccc; padding:0px; white-space:normal;",
+        row_outputs
+      )
     )
+
   })
   
   ## render param table rows -----
   observe({
-    req(out_used_params())
+    req(corr_results()$used_params)
     
-    for (i in seq_len(nrow(out_used_params()))) {
+    for (i in seq_len(nrow(corr_results()$used_params))) {
       local({
-        param <- out_used_params()[i, ]
+        param <- corr_results()$used_params[i, ]
         param_name <- param$Parameter
         output_id <- paste0("param_row_", param_name)
         override_id <- paste0("override_", param_name)
@@ -2237,9 +2215,9 @@ server <- function(input, output, session) {
   
   ## track and store overrides ------
   observe({
-    req(out_used_params())
+    req(corr_results()$used_params)
     
-    for (param in out_used_params()$Parameter) {
+    for (param in corr_results()$used_params$Parameter) {
       btn_id <- paste0("override_", param)
       val <- input[[btn_id]]
       
@@ -2271,10 +2249,10 @@ server <- function(input, output, session) {
   ## download param table ----
   
   get_current_param_table <- function() {
-    req(out_used_params())
+    req(corr_results()$used_params)
     
     # Pull the original table
-    base_table <- out_used_params()
+    base_table <- corr_results()$used_params
     
     # Add override column
     base_table$Override <- sapply(base_table$Parameter, function(param) {
@@ -2355,7 +2333,7 @@ server <- function(input, output, session) {
   }
   
   output$dendroPlot <- renderPlot({
-    dend <- out_id_dend_obj()
+    dend <- corr_results()$id_dend_obj
     
     if (is.null(dend)) {
       plot.new()
@@ -2398,7 +2376,7 @@ server <- function(input, output, session) {
       )
       
       draw_dendrogram(
-        dend             = out_id_dend_obj(),
+        dend             = corr_results()$id_dend_obj,
         nametag          = nametag,
         trial_matSelect  = input$trial_matSelect,
         k_val            = input$k_val,
@@ -2414,7 +2392,7 @@ server <- function(input, output, session) {
       paste0("dendrogram-obj_", input$trial_matSelect, "_", Sys.Date(),".rds")
     },
     content = function(file) {
-      placeholder <- out_id_dend_obj()
+      placeholder <- corr_results()$id_dend_obj
       write_rds(placeholder, file)
     }
   )
@@ -2424,8 +2402,8 @@ server <- function(input, output, session) {
 
   make_vardates <- function(){
     
-    seasoncorr_mx <- out_id_cor()
-    IDs <- out_IDs()
+    seasoncorr_mx <- corr_results()$id_cor()
+    IDs <- corr_results()$IDs
     rownames(seasoncorr_mx) <- as.character(IDs)
     colnames(seasoncorr_mx) <- as.character(IDs)
     
@@ -2439,7 +2417,7 @@ server <- function(input, output, session) {
     rownames(sitedist_mx) <- pull(trials_x, ID)
     colnames(sitedist_mx) <- pull(trials_x, ID)
     
-    yearly <- out_scfinal_dt() %>% rownames_to_column("ID")
+    yearly <- corr_results()$scfinal_dt %>% rownames_to_column("ID")
     datetags <- select(trials_x, ID, ID_Loc, Site, Mat, Year, PlantingDOY, PD_mday, HarvestDate_Sim, PlantingDate_Sim, Latitude)
     datetags <- mutate(datetags, seasonlength = HarvestDate_Sim - PlantingDate_Sim)
     
@@ -2495,85 +2473,41 @@ output$current_GDD_settings <- renderText({
   
   ## Site selections -------
   ### site selection UIs ----
-  
-  output$siteSelectionUI <- renderUI({
-    fluidRow(
-      column(width = 12, 
-             actionButton("selectAllSites", "Select All"),
-             actionButton("unselectAllSites", "Unselect All")
-      ),
-      column(width = 12,
-             tags$label("Select Sites"),
-             tags$div(
-               style = "height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;",
-               checkboxGroupInput("selectedSites", NULL,  
-                                  choices = site_list(), 
-                                  selected = site_list()[1:2])
-             )
+  make_site_selector <- function(suffix) {
+    renderUI({
+      id_group   <- paste0("selectedSites", suffix)
+      id_all     <- paste0("selectAllSites",   suffix)
+      id_none    <- paste0("unselectAllSites", suffix)
+      fluidRow(
+        column(12, actionButton(id_all, "Select All"),
+               actionButton(id_none, "Unselect All")),
+        column(12, tags$label("Select Sites"),
+               tags$div(style = "height:400px;overflow-y:auto;border:1px solid #ccc;padding:5px;",
+                        checkboxGroupInput(id_group, NULL,
+                                           choices  = site_list(),
+                                           selected = site_list()[1:2])
+               )
+        )
       )
-    )
-  })
+    })
+  }
   
-  output$siteSelectionUI_faceted <- renderUI({
-    fluidRow(
-      column(width = 12,
-             actionButton("selectAllSites_faceted", "Select All"),
-             actionButton("unselectAllSites_faceted", "Unselect All")
-      ),
-      column(width = 12,
-             tags$label("Select Sites"),
-             tags$div(
-               style = "height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;",
-               checkboxGroupInput("selectedSites_faceted", NULL,  
-                                  choices = site_list(), 
-                                  selected = site_list()[1:2])
-             )
-      )
-    )
-  })
-  
-  output$siteSelectionUI_between <- renderUI({
-    fluidRow(
-      column(width = 12,
-             actionButton("selectAllSites_between", "Select All"),
-             actionButton("unselectAllSites_between", "Unselect All")
-      ),
-      column(width = 12,
-             tags$label("Select Sites"),
-             tags$div(
-               style = "height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 5px;",
-               checkboxGroupInput("selectedSites_between", NULL,  
-                                  choices = site_list(), 
-                                  selected = site_list()[1:2])
-             )
-      )
-    )
-  })
+  output$siteSelectionUI         <- make_site_selector("")
+  output$siteSelectionUI_faceted <- make_site_selector("_faceted")
+  output$siteSelectionUI_between <- make_site_selector("_between")
   
   ### select all / unselect all ----  
-  observeEvent(input$selectAllSites, {
-    updateCheckboxGroupInput(session, "selectedSites", selected = site_list())
-  })
-  
-  observeEvent(input$unselectAllSites, {
-    updateCheckboxGroupInput(session, "selectedSites", selected = character(0))
-  })
-  
-  observeEvent(input$selectAllSites_faceted, {
-    updateCheckboxGroupInput(session, "selectedSites_faceted", selected = site_list())
-  })
-  
-  observeEvent(input$unselectAllSites_faceted, {
-    updateCheckboxGroupInput(session, "selectedSites_faceted", selected = character(0))
-  })
-  
-  observeEvent(input$selectAllSites_between, {
-    updateCheckboxGroupInput(session, "selectedSites_between", selected = site_list())
-  })
-  
-  observeEvent(input$unselectAllSites_between, {
-    updateCheckboxGroupInput(session, "selectedSites_between", selected = character(0))
-  })  
+  for (suffix in c("", "_faceted", "_between")) {
+    local({
+      sfx <- suffix
+      observeEvent(input[[paste0("selectAllSites",   sfx)]], {
+        updateCheckboxGroupInput(session, paste0("selectedSites", sfx), selected = site_list())
+      })
+      observeEvent(input[[paste0("unselectAllSites", sfx)]], {
+        updateCheckboxGroupInput(session, paste0("selectedSites", sfx), selected = character(0))
+      })
+    })
+  }
   
   ## TT/precip1 (comparison) ---- 
   ### store the generated daily TT/precip plot for download ----
