@@ -438,18 +438,48 @@ period_key <- daily_sim_outputs %>% ungroup() %>%
 #   )) %>% select(-MatDate_Sim) %>% 
 #   mutate(Period = factor(Period, ordered = T, levels = as.character(1:11)))
 
-seasonal_data <- daily_sim_outputs %>% 
-  group_by(Period, ID) %>% select(-any_of(c("Stage"))) %>% 
-  summarize(across(where(is.numeric) & !c(DOY,AccEmTT), function(x){mean(x,na.omit=T)}), 
-            AccRain = sum(Rain), AccTT = sum(ThermalTime), AccEmTT = max(AccEmTT),
-            Period_Start_Date = min(Date), Period_End_Date = max(Date)) %>% 
-  mutate(Duration = as.numeric(as.period(Period_End_Date - Period_Start_Date, "days"))/86400 + 1, 
-         Period_Start_DOY = yday(Period_Start_Date), 
-         Period_End_DOY = yday(Period_End_Date)) %>%
+# seasonal_data <- daily_sim_outputs %>% 
+#   group_by(Period, ID) %>% select(-any_of(c("Stage"))) %>% 
+#   summarize(across(where(is.numeric) & !c(DOY,AccEmTT), function(x){mean(x,na.omit=T)}), 
+#             AccRain = sum(Rain), 
+#             AccTT = sum(ThermalTime), 
+#             AccEmTT = max(AccEmTT),
+#             Period_Start_Date = min(Date), 
+#             Period_End_Date = max(Date)) %>% 
+#   mutate(Duration = as.numeric(as.period(Period_End_Date - Period_Start_Date, "days"))/86400 + 1, 
+#          Period_Start_DOY = yday(Period_Start_Date), 
+#          Period_End_DOY = yday(Period_End_Date)) %>%
+#   relocate(ID, Period, Rain) %>% 
+#   relocate(AccRain, .after = Rain) %>% relocate(AccTT, AccEmTT, .after = ThermalTime) %>%
+#   relocate(Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
+#   arrange(ID) 
+
+RESERVE_VARS <- c("AccRain", "AccTT", "AccEmTT", "Duration", "Period_Start_Date", 
+                  "Period_End_Date", "Period_Start_DOY", "Period_End_DOY", "Duration", "DOY", "Stage")
+
+seasonal_data <- daily_sim_outputs %>%
+  mutate(Period = as.character(Period)) %>%
+  left_join(select(new_config, Period, MergeGroup), by = "Period") %>%
+  group_by(ID, MergeGroup) %>%
+  summarise(
+    AccRain           = sum(Rain, na.rm = TRUE),
+    AccTT             = sum(ThermalTime, na.rm = TRUE),
+    AccEmTT           = max(AccEmTT, na.rm = TRUE),
+    Period_Start_Date = min(Date, na.rm = TRUE),
+    Period_End_Date   = max(Date, na.rm = TRUE),
+    Period_Start_DOY = yday(Period_Start_Date),
+    Period_End_DOY   = yday(Period_End_Date),
+    Duration         = n(),
+    across(where(is.numeric) & !any_of(RESERVE_VARS),
+           ~ mean(.x, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
+  rename(Period = MergeGroup) %>%
   relocate(ID, Period, Rain) %>% 
-  relocate(AccRain, .after = Rain) %>% relocate(AccTT, AccEmTT, .after = ThermalTime) %>%
-  relocate(Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
-  arrange(ID) 
+  relocate(AccRain, .after = Rain) %>% 
+  relocate(AccTT, AccEmTT, .after = ThermalTime) %>%
+  relocate(Period_Start_Date, Period_End_Date, Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
+  arrange(ID, as.numeric(Period)) 
 
 #empty data for missing periods 
 idp <- tidyr::expand(tibble(seasonal_data), ID, Period) #full list of ID/Period combinations

@@ -1,27 +1,21 @@
-- allow periods to be summarized and reported in an intuitive way
-  - fix text on the "configure pheno periods" page
-  - have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables from the tempate files be recognized as summed by default
-  !!! the functions to generate period_key, seasonal_data, and final_x from the original daily_sim_outputs should be identical between the apsimx script and the app script
-  - figure out why summarization is broken (TT is the same as AccTT in outputs) and correct it
-  - make sure the output columns are ordered the same between apsimx and the app
-  - condense the sd_base and sd_out functions?
-  
-  - find where the NaNs in the seasonal_data are coming from and if they are causing problems
-  
-!!! figure out why some maturity selections on seasonal similarity of trials aren't working
 
-/// fixed the date selection in the build gridded input page, so that it ignores years and doesn't stretch across them when trying to make a calendar selection
-/// replaced "configured_" reactives with their regular counterparts, simplified how the page works overal
-/// pulled the summarization / creation of output files other than the daily_outputs into its own function.
-/// if you summarize the periods, close the app, then reopen it, you can regenerate a period_key with the original periods from the daily sim outputs
-/// created page to allow people to automate inputs of a range of planting dates and genetics 
-
+- fix text on the "configure pheno periods" page
+- find where the NaNs in the seasonal_data are coming from and if they are causing problems
+  
+/// periods can be summarized and reported in an intuitive way
+/// the functions to generate period_key, seasonal_data, and final_x from the original daily_sim_outputs are now identical between the apsimx script and the app script
+/// fixed why some maturity selections on seasonal similarity of trials aren't working
+/// condensed and corrected the summarization of seasonal covariates function from the period configuration tab
+/// fixed alignment of outputs between analysis script and app
   
 - the template soy / maize files have working soil modules and will run even if the soil isn't replaced. this means that when soil isn't grabbed successfully, the sims still run "successfully" (misleadingly)
-
 - check that the soy template models match the pheno that's in the recalibration models
 
+- have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables from the tempate files be recognized as summed by default
 - change buffer from two weeks default to something customizable
+- add direct controls for ReaperMan and Sowing scripts
+ - toggle for frost date
+
   
   ??? have the period_key creation read phases from the APSIM model internals directly rather than infer them from the outputs
   these values aren't stored in the template simulations unfortunately
@@ -34,8 +28,6 @@
 
 - have the function to run the analysis wipe the outputs folder before the files are counted by the progress counter / fix progress counter not resetting when running new trial after failed trial (clear output files immediately)
 
-- add direct controls for ReaperMan and Sowing scripts
- - toggle for frost date
 
 - add search bar to seasonal covariates selector
 
