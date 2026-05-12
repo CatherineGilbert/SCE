@@ -33,13 +33,14 @@ ui <- dashboardPage(
     width = 300,
     sidebarMenu(
       menuItem("About", tabName = "info", icon = icon("circle-info")),
-      menuItem("Upload and Analyze", tabName = "analysis", icon = icon("upload"))
+      menuItem("Upload and Analyze", tabName = "analysis", icon = icon("upload")),
+      menuSubItem("Build Gridded Input File", tabName = "build_input", icon = icon("globe"))
     ),
     hidden(
       div(id = "sidebar_menu",
           sidebarMenu(
             menuItem("View Results",            tabName = "results",          icon = icon("table-list")),
-            menuItem("Configure Periodization",       tabName = "config_periods",   icon = icon("sliders")),
+            menuItem("Configure Pheno Periods",       tabName = "config_periods",   icon = icon("sliders")),
             menuItem("View Map",                tabName = "view_map",         icon = icon("map")),
             menuItem("View Seasonal Heatmaps",  tabName = "heatmap",          icon = icon("fire")),
             menuItem("View Trial Similarities", tabName = "trial_comp",       icon = icon("seedling"))
@@ -244,6 +245,102 @@ ui <- dashboardPage(
               bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` are intended to be used with the template models provided. See documentation for more information on these functions.", "right", options = list(container = "body")),
               bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to two weeks before planting and after harvest. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
               ),
+    ###build gridded input file UI -----------
+    tabItem(tabName = "build_input",
+            fluidPage(
+              h3("Build a Gridded Input File"),
+              fluidRow(
+                column(width = 6,
+                       box(width = 12,
+                           h4("Geographic Range"),
+                           p("Enter the coordinates of two opposite corners of the rectangular area to cover."),
+                           fluidRow(
+                             column(width = 6,
+                                    numericInput("cornerA_lat",  "Corner A Latitude (WGS84):",  value = 40.0, min = -90,  max = 90,  step = 0.1),
+                                    numericInput("cornerB_lat", "Corner B Latitude (WGS84):", value = 42.0, min = -90, max = 90, step = 0.1)
+                             ),
+                             column(width = 6,
+                                    numericInput("cornerA_long",  "Corner A Longitude (WGS84):",  value = -88.0, min = -180,  max = 180,  step = 0.1),
+                                    numericInput("cornerB_long", "Corner B Longitude (WGS84):", value = -90.0, min = -180, max = 180, step = 0.1)
+                             )
+                           ),
+                           numericInput("grid_spacing_km", "Grid Spacing (km):", value = 50, min = 1, max = 1000, step = 1),
+                           uiOutput("totallocs_UI")
+                       ),
+                       box(width = 12,
+                           h4("Genetics"),
+                           p("Enter comma-separated genetic maturity values to test (e.g. 3.5, 4.0, 4.5)."),
+                           textInput("genetics_input", "Genetic Maturities:", value = "3.5, 4.0, 4.5"),
+                           uiOutput("totalgenetics_UI")
+                       )
+                       
+                ),
+                column(width = 6,
+                       box(width = 12,
+                           h4("Planting Dates"),
+                           p("Enter the range of planting dates to test within each year."),
+                           fluidRow(
+                             column(
+                               width = 6,
+                               dateInput(
+                                 "planting_start",
+                                 "First Planting Date:",
+                                 value = as.Date("2000-05-01"),
+                                 format = "MM dd",
+                                 startview = "month",
+                                 min = as.Date("2000-01-01"),
+                                 max = as.Date("2000-12-31")
+                               )
+                             ),
+                             column(
+                               width = 6,
+                               dateInput(
+                                 "planting_end",
+                                 "Last Planting Date:",
+                                 value = as.Date("2000-06-01"),
+                                 format = "MM dd",
+                                 startview = "month",
+                                 min = as.Date("2000-01-01"),
+                                 max = as.Date("2000-12-31")
+                               )
+                             )
+                           ),
+                           numericInput(
+                             "planting_step_days",
+                             "Planting Date Interval (days):",
+                             value = 14,
+                             min = 1,
+                             max = 180,
+                             step = 1
+                           ),
+                           uiOutput("totaldates_UI")
+                       ),
+                       box(width = 12,
+                           h4("Years"),
+                           p("Enter the range of years to simulate."),
+                           fluidRow(
+                             column(width = 6,
+                                    numericInput("year_start", "First Year:", value = 2015, min = 1900, max = 2100, step = 1)
+                             ),
+                             column(width = 6,
+                                    numericInput("year_end", "Last Year:", value = 2020, min = 1900, max = 2100, step = 1)
+                             )
+                           ),
+                           uiOutput("totalyears_UI")
+                       ),
+                       box(width = 12, 
+                           h4("Summary"),
+                           uiOutput("total_trialsUI"),
+                           br(),
+                           downloadButton("download_grid_input", "Download Input File")
+                       )
+                )
+              ),
+              br(),
+              h4("Preview"),
+              DTOutput("grid_input_preview")
+            )
+    ),
     ###config periods UI -----
     tabItem(tabName = "config_periods",
             fluidPage(
@@ -723,6 +820,11 @@ server <- function(input, output, session) {
   pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
   palette <- rev(pal_f(50)[1:50])
   
+  seasonal_data <- reactiveVal(NULL)
+  final_x       <- reactiveVal(NULL)
+  period_key    <- reactiveVal(NULL)
+  raw_period_key <- reactiveVal(NULL)
+  
  # Front Page / Analysis ----
   
   ## download examples ------
@@ -1078,12 +1180,31 @@ server <- function(input, output, session) {
     shinyjs::show("sidebar_spinner")
     
     trial_info <<- read_csv(paste0(results_dir, "/trial_info.csv"), show_col_types = FALSE)
-    final_x <<- read_csv(paste0(results_dir, "/final_x.csv"), show_col_types = FALSE)
-    seasonal_data <<- read_csv(paste0(results_dir, "/seasonal_data.csv"), show_col_types = FALSE)
     daily_sim_outputs <<- read_csv(paste0(results_dir, "/daily_sim_outputs.csv"), show_col_types = FALSE)
-    period_key <<- read_csv(paste0(results_dir, "/period_key.csv"), show_col_types = FALSE)
     
-    nametag <<- select(final_x, ID, Site, PlantingDate_Sim, Mat) %>% 
+    seasonal_data(read_csv(paste0(results_dir, "/seasonal_data.csv"), show_col_types = FALSE))
+    final_x(read_csv(paste0(results_dir, "/final_x.csv"), show_col_types = FALSE))
+    period_key(read_csv(paste0(results_dir, "/period_key.csv"), show_col_types = FALSE))
+    
+    rebuilt_key <- daily_sim_outputs %>%
+      ungroup() %>%
+      select(PhaseName, Period) %>%
+      distinct() %>%
+      filter(!is.na(PhaseName)) %>%
+      group_by(Period) %>%
+      summarise(
+        Label                   = first(PhaseName),
+        `APSIM Phases Included` = paste(PhaseName, collapse = " → "),
+        `Original Periods`      = paste(Period,    collapse = ", "),
+        .groups = "drop"
+      ) %>%
+      mutate(Period = as.character(Period)) %>%
+      select(Period, Label, `APSIM Phases Included`, `Original Periods`) %>%
+      arrange(as.numeric(Period))
+    raw_period_key(rebuilt_key)
+    
+        
+    nametag <<- select(final_x(), ID, Site, PlantingDate_Sim, Mat) %>% 
       mutate(tag = paste0(ID,": ", Site, " ", PlantingDate_Sim),
              mtag = paste0(ID,": ", Site, " ", PlantingDate_Sim, " ", Mat))
     
@@ -1175,9 +1296,9 @@ server <- function(input, output, session) {
            # Write configured versions so the download reflects any period changes
            write_csv(trial_info,                  file.path(temp_dir, "trial_info.csv"))
            write_csv(daily_sim_outputs,           file.path(temp_dir, "daily_sim_outputs.csv"))
-           write_csv(configured_seasonal_data(),  file.path(temp_dir, "seasonal_data.csv"))
-           write_csv(configured_final_x(),        file.path(temp_dir, "final_x.csv"))
-           write_csv(configured_period_key(),     file.path(temp_dir, "period_key.csv"))
+           write_csv(seasonal_data(),  file.path(temp_dir, "seasonal_data.csv"))
+           write_csv(final_x(),        file.path(temp_dir, "final_x.csv"))
+           write_csv(period_key(),     file.path(temp_dir, "period_key.csv"))
 
            zip::zipr(file, files = file.path(temp_dir,
                                              c("trial_info.csv","daily_sim_outputs.csv",
@@ -1203,47 +1324,261 @@ server <- function(input, output, session) {
     }
   })
   
+  # Build Gridded Input File --------
   
-  # Configure Periods ------
-  ## reactive: raw period list, populated once analysis completes ---------------
-  raw_period_key <- reactiveVal(NULL)   # the original period_key from the sim
+  ## helper: generate grid points from two corners and spacing in km ----
+  make_grid <- function(lat_a, lon_a, lat_b, lon_b, spacing_km) {
+    lat_min <- min(lat_a, lat_b)
+    lat_max <- max(lat_a, lat_b)
+    lon_min <- min(lon_a, lon_b)
+    lon_max <- max(lon_a, lon_b)
+    
+    # approximate degrees per km
+    lat_step <- spacing_km / 110.574
+    lon_step <- spacing_km / (111.320 * cos(mean(c(lat_min, lat_max)) * pi / 180))
+    
+    lats <- seq(lat_min, lat_max, by = lat_step)
+    lons <- seq(lon_min, lon_max, by = lon_step)
+    
+    expand.grid(Latitude = round(lats, 4), Longitude = round(lons, 4))
+  }
   
-  observe({
-    req(analysisDone())
-    raw_period_key(period_key)          # period_key loaded from results CSV
-  }) %>% bindEvent(analysisDone())
-  
-  ## reactive: stores the *applied* configuration (a data.frame) ----------------
-  #  Columns: Period (factor), APSIMName, CustomName, MergeGroup
-  applied_config <- reactiveVal(NULL)
-  
-  ## helper: build a default config from whatever period_key currently holds ----
-  default_config <- function(pk) {
-    tibble(
-      Period     = pk$Period,
-      APSIMName  = pk$Label,
-      CustomName = pk$Label,
-      MergeGroup = pk$Period
+  ## helper: generate planting dates from range and interval ----
+  make_planting_dates <- function(start_date, end_date,
+                                  step_days,
+                                  year_start, year_end) {
+    
+    start_fixed <- as.Date(paste0("2000-", format(as.Date(start_date), "%m-%d")))
+    end_fixed <- as.Date(paste0("2000-", format(as.Date(end_date), "%m-%d")))
+    base_dates <- seq(start_fixed, end_fixed, by = step_days)
+    base_mmdd <- format(base_dates, "%m-%d")
+    years <- year_start:year_end
+    
+    as.character(
+      as.Date(
+        outer(base_mmdd, years,
+              function(md, y) paste0(y, "-", md))
+      )
     )
   }
   
-  ## seed the applied_config once analysis is done ------------------------------
-  observe({
-    req(analysisDone(), !is.null(raw_period_key()))
-    if (is.null(applied_config())) {
-      applied_config(default_config(raw_period_key()))
-    }
-  }) %>% bindEvent(raw_period_key())
+  ## helper: parse genetics input string ----
+  parse_genetics <- function(genetics_str) {
+    vals <- trimws(strsplit(genetics_str, ",")[[1]])
+    vals <- vals[nchar(vals) > 0]
+    vals
+  }
   
+  ## reactive: build the full grid input tibble ----
+  grid_input_data <- reactive({
+    req(input$cornerA_lat, input$cornerA_long,
+        input$cornerB_lat, input$cornerB_long,
+        input$grid_spacing_km,
+        input$planting_start, input$planting_end, input$planting_step_days,
+        input$year_start, input$year_end,
+        input$genetics_input)
+    
+    validate(
+      need(input$year_start <= input$year_end,    "First Year must be <= Last Year."),
+      need(input$planting_start <= input$planting_end, "First Planting Date must be <= Last Planting Date."),
+      need(nchar(trimws(input$genetics_input)) > 0, "Please enter at least one genetic maturity.")
+    )
+    
+    grid    <- make_grid(input$cornerA_lat, input$cornerA_long,
+                         input$cornerB_lat, input$cornerB_long,
+                         input$grid_spacing_km)
+    dates   <- make_planting_dates(input$planting_start, input$planting_end,
+                                   input$planting_step_days,
+                                   input$year_start, input$year_end)
+    genetics <- parse_genetics(input$genetics_input)
+    
+    sites <- grid %>%
+      mutate(Site = paste0("Lat", Latitude, "_Lon", Longitude))
+    
+    expand.grid(
+      Site      = sites$Site,
+      Planting  = dates,
+      Genetics  = genetics,
+      stringsAsFactors = FALSE
+    ) %>%
+      left_join(sites, by = "Site") %>%
+      select(Site, Planting, Genetics, Latitude, Longitude)
+  })
+  
+  ## summary UIs ----
+  output$totallocs_UI <- renderUI({
+    req(input$cornerA_lat, input$cornerA_long, input$cornerB_lat, input$cornerB_long, input$grid_spacing_km)
+    grid <- make_grid(input$cornerA_lat, input$cornerA_long,
+                      input$cornerB_lat, input$cornerB_long,
+                      input$grid_spacing_km)
+    p(em(paste0(nrow(grid), " grid locations")))
+  })
+  
+  output$totaldates_UI <- renderUI({
+    req(input$planting_start, input$planting_end, input$planting_step_days,
+        input$year_start, input$year_end)
+    dates <- make_planting_dates(input$planting_start, input$planting_end,
+                                 input$planting_step_days,
+                                 input$year_start, input$year_end)
+    p(em(paste0(length(dates), " planting dates across ",
+                length(input$year_start:input$year_end), " years")))
+  })
+  
+  output$totalgenetics_UI <- renderUI({
+    req(input$genetics_input)
+    genetics <- parse_genetics(input$genetics_input)
+    p(em(paste0(length(genetics), " genetic maturity value(s): ",
+                paste(genetics, collapse = ", "))))
+  })
+  
+  output$totalyears_UI <- renderUI({
+    req(input$year_start, input$year_end)
+    if (input$year_start > input$year_end) {
+      p(em("First Year must be <= Last Year."), style = "color: red;")
+    } else {
+      p(em(paste0(length(input$year_start:input$year_end), " years")))
+    }
+  })
+  
+  output$total_trialsUI <- renderUI({
+    tryCatch({
+      n <- nrow(grid_input_data())
+      p(strong(paste0("Total trials: ", n)))
+    }, error = function(e) {
+      p(em("Complete all fields to see total trial count."))
+    })
+  })
+  
+  ## preview table ----
+  output$grid_input_preview <- renderDT({
+    req(grid_input_data())
+    datatable(
+      head(grid_input_data(), 100),
+      rownames = FALSE,
+      class    = "compact stripe",
+      caption  = "Showing first 100 rows.",
+      options  = list(scrollX = TRUE, paging = FALSE, searching = FALSE)
+    )
+  })
+  
+  ## download handler ----
+  output$download_grid_input <- downloadHandler(
+    filename = function() {
+      paste0("grid_input_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write_csv(grid_input_data(), file)
+    }
+  )
+  
+  
+  # Configure Periods ------
+  
+  ## helper: read current UI inputs into a config tibble ----
+  read_period_config <- function(pk, input) {
+    tibble(
+      Period     = as.character(pk$Period),
+      APSIMName  = pk$Label,
+      CustomName = vapply(as.character(pk$Period), function(p) {
+        v <- input[[paste0("pcfg_name_", p)]]
+        if (is.null(v) || trimws(v) == "") pk$Label[pk$Period == p]
+        else trimws(v)
+      }, character(1)),
+      MergeGroup = vapply(as.character(pk$Period), function(p) {
+        v <- input[[paste0("pcfg_group_", p)]]
+        if (is.null(v) || is.na(v)) as.character(p)
+        else as.character(v)
+      }, character(1))
+    )
+  }
+  
+  ## helper: build a default config from raw_period_key ----
+  default_config <- function(pk) {
+    tibble(
+      Period     = as.character(pk$Period),
+      APSIMName  = pk$Label,
+      CustomName = pk$Label,
+      MergeGroup = as.character(pk$Period)
+    )
+  }
+  
+  ## helper: build period_key table from a config tibble ----
+  build_period_key <- function(new_config) {
+    new_config %>%
+      group_by(MergeGroup) %>%
+      summarise(
+        Label                   = first(CustomName),
+        `APSIM Phases Included` = paste(APSIMName, collapse = " → "),
+        `Original Periods`      = paste(Period,    collapse = ", "),
+        .groups = "drop"
+      ) %>%
+      rename(Period = MergeGroup) %>%
+      select(Period, Label, `APSIM Phases Included`, `Original Periods`) %>%
+      arrange(as.numeric(Period))
+  }
+  
+  ## helper: build seasonal_data, final_x, and period_key from daily_sim_outputs ----
+  build_period_outputs <- function(daily_sim_outputs, new_config, trial_info) {
+    
+    SUM_VARS <- c("AccRain", "ThermalTime", "AccTT", "AccEmTT", "Duration")
+    
+    sd_base <- daily_sim_outputs %>%
+      group_by(Period, ID) %>%
+      select(-any_of(c("Stage"))) %>%
+      summarize(
+        across(where(is.numeric) & !any_of(c("DOY", "AccEmTT", "Duration", "Period_Start_DOY", "Period_End_DOY")),
+               ~ mean(.x, na.omit = TRUE)),
+        AccRain           = sum(Rain),
+        AccTT             = sum(ThermalTime),
+        AccEmTT           = max(AccEmTT),
+        Period_Start_Date = min(Date),
+        Period_End_Date   = max(Date),
+        .groups = "drop"
+      ) %>%
+      mutate(Period = as.character(Period))
+    
+    sd_out <- sd_base %>%
+      left_join(select(new_config, Period, MergeGroup), by = "Period") %>%
+      group_by(ID, MergeGroup) %>%
+      summarise(
+        across(where(is.numeric) & any_of(SUM_VARS),
+               ~ sum(.x, na.rm = TRUE)),
+        across(where(is.numeric) & !any_of(SUM_VARS) &
+                 !any_of(c("Duration", "Period_Start_DOY", "Period_End_DOY")),
+               ~ mean(.x, na.rm = TRUE)),
+        Period_Start_Date = min(Period_Start_Date, na.rm = TRUE),
+        Period_End_Date   = max(Period_End_Date,   na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      mutate(
+        Duration         = as.numeric(as.period(Period_End_Date - Period_Start_Date, "days")) / 86400 + 1,
+        Period_Start_DOY = yday(Period_Start_Date),
+        Period_End_DOY   = yday(Period_End_Date)
+      ) %>%
+      rename(Period = MergeGroup) %>%
+      relocate(ID, Period) %>%
+      relocate(ID, Period, Rain) %>% 
+      relocate(AccRain, .after = Rain) %>% 
+      relocate(AccTT, AccEmTT, .after = ThermalTime) %>%
+      relocate(Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
+      arrange(ID, as.numeric(Period)) 
+    
+    fx_out <- pivot_wider(
+      select(sd_out, -Period_Start_Date, -Period_End_Date) %>% rename(PivotPeriod = Period),
+      names_from  = PivotPeriod,
+      values_from = setdiff(names(select(sd_out, -Period_Start_Date, -Period_End_Date)), c("ID", "Period"))
+    ) %>%
+      right_join(trial_info, ., by = "ID")
+    
+    list(seasonal_data = sd_out, final_x = fx_out, period_key = build_period_key(new_config))
+  }
   
   ## render the per-row configuration UI ----------------------------------------
   output$period_config_tableUI <- renderUI({
     req(analysisDone(), !is.null(raw_period_key()))
     
-    pk     <- raw_period_key()
-    config <- isolate(applied_config()) %||% default_config(pk)
+    pk <- raw_period_key()
     
-    # Header row
     header <- fluidRow(
       column(2, strong("Original Period")),
       column(3, strong("APSIM Phase Name")),
@@ -1252,12 +1587,7 @@ server <- function(input, output, session) {
     )
     
     rows <- lapply(seq_len(nrow(pk)), function(i) {
-      p_val  <- as.character(pk$Period[i])
-      cfg_i  <- config[as.character(config$Period) == p_val, ]
-      
-      cur_name  <- if (nrow(cfg_i) == 1) cfg_i$CustomName  else pk$Label[i]
-      cur_group <- if (nrow(cfg_i) == 1) cfg_i$MergeGroup  else p_val
-      
+      p_val <- as.character(pk$Period[i])
       fluidRow(
         style = if (i %% 2 == 0) "background-color: #f9f9f9; padding: 4px 0;"
         else              "background-color: #ffffff; padding: 4px 0;",
@@ -1267,7 +1597,7 @@ server <- function(input, output, session) {
                textInput(
                  inputId = paste0("pcfg_name_",  p_val),
                  label   = NULL,
-                 value   = cur_name,
+                 value   = pk$Label[i],
                  width   = "100%"
                )
         ),
@@ -1275,7 +1605,7 @@ server <- function(input, output, session) {
                numericInput(
                  inputId = paste0("pcfg_group_", p_val),
                  label   = NULL,
-                 value   = as.numeric(cur_group),
+                 value   = as.numeric(p_val),
                  min     = 1,
                  step    = 1,
                  width   = "100%"
@@ -1291,199 +1621,71 @@ server <- function(input, output, session) {
     )
   })
   
-  ## reactive stores for the configured (possibly merged) outputs ----------------
-  # These are what the rest of the app reads instead of the raw globals.
-  configured_seasonal_data <- reactiveVal(NULL)
-  configured_final_x       <- reactiveVal(NULL)
-  configured_period_key    <- reactiveVal(NULL)
-  
-  ## apply button — read inputs, compute merged outputs -------------------------
+  ## apply button ----
   observeEvent(input$apply_period_config, {
     req(!is.null(raw_period_key()))
     
-    pk <- raw_period_key()
-    
-    # ── 1. collect user-entered names and merge groups ─────────────────────────
-    new_config <- tibble(
-      Period     = as.character(pk$Period),
-      APSIMName  = pk$Label,
-      CustomName = vapply(as.character(pk$Period), function(p) {
-        v <- input[[paste0("pcfg_name_",  p)]]
-        if (is.null(v) || trimws(v) == "") pk$Label[pk$Period == p]
-        else trimws(v)
-      }, character(1)),
-      MergeGroup = vapply(as.character(pk$Period), function(p) {
-        v <- input[[paste0("pcfg_group_", p)]]
-        if (is.null(v) || is.na(v)) as.character(p)
-        else as.character(v)
-      }, character(1))
-    )
-    applied_config(new_config)
-    
-    # ── 2. decide the label for each merge group ────────────────────────────────
-    # Use the custom name of the *first* (lowest-Period) member of each group.
-    group_labels <- new_config %>%
-      group_by(MergeGroup) %>%
-      slice(1) %>%
-      ungroup() %>%
-      select(MergeGroup, GroupLabel = CustomName)
-    
-    # ── 3. variables that should be summed vs. meaned on merge ─────────────────
-    SUM_VARS <- c("AccRain", "ThermalTime", "AccTT", "AccEmTT", "Duration")
-    
-    # ── 4. rebuild seasonal_data with merged periods ────────────────────────────
-    # Join the merge-group mapping onto seasonal_data
-    period_to_group <- select(new_config, Period, MergeGroup)
-    
-    sd_merged <- seasonal_data %>%
-      mutate(Period = as.character(Period)) %>%
-      left_join(period_to_group, by = "Period") %>%
-      group_by(ID, MergeGroup) %>%
-      summarise(
-        across(
-          where(is.numeric) & any_of(SUM_VARS),
-          ~ sum(.x, na.rm = TRUE)
-        ),
-        across(
-          where(is.numeric) & !any_of(SUM_VARS),
-          ~ mean(.x, na.rm = TRUE)
-        ),
-        Period_Start_Date = min(Period_Start_Date, na.rm = TRUE),
-        Period_End_Date   = max(Period_End_Date,   na.rm = TRUE),
-        .groups = "drop"
-      ) %>%
-      rename(Period = MergeGroup) %>%
-      relocate(ID, Period) %>%
-      arrange(as.numeric(Period))
-    
-    # ── 5. rebuild final_x with merged, renamed column suffixes ─────────────────
-    # column names in final_x use the pattern Variable_Period.
-    # re-pivot from sd_merged using GroupLabel as the suffix.
-    sd_for_pivot <- sd_merged %>%
-      select(-Period_Start_Date, -Period_End_Date) %>%   # dates not pivoted
-      rename(PivotPeriod = Period)
-    
-    fx_merged <- pivot_wider(
-      sd_for_pivot,
-      names_from  = PivotPeriod,
-      values_from = setdiff(names(sd_for_pivot), c("ID", "PivotPeriod"))
-    ) %>%
-      right_join(trial_info, ., by = "ID")
-    
-    # ── 6. rebuild period_key display table ─────────────────────────────────────
-    pk_merged <- new_config %>%
-      group_by(MergeGroup) %>%
-      summarise(
-        CustomName    = first(CustomName),
-        `APSIM Phases Included` = paste(APSIMName, collapse = " → "),
-        `Original Periods`      = paste(Period,    collapse = ", "),
-        .groups = "drop"
-      ) %>%
-      rename(
-        Period = MergeGroup,
-        `Label`          = CustomName
-      ) %>%
-      select(Period, Label, `APSIM Phases Included`, `Original Periods`) %>%
-      arrange(as.numeric(Period))
-    
-    # ── 7. push to reactive stores ───────────────────────────────────────────────
-    configured_seasonal_data(sd_merged)
-    configured_final_x(fx_merged)
-    configured_period_key(pk_merged)
+    cfg <- read_period_config(raw_period_key(), input)
+    out <- build_period_outputs(daily_sim_outputs, cfg, trial_info)
+    seasonal_data(out$seasonal_data)
+    final_x(out$final_x)
+    period_key(out$period_key)
     
     tryCatch({
-      write_csv(sd_merged,  file.path(results_dir, "seasonal_data.csv"))
-      write_csv(fx_merged,  file.path(results_dir, "final_x.csv"))
-      write_csv(pk_merged,  file.path(results_dir, "period_key.csv"))
-      showNotification("Period configuration applied and files saved.", 
+      write_csv(out$seasonal_data, file.path(results_dir, "seasonal_data.csv"))
+      write_csv(out$final_x,       file.path(results_dir, "final_x.csv"))
+      write_csv(out$period_key,    file.path(results_dir, "period_key.csv"))
+      showNotification("Period configuration applied and files saved.",
                        type = "message", duration = 3)
     }, error = function(e) {
-      showNotification(paste("Configuration applied but file write failed:", e$message), 
+      showNotification(paste("Configuration applied but file write failed:", e$message),
                        type = "warning", duration = 6)
     })
   })
   
-  ## reset button ----------------------------------------------------------------
+  ## reset button ----
   observeEvent(input$reset_period_config, {
     req(!is.null(raw_period_key()))
     
-    def <- default_config(raw_period_key())
-    applied_config(def)
+    pk  <- raw_period_key()
+    def <- default_config(pk)
     
-    # Reset text inputs in the UI
-    pk <- raw_period_key()
     for (p in as.character(pk$Period)) {
-      cfg_i <- def[def$Period == p, ]
-      updateTextInput(session, paste0("pcfg_name_",  p), value = cfg_i$CustomName)
-      updateTextInput(session, paste0("pcfg_group_", p), value = cfg_i$MergeGroup)
+      updateTextInput(session,    paste0("pcfg_name_",  p), value = pk$Label[pk$Period == p])
+      updateNumericInput(session, paste0("pcfg_group_", p), value = as.numeric(p))
     }
     
-    # restore originals
-    configured_seasonal_data(seasonal_data)
-    configured_final_x(final_x)
-    configured_period_key(period_key)
+    out <- build_period_outputs(daily_sim_outputs, def, trial_info)
+    seasonal_data(out$seasonal_data)
+    final_x(out$final_x)
+    period_key(out$period_key)
     
     tryCatch({
-      write_csv(seasonal_data, file.path(results_dir, "seasonal_data.csv"))
-      write_csv(final_x,       file.path(results_dir, "final_x.csv"))
-      write_csv(period_key,    file.path(results_dir, "period_key.csv"))
-      showNotification("Period configuration reset and files restored.", 
+      write_csv(out$seasonal_data, file.path(results_dir, "seasonal_data.csv"))
+      write_csv(out$final_x,       file.path(results_dir, "final_x.csv"))
+      write_csv(out$period_key,    file.path(results_dir, "period_key.csv"))
+      showNotification("Period configuration reset and files restored.",
                        type = "message", duration = 3)
     }, error = function(e) {
-      showNotification(paste("Configuration reset but file write failed:", e$message), 
+      showNotification(paste("Configuration reset but file write failed:", e$message),
                        type = "warning", duration = 6)
     })
   })
   
-  # Seed reactive stores from the raw data once analysis completes (before any config applied)
-  observe({
-    req(analysisDone())
-    configured_seasonal_data(seasonal_data)
-    configured_final_x(final_x)
-    
-    configured_period_key(period_key)
-    
-  }) %>% bindEvent(analysisDone())
-  
-  
-  ## live preview table in the Configure Periods tab ----------------------------
+  ## live preview table ----
   output$period_config_preview <- renderDT({
     req(analysisDone(), !is.null(raw_period_key()))
     
-    pk <- raw_period_key()
-    
-    config <- lapply(as.character(pk$Period), function(p) {
-      name_val  <- input[[paste0("pcfg_name_",  p)]]
-      group_val <- input[[paste0("pcfg_group_", p)]]
-      tibble(
-        Period     = p,
-        APSIMName  = pk$Label[as.character(pk$Period) == p],
-        CustomName = if (is.null(name_val) || trimws(name_val) == "")
-          pk$Label[as.character(pk$Period) == p] else trimws(name_val),
-        MergeGroup = if (is.null(group_val) || is.na(group_val))
-          p else as.character(group_val)
-      )
-    }) %>% bind_rows()
-    
-    preview_key <- config %>%
-      group_by(MergeGroup) %>%
-      summarise(
-        Label                   = first(APSIMName),
-        `APSIM Phases Included` = paste(APSIMName, collapse = " → "),
-        `Original Periods`      = paste(Period,    collapse = ", "),
-        .groups = "drop"
-      ) %>%
-      rename(Period = MergeGroup) %>%
-      select(Period, Label, `APSIM Phases Included`, `Original Periods`) %>%
-      arrange(as.numeric(Period))
+    cfg <- read_period_config(raw_period_key(), input)
     
     datatable(
-      preview_key,
+      build_period_key(cfg),
       rownames = FALSE,
       class    = "compact stripe",
       options  = list(paging = FALSE, searching = FALSE, scrollX = TRUE)
     )
   })
+ 
   
 # View Results & Boxplot ----
   ## viewData / view data in tables below boxplot ----  
@@ -1492,9 +1694,9 @@ server <- function(input, output, session) {
      data <- switch(input$fileToView,
                     "trial_info.csv"        = trial_info,
                     "daily_sim_outputs.csv" = daily_sim_outputs,
-                    "seasonal_data.csv"     = configured_seasonal_data(),
-                    "final_x.csv"           = configured_final_x(),
-                    "period_key.csv"        = configured_period_key())
+                    "seasonal_data.csv"     = seasonal_data(),
+                    "final_x.csv"           = final_x(),
+                    "period_key.csv"        = period_key())
      rdata <- mutate(data, across(where(is.numeric), ~ round(.x, 4)))
      datatable(rdata,
                escape  = FALSE,
@@ -1511,9 +1713,9 @@ server <- function(input, output, session) {
      data <- switch(input$fileSelectPlot,
                     "trial_info.csv"        = trial_info,
                     "daily_sim_outputs.csv" = daily_sim_outputs,
-                    "seasonal_data.csv"     = configured_seasonal_data(),
-                    "final_x.csv"           = configured_final_x(),
-                    "period_key.csv"        = configured_period_key())
+                    "seasonal_data.csv"     = seasonal_data(),
+                    "final_x.csv"           = final_x(),
+                    "period_key.csv"        = period_key())
      selectInput("varSelect_boxplot", "Select Variable", choices = names(data)[-1])
    })
   
@@ -1531,9 +1733,9 @@ server <- function(input, output, session) {
      data <- switch(input$fileSelectPlot,
                     "trial_info.csv"        = trial_info,
                     "daily_sim_outputs.csv" = daily_sim_outputs,
-                    "seasonal_data.csv"     = configured_seasonal_data(),
-                    "final_x.csv"           = configured_final_x(),
-                    "period_key.csv"        = configured_period_key())
+                    "seasonal_data.csv"     = seasonal_data(),
+                    "final_x.csv"           = final_x(),
+                    "period_key.csv"        = period_key())
        
     if (!selected_file %in% c("trial_info.csv","final_x.csv")) {
       data <- left_join(data, trial_info[, c("ID", "Site")], by = "ID")
@@ -1587,7 +1789,7 @@ server <- function(input, output, session) {
   ## select variable for heatmap ----
   output$season_varHeatmapUI <- renderUI({
     req(analysisDone())
-    varchoice <- configured_seasonal_data() %>% ungroup() %>%
+    varchoice <- seasonal_data() %>% ungroup() %>%
       select(where(is.numeric)) %>%
       select(-any_of(c("ID", "Period"))) %>% names()
     selectInput("season_varSelect", "Select Variable", choices = varchoice)
@@ -1605,7 +1807,7 @@ server <- function(input, output, session) {
       heatcex <- input$season_cex
       
       #create base matrix from final_x, filter to maturity selection if necessary
-      cfg_fx <- configured_final_x()
+      cfg_fx <- final_x()
       if(matsel == "ALL"){var_mat <- cfg_fx} else {var_mat <- filter(cfg_fx, Mat == matsel)}
       
       #if by site, aggregate by site
@@ -1635,7 +1837,7 @@ server <- function(input, output, session) {
       
       # Keep the GroupLabel suffixes as axis labels instead of 1..N integers.
       # Extract them from the column names (format: Variable_GroupLabel).
-      pk_labels <- configured_period_key() %>%
+      pk_labels <- period_key() %>%
         select(Period, Label) %>%
         mutate(Period = as.character(Period))
       
@@ -1797,8 +1999,8 @@ server <- function(input, output, session) {
   ## show key for periods -----
   
   output$viewKey <- renderDT({
-    req(analysisDone(), !is.null(configured_period_key()))
-    datatable(configured_period_key(),
+    req(analysisDone(), !is.null(period_key()))
+    datatable(period_key(),
               rownames = FALSE,
               class = 'compact stripe',
               options = list(
@@ -2103,8 +2305,8 @@ server <- function(input, output, session) {
     tryCatch({
       ID_corr(
         matsel = input$trial_matSelect,
-        final_x = configured_final_x(),
-        seasonal_data = seasonal_data,
+        final_x = final_x(),
+        seasonal_data = seasonal_data(),
         min_dur = input$min_dur,
         exclude_startend = input$exclude_startend,
         nzv_chk = input$nzv_chk,
@@ -2402,7 +2604,7 @@ server <- function(input, output, session) {
 
   make_vardates <- function(){
     
-    seasoncorr_mx <- corr_results()$id_cor()
+    seasoncorr_mx <- corr_results()$id_cor
     IDs <- corr_results()$IDs
     rownames(seasoncorr_mx) <- as.character(IDs)
     colnames(seasoncorr_mx) <- as.character(IDs)
