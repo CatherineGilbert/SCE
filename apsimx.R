@@ -458,9 +458,7 @@ RESERVE_VARS <- c("AccRain", "AccTT", "AccEmTT", "Duration", "Period_Start_Date"
                   "Period_End_Date", "Period_Start_DOY", "Period_End_DOY", "Duration", "DOY", "Stage")
 
 seasonal_data <- daily_sim_outputs %>%
-  mutate(Period = as.character(Period)) %>%
-  left_join(select(new_config, Period, MergeGroup), by = "Period") %>%
-  group_by(ID, MergeGroup) %>%
+  group_by(ID, Period) %>%
   summarise(
     AccRain           = sum(Rain, na.rm = TRUE),
     AccTT             = sum(ThermalTime, na.rm = TRUE),
@@ -474,7 +472,6 @@ seasonal_data <- daily_sim_outputs %>%
            ~ mean(.x, na.rm = TRUE)),
     .groups = "drop"
   ) %>%
-  rename(Period = MergeGroup) %>%
   relocate(ID, Period, Rain) %>% 
   relocate(AccRain, .after = Rain) %>% 
   relocate(AccTT, AccEmTT, .after = ThermalTime) %>%

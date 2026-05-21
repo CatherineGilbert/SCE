@@ -43,7 +43,8 @@ ui <- dashboardPage(
             menuItem("Configure Pheno Periods",       tabName = "config_periods",   icon = icon("sliders")),
             menuItem("View Map",                tabName = "view_map",         icon = icon("map")),
             menuItem("View Seasonal Heatmaps",  tabName = "heatmap",          icon = icon("fire")),
-            menuItem("View Trial Similarities", tabName = "trial_comp",       icon = icon("seedling"))
+            menuItem("View Trial Similarities", tabName = "trial_comp",       icon = icon("seedling")),
+            menuItem("Sheila's Plots",   tabName = "sheila_plots",            icon = icon("question"))
           )
       )
     ),
@@ -256,11 +257,17 @@ ui <- dashboardPage(
                            p("Enter the coordinates of two opposite corners of the rectangular area to cover."),
                            fluidRow(
                              column(width = 6,
-                                    numericInput("cornerA_lat",  "Corner A Latitude (WGS84):",  value = 40.0, min = -90,  max = 90,  step = 0.1),
+                                    numericInput("cornerA_lat",  "Corner A Latitude (WGS84):",  value = 40.0, min = -90,  max = 90,  step = 0.1)
+                             ),
+                             column(width = 6,
+                                    numericInput("cornerA_long",  "Corner A Longitude (WGS84):",  value = -88.0, min = -180,  max = 180,  step = 0.1)
+                             )
+                           ),
+                           fluidRow(
+                             column(width = 6,
                                     numericInput("cornerB_lat", "Corner B Latitude (WGS84):", value = 42.0, min = -90, max = 90, step = 0.1)
                              ),
                              column(width = 6,
-                                    numericInput("cornerA_long",  "Corner A Longitude (WGS84):",  value = -88.0, min = -180,  max = 180,  step = 0.1),
                                     numericInput("cornerB_long", "Corner B Longitude (WGS84):", value = -90.0, min = -180, max = 180, step = 0.1)
                              )
                            ),
@@ -932,6 +939,8 @@ server <- function(input, output, session) {
       cat("Analysis already in progress.\n")
       return()
     } 
+    
+    prog_m(c(prog_m(), "Starting ..."))
 
     analysisInProgress(TRUE)
     analysisDone(FALSE)
@@ -940,6 +949,12 @@ server <- function(input, output, session) {
     shinyjs::show("runSpinner")
     shinyjs::hide("sidebar_menu")
     shinyjs::hide("ttpp_sidebar_menu")
+    
+    #clear existing files
+    unlink(paste0(output_dir,"/met"),recursive = T) ; dir.create(paste0(output_dir,"/met"))
+    unlink(paste0(output_dir,"/soils"),recursive = T) ; dir.create(paste0(output_dir,"/soils"))
+    unlink(paste0(output_dir,"/apsim"),recursive = T) ; dir.create(paste0(output_dir,"/apsim"))
+    unlink(paste0(output_dir,"/results"),recursive = T) ; dir.create(paste0(output_dir,"/results"))
     
     # reset counters for the progress update
     prog_error(NA)
@@ -951,8 +966,6 @@ server <- function(input, output, session) {
     valid_count(0)
     ntrials(0)
     nloc(0)
-    
-    prog_m(c(prog_m(), "Starting ..."))
     
     #check if input chosen
     if ((!input$useExampleInput & !is.null(input$fileUpload)) | 
@@ -977,13 +990,6 @@ server <- function(input, output, session) {
       prog_error(c("No template model choice detected."))
       return()
     }
-    
-    
-    #clear existing files
-    unlink(paste0(output_dir,"/met"),recursive = T) ; dir.create(paste0(output_dir,"/met"))
-    unlink(paste0(output_dir,"/soils"),recursive = T) ; dir.create(paste0(output_dir,"/soils"))
-    unlink(paste0(output_dir,"/apsim"),recursive = T) ; dir.create(paste0(output_dir,"/apsim"))
-    unlink(paste0(output_dir,"/results"),recursive = T) ; dir.create(paste0(output_dir,"/results"))
     
     #set parameters
     parms <- tibble(mat_handling = mat_handling(), 
@@ -1453,11 +1459,10 @@ server <- function(input, output, session) {
   output$grid_input_preview <- renderDT({
     req(grid_input_data())
     datatable(
-      head(grid_input_data(), 100),
+      grid_input_data(),
       rownames = FALSE,
       class    = "compact stripe",
-      caption  = "Showing first 100 rows.",
-      options  = list(scrollX = TRUE, paging = FALSE, searching = FALSE)
+      options  = list(scrollX = TRUE, paging = TRUE, searching = FALSE)
     )
   })
   
@@ -1545,7 +1550,8 @@ server <- function(input, output, session) {
       relocate(AccRain, .after = Rain) %>% 
       relocate(AccTT, AccEmTT, .after = ThermalTime) %>%
       relocate(Period_Start_Date, Period_End_Date, Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
-      arrange(ID, as.numeric(Period)) 
+      mutate(Period = as.numeric(Period)) %>%
+      arrange(ID, Period) 
     
     #empty data for missing periods 
     idp <- tidyr::expand(tibble(sd_out), ID, Period) #full list of ID/Period combinations
@@ -2595,7 +2601,7 @@ server <- function(input, output, session) {
   )
   
 
-## function to create comparison report ----------
+## function to create seasonal comparison report ----------
 
   make_vardates <- function(){
     
@@ -2605,7 +2611,7 @@ server <- function(input, output, session) {
     colnames(seasoncorr_mx) <- as.character(IDs)
     
     #load trails_x
-    trials_x <- filter(trial_info, ID %in% IDs) %>%
+    trials_x <- filter(trial_info(), ID %in% IDs) %>%
       mutate(PlantingDOY = yday(PlantingDate_Sim), 
              PD_mday = format(PlantingDate_Sim, "%m/%d"))
     
@@ -2614,7 +2620,6 @@ server <- function(input, output, session) {
     rownames(sitedist_mx) <- pull(trials_x, ID)
     colnames(sitedist_mx) <- pull(trials_x, ID)
     
-    yearly <- corr_results()$scfinal_dt %>% rownames_to_column("ID")
     datetags <- select(trials_x, ID, ID_Loc, Site, Mat, Year, PlantingDOY, PD_mday, HarvestDate_Sim, PlantingDate_Sim, Latitude)
     datetags <- mutate(datetags, seasonlength = HarvestDate_Sim - PlantingDate_Sim)
     
@@ -2627,7 +2632,7 @@ server <- function(input, output, session) {
       pivot_longer(pull(., "ID")) %>% rename(ID1 = ID, ID2 = name, sitedist = value) %>%
       mutate(ID1 = as.numeric(ID1), ID2 = as.numeric(ID2))
     long_comp <- left_join(long_comp, sitedist_dt, by = c("ID.x" = "ID1", "ID.y" = "ID2"))
-    long_comp <- filter(long_comp, ID_Loc.x >= ID_Loc.y) 
+    long_comp <- filter(long_comp, ID_Loc.x >= ID_Loc.y)  #essentially taking the top diagonal of the ""comparison matrix""
     long_comp <- mutate(long_comp, "planting_offset" = (abs(PlantingDOY.x - PlantingDOY.y) + 1),
                         "season_diff" = abs(as.numeric(seasonlength.x - seasonlength.y)))
     
@@ -2875,6 +2880,66 @@ output$current_GDD_settings <- renderText({
   )
   
 }
+
+## Sheila's Plots -----------
+
+rsl <- final_x()
+
+## Stages plot -------------------------------------------------------------
+
+# Prepare results for plot
+rsl_p <- rsl |> 
+  mutate(Genetics = factor(Genetics),
+         Planting_genetics = paste(Planting, Genetics, sep = "_")) |> # This will be the plot y axis
+  select(Planting, Genetics, HarvestDate_Sim, Planting_genetics, all_of(starts_with("Period_Start_Date"))) |>
+  arrange(Planting, Genetics) |>
+  unique() |>
+  pivot_longer(cols = starts_with("Period_Start_Date"), names_to = "Period", values_to = "Date") |> # make longer table with each stage per ID as a row
+  mutate(Period = gsub("Period_Start_Date_", "", Period)) |> 
+  droplevels()
+
+pkey <- read_csv("data/soy_input_1loc_1year_allg_allPlanting/results_2026-04-24/period_key.csv") # Stage names
+
+rsl_p2 <- left_join(rsl_p |> filter(Period %in% c(2, 5, 9, 11)), # filter only the most relevant periods:  "Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"  
+                    pkey |> 
+                      mutate(Stage = gsub("([a-z])([A-Z])", "\\1 \\2", `APSIM StageName`), # Make period names look nice
+                             Period = as.character(Period)) |>
+                      select(Period, Stage),
+                    by = "Period")
+
+lab <- rsl_p2$Stage # Stage name labels
+
+breaks <- c(
+  seq(from = as.Date("2024-04-15"), to = as.Date("2024-05-30"), by = "15 days"),
+  seq(from = as.Date("2024-06-15"), to = as.Date("2024-07-30"), by = "15 days"),
+  seq(from = as.Date("2024-08-15"), to = as.Date("2024-08-30"), by = "15 days"),
+  seq(from = as.Date("2024-09-15"), to = as.Date("2024-10-30"), by = "15 days"),
+  seq(from = as.Date("2024-11-15"), to = as.Date("2024-11-30"), by = "15 days")) # Breaks for x axis
+
+cp <- c(viridis(5)[1:4], "gray60") # Colors for Maturity groups
+
+rsl_p2 |>
+  mutate(Planting_genetics = factor(Planting_genetics),
+         Stage = factor(Stage, levels = c("Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"))) |> # Turn stage into factor so it shows ordered in plot labels
+  ggplot(aes(x = Date, y = Planting_genetics)) +
+  geom_errorbarh(aes(xmin = Planting, xmax = HarvestDate_Sim, color = Genetics),
+                 width = 0,
+                 position = position_dodge(width = 1)) +
+  geom_point(aes(color = Genetics, shape = Stage),
+             size = 3) +
+  scale_x_date(breaks = breaks, date_labels = "%b %d") +
+  scale_color_manual(values = cp) +
+  theme_bigstatsr(size.rel = 0.6) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_text(angle = 45, vjust = 0.5, size = 9)) +
+  labs(x = "Date",
+       y = "",
+       title = "Developmental stages by planting time and maturity group", 
+       color = "Maturity group")
+
+ggsave("output/Developmental stages by planting time and maturity group.pdf", width = 11.5, height = 8, units = "in")
+
 
 # Run the app ----
 shinyApp(ui = ui, server = server)
