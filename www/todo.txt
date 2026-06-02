@@ -1,6 +1,4 @@
 
-/// fixed Maize template model incorrecty determining death from total senesence 
-//// The template soy / maize files had working soil modules and would run even if the soil wasn't replaced. this means that when soil isn't grabbed successfully, the sims still ran "successfully" (misleadingly). I am breaking the template file's soil modules again to try to prevent this from happening. 
 
 - fix the UI on the latitude and longitude boxes in "create gridded inputs"
 - fix text on the "configure pheno periods" page

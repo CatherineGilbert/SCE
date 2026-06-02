@@ -2881,64 +2881,64 @@ output$current_GDD_settings <- renderText({
   
 }
 
-## Sheila's Plots -----------
-
-rsl <- final_x()
-
-## Stages plot -------------------------------------------------------------
-
-# Prepare results for plot
-rsl_p <- rsl |> 
-  mutate(Genetics = factor(Genetics),
-         Planting_genetics = paste(Planting, Genetics, sep = "_")) |> # This will be the plot y axis
-  select(Planting, Genetics, HarvestDate_Sim, Planting_genetics, all_of(starts_with("Period_Start_Date"))) |>
-  arrange(Planting, Genetics) |>
-  unique() |>
-  pivot_longer(cols = starts_with("Period_Start_Date"), names_to = "Period", values_to = "Date") |> # make longer table with each stage per ID as a row
-  mutate(Period = gsub("Period_Start_Date_", "", Period)) |> 
-  droplevels()
-
-pkey <- read_csv("data/soy_input_1loc_1year_allg_allPlanting/results_2026-04-24/period_key.csv") # Stage names
-
-rsl_p2 <- left_join(rsl_p |> filter(Period %in% c(2, 5, 9, 11)), # filter only the most relevant periods:  "Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"  
-                    pkey |> 
-                      mutate(Stage = gsub("([a-z])([A-Z])", "\\1 \\2", `APSIM StageName`), # Make period names look nice
-                             Period = as.character(Period)) |>
-                      select(Period, Stage),
-                    by = "Period")
-
-lab <- rsl_p2$Stage # Stage name labels
-
-breaks <- c(
-  seq(from = as.Date("2024-04-15"), to = as.Date("2024-05-30"), by = "15 days"),
-  seq(from = as.Date("2024-06-15"), to = as.Date("2024-07-30"), by = "15 days"),
-  seq(from = as.Date("2024-08-15"), to = as.Date("2024-08-30"), by = "15 days"),
-  seq(from = as.Date("2024-09-15"), to = as.Date("2024-10-30"), by = "15 days"),
-  seq(from = as.Date("2024-11-15"), to = as.Date("2024-11-30"), by = "15 days")) # Breaks for x axis
-
-cp <- c(viridis(5)[1:4], "gray60") # Colors for Maturity groups
-
-rsl_p2 |>
-  mutate(Planting_genetics = factor(Planting_genetics),
-         Stage = factor(Stage, levels = c("Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"))) |> # Turn stage into factor so it shows ordered in plot labels
-  ggplot(aes(x = Date, y = Planting_genetics)) +
-  geom_errorbarh(aes(xmin = Planting, xmax = HarvestDate_Sim, color = Genetics),
-                 width = 0,
-                 position = position_dodge(width = 1)) +
-  geom_point(aes(color = Genetics, shape = Stage),
-             size = 3) +
-  scale_x_date(breaks = breaks, date_labels = "%b %d") +
-  scale_color_manual(values = cp) +
-  theme_bigstatsr(size.rel = 0.6) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.x = element_text(angle = 45, vjust = 0.5, size = 9)) +
-  labs(x = "Date",
-       y = "",
-       title = "Developmental stages by planting time and maturity group", 
-       color = "Maturity group")
-
-ggsave("output/Developmental stages by planting time and maturity group.pdf", width = 11.5, height = 8, units = "in")
+# ## Sheila's Plots -----------
+# 
+# rsl <- final_x()
+# 
+# ## Stages plot -------------------------------------------------------------
+# 
+# # Prepare results for plot
+# rsl_p <- rsl |> 
+#   mutate(Genetics = factor(Genetics),
+#          Planting_genetics = paste(Planting, Genetics, sep = "_")) |> # This will be the plot y axis
+#   select(Planting, Genetics, HarvestDate_Sim, Planting_genetics, all_of(starts_with("Period_Start_Date"))) |>
+#   arrange(Planting, Genetics) |>
+#   unique() |>
+#   pivot_longer(cols = starts_with("Period_Start_Date"), names_to = "Period", values_to = "Date") |> # make longer table with each stage per ID as a row
+#   mutate(Period = gsub("Period_Start_Date_", "", Period)) |> 
+#   droplevels()
+# 
+# pkey <- read_csv("data/soy_input_1loc_1year_allg_allPlanting/results_2026-04-24/period_key.csv") # Stage names
+# 
+# rsl_p2 <- left_join(rsl_p |> filter(Period %in% c(2, 5, 9, 11)), # filter only the most relevant periods:  "Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"  
+#                     pkey |> 
+#                       mutate(Stage = gsub("([a-z])([A-Z])", "\\1 \\2", `APSIM StageName`), # Make period names look nice
+#                              Period = as.character(Period)) |>
+#                       select(Period, Stage),
+#                     by = "Period")
+# 
+# lab <- rsl_p2$Stage # Stage name labels
+# 
+# breaks <- c(
+#   seq(from = as.Date("2024-04-15"), to = as.Date("2024-05-30"), by = "15 days"),
+#   seq(from = as.Date("2024-06-15"), to = as.Date("2024-07-30"), by = "15 days"),
+#   seq(from = as.Date("2024-08-15"), to = as.Date("2024-08-30"), by = "15 days"),
+#   seq(from = as.Date("2024-09-15"), to = as.Date("2024-10-30"), by = "15 days"),
+#   seq(from = as.Date("2024-11-15"), to = as.Date("2024-11-30"), by = "15 days")) # Breaks for x axis
+# 
+# cp <- c(viridis(5)[1:4], "gray60") # Colors for Maturity groups
+# 
+# rsl_p2 |>
+#   mutate(Planting_genetics = factor(Planting_genetics),
+#          Stage = factor(Stage, levels = c("Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"))) |> # Turn stage into factor so it shows ordered in plot labels
+#   ggplot(aes(x = Date, y = Planting_genetics)) +
+#   geom_errorbarh(aes(xmin = Planting, xmax = HarvestDate_Sim, color = Genetics),
+#                  width = 0,
+#                  position = position_dodge(width = 1)) +
+#   geom_point(aes(color = Genetics, shape = Stage),
+#              size = 3) +
+#   scale_x_date(breaks = breaks, date_labels = "%b %d") +
+#   scale_color_manual(values = cp) +
+#   theme_bigstatsr(size.rel = 0.6) +
+#   theme(axis.text.y = element_blank(),
+#         axis.ticks.y = element_blank(),
+#         axis.text.x = element_text(angle = 45, vjust = 0.5, size = 9)) +
+#   labs(x = "Date",
+#        y = "",
+#        title = "Developmental stages by planting time and maturity group", 
+#        color = "Maturity group")
+# 
+# ggsave("output/Developmental stages by planting time and maturity group.pdf", width = 11.5, height = 8, units = "in")
 
 
 # Run the app ----
