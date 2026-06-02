@@ -1,15 +1,12 @@
 
-/// fixed Period changing format from chr to num
-/// fixed new summarization function
-/// the function to run the analysis should now wipe the outputs folder before the files are counted by the progress counter 
-
+/// fixed Maize template model incorrecty determining death from total senesence 
+//// The template soy / maize files had working soil modules and would run even if the soil wasn't replaced. this means that when soil isn't grabbed successfully, the sims still ran "successfully" (misleadingly). I am breaking the template file's soil modules again to try to prevent this from happening. 
 
 - fix the UI on the latitude and longitude boxes in "create gridded inputs"
 - fix text on the "configure pheno periods" page
 - find where the NaNs in the seasonal_data are coming from and if they are causing problems
 - break the ID_corr function into different functions for computation and plot rendering, so changing text size isn't such a pain. 
   
-- the template soy / maize files have working soil modules and will run even if the soil isn't replaced. this means that when soil isn't grabbed successfully, the sims still run "successfully" (misleadingly)
 - check that the soy template models match the pheno that's in the recalibration models (they do not)
 
 - sheila's lovely contributions
