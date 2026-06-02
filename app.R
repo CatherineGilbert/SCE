@@ -1,11 +1,10 @@
 if (!require("pacman")) install.packages("pacman")
 pkg <- c("shiny", "shinydashboard", "shinycssloaders", "shinyWidgets", "shinyBS", 
-"shinyjs", "DT", "geosphere", "pheatmap", "apsimx", "tidyverse",
-"daymetr", "data.table", "RColorBrewer", "janitor", "tidyr",
-"zip", "here", "future", "promises", "lubridate", "ggplot2",
-"viridisLite", "dendextend", "scales", "grid", "leaflet", 
-"apsimx", "tidyverse", "daymetr", "chirps", "nasapower", 
-"soilDB", "spData", "tools", "parallel", "beepr")
+"shinyjs", "DT", "geosphere", "pheatmap", "apsimx", "daymetr", "data.table", 
+"RColorBrewer", "janitor", "zip", "here", "future", "promises", "viridisLite", 
+"dendextend", "scales", "grid", "leaflet", "apsimx", "tidyverse", 
+"daymetr", "chirps", "nasapower", "soilDB", "spData", "tools", "parallel",
+"beepr", "plotly", "bigstatsr")
 p_load(char = pkg)
 
 plan(multisession, workers = 2)
@@ -44,7 +43,7 @@ ui <- dashboardPage(
             menuItem("View Map",                tabName = "view_map",         icon = icon("map")),
             menuItem("View Seasonal Heatmaps",  tabName = "heatmap",          icon = icon("fire")),
             menuItem("View Trial Similarities", tabName = "trial_comp",       icon = icon("seedling")),
-            menuItem("Sheila's Plots",   tabName = "sheila_plots",            icon = icon("question"))
+            menuItem("View Timelines",   tabName = "timelines",            icon = icon("chart-gantt"))
           )
       )
     ),
@@ -53,7 +52,7 @@ ui <- dashboardPage(
           sidebarMenu(
             menuItem("Thermal Time / Precipitation", icon = icon("cloud-sun-rain"),
                menuSubItem("Modify GDD Equation", tabName = "gdd_equation", icon = icon("calculator")),
-               menuSubItem("Typical TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
+               menuSubItem("Typical Site TT/Precip Accumulation", tabName = "daily_between_sites", icon = icon("chart-line")),
                menuSubItem("Site Yearly TT/Precip Totals", tabName = "faceted_comparison", icon = icon("chart-area")),
                menuSubItem("Ten Year Site TT/Precip Means", tabName = "between_sites", icon = icon("chart-bar"))
             )
@@ -125,7 +124,7 @@ ui <- dashboardPage(
       tabItem(tabName = "info",
         fluidPage(
           h2("Seasonal Characterization Engine"),
-          p(em("Created by Catherine Gilbert, German Mandrini, and Sam Shi.")),
+          p(em("Created by Catherine Gilbert, German Mandrini, Sheila Scheffel Pereira, and Sam Shi.")),
           br(),
           p("The", tags$b("Seasonal Characterization Engine (SCE)"), " describes growing environment in terms of the crop's 
             development. Using APSIM, a procedural crop simulation program, the tool simulates the growth 
@@ -238,7 +237,8 @@ ui <- dashboardPage(
                 box(
                   h3("Download Results (.zip)"),
                   downloadButton("downloadData", "Download Results")
-                )
+                ),
+                tags$span(style = "color: red;","As of 6/2/26 the SSURGO API is not functioning.")
               ),
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
@@ -530,6 +530,56 @@ ui <- dashboardPage(
           DTOutput("viewKey")
         )
       ),
+      ### timeline plot ----
+      tabItem(
+      tabName = "timelines",
+      fluidPage(
+        h3("Timeline Plot"),
+        fluidRow(
+          column(width = 3,
+            uiOutput("timeline_yearSelectUI")
+          ),
+          column(width = 3,
+            numericInput(
+              inputId = "timeline_cex",
+              label = "Adjust Label Size",
+              value = 16,        
+              min = 0,          
+              max = 50,          
+              step = 1        
+            )
+          ),
+          column(width = 3,
+            numericInput(
+              inputId = "timeline_h",
+              label = "Height (px)",
+              value = 800,        
+              min = 0,          
+              max = 10000,          
+              step = 100        
+            )
+          ),
+        ),
+        fluidRow(
+          column(
+            width = 3,
+            box(
+              width = 12,
+              checkboxGroupInput(
+                "selected_labels",
+                "Developmental Stages",
+                choices = NULL
+              )
+            )
+          ),
+          column(
+            width = 9,
+            plotOutput("timeline_plot", height = "auto"),
+            downloadButton( "download_timeline_plot","Download Developmental Timeline (.png)")
+          )
+        )
+      )
+      ),
       ### trial comp UI -----
       tabItem(
         tabName = "trial_comp",
@@ -724,7 +774,10 @@ ui <- dashboardPage(
                 h2("Typical TT/Precip Accumulation"),
                 p(
                   "This section allows you to compare the accumulation of precipitation and thermal 
-                  time during the typical growing season at each site. Select the variable to view and sites to compare for the visualization."
+                  time during the typical growing season at each site. The timespan of a site's \"typical\" 
+                  growing season is estimated using the mean planting and harvest dates of the previous trial 
+                  simulations. Thermal time and precipitation values are taken from the last ten years of weather records at that site. 
+                  Select the variable to view and sites to compare for the visualization."
                 ),
                 selectInput(
                   "comparisonType",
@@ -752,7 +805,7 @@ ui <- dashboardPage(
                 h2("Site Yearly TT/Precip Totals"),
                 p(
                   "This section shows, for each site, the total accumulated precipitation and thermal time during 
-                  each year's expected growing season. The dashed lines on the graph represent the 
+                  each year's typical growing season. The dashed lines on the graph represent the 
                   mean total thermal time or precipitation at that site over the last ten years. 
                   Select the sites to compare for the visualization."
                 ),
@@ -813,9 +866,18 @@ server <- function(input, output, session) {
   unlink(input_dir,recursive = T) ; dir.create(input_dir)
   
   # Reactive values for storing the analysis state and the selected variable
-  #analysisDone <- reactiveVal(FALSE)
+  if (
+    all(
+      file.exists(
+        file.path("codes_dir/output_files/results/", c("final_x.csv","seasonal_data.csv","trial_info.csv","period_key.csv"))
+      )
+    )
+  ){
+    analysisDone <- reactiveVal(TRUE)
+  } else {
+    analysisDone <- reactiveVal(FALSE)
+  }
   analysisInProgress <- reactiveVal(FALSE)
-  analysisDone <- reactiveVal(TRUE)
   analysisFailed <- reactiveVal(FALSE)
   
   output_dir <- paste0(codes_dir,"/output_files")
@@ -1223,7 +1285,7 @@ server <- function(input, output, session) {
     req(analysisDone())
     base_temp(input$base_temp)
     max_temp(input$max_temp)
-    ttpp <- ttpp_crunch()  # run your slow function here
+    ttpp <- ttpp_crunch() # get the daily tt/precip estimates with this slow function
     bigmet <<- ttpp$bigmet
     mean_startend <<- ttpp$mean_startend
     filtmet(ttpp$bigmet_gdd)
@@ -1770,7 +1832,7 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       png(file, width = 1000, height = 1000)
-      print(boxplot_data())  # Print the stored plot
+      print(boxplot_data()) 
       dev.off()
     }
   )
@@ -2729,44 +2791,30 @@ output$current_GDD_settings <- renderText({
     #conversion to days after sowing
     sdbtw_sites <- dbtw_sites %>% mutate(day = day - min(day) + 1)
     
-    if (input$comparisonType == "precip_doy") {
-      p <- ggplot(dbtw_sites)  + 
-        aes(x = day, y = acc_precip, colour = Site) +
-        geom_line() +
-        scale_color_hue(direction = 1) +
-        labs(x = "Day of Year", y = "Daily Mean Accumulated Precipitation (mm)", 
-             title = "Typical Accumulated Precipitation at a Site by Day of Year") +
-        theme_minimal() +
-        theme(text = element_text(size = 15))
-    } else if (input$comparisonType == "tt_doy") {
-      p <- ggplot(dbtw_sites)  + 
-        aes(x = day, y = acc_tt, colour = Site) +
-        geom_line() +
-        scale_color_hue(direction = 1) +
-        labs(x = "Day of Year", y = "Daily Mean Accumulated Thermal Time (GDD)",
-             title = "Typical Accumulated Thermal Time at a Site by Day of Year") +
-        theme_minimal()+
-        theme(text = element_text(size = 15))
-    } else if (input$comparisonType == "precip_das") {
-      p <- ggplot(sdbtw_sites) + 
-        aes(x = day, y = acc_precip, colour = Site) +
-        geom_line() +
-        scale_color_hue(direction = 1) +
-        labs(x = "Days after Sowing", y = "Daily Mean Accumulated Precipitation (mm)",
-             title = "Typical Accumulated Precipitation at a Site by Days after Sowing") +
-        theme_minimal()+
-        theme(text = element_text(size = 15))
-    } else if (input$comparisonType == "tt_das") {
-      p <- ggplot(sdbtw_sites) + 
-        aes(x = day, y = acc_tt, colour = Site) +
-        geom_line() +
-        scale_color_hue(direction = 1) +
-        labs(x = "Days after Sowing", y = "Daily Mean Accumulated Thermal Time (GDD)",
-             title = "Typical Accumulated Thermal Time at a Site by Days after Sowing") +
-        theme_minimal()+
-        theme(text = element_text(size = 15))
-    }
+    is_precip <- grepl("^precip", input$comparisonType)
+    is_das <- grepl("das$", input$comparisonType)
     
+    data <- if (is_das) sdbtw_sites else dbtw_sites
+    yvar <- if (is_precip) "acc_precip" else "acc_tt"
+    
+    xlab <- if (is_das) "Days after Sowing" else "Day of Year"
+    measure <- if (is_precip) "Precipitation" else "Thermal Time"
+    units <- if (is_precip) "(mm)" else "(GDD)"
+    
+    p <- ggplot(
+      data,
+      aes(x = day, y = .data[[yvar]], colour = Site)
+    ) +
+      geom_line() +
+      scale_color_hue(direction = 1) +
+      labs(
+        x = xlab,
+        y = paste("Daily Mean Accumulated", measure, units),
+        title = paste("Typical Accumulated", measure, "at a Site by", xlab)
+      ) +
+      theme_minimal() +
+      theme(text = element_text(size = 15))
+
     comparison_plot_data(p)  # Store the plot in a reactive value
     print(p)  # Render the plot
   })
@@ -2878,68 +2926,115 @@ output$current_GDD_settings <- renderText({
       dev.off()
     }
   )
+
+# Sheila's Plots -----------
+
+## Timeline Plot -----------
+
+  observe({
+    req(analysisDone())
+    req(period_key())
+
+    pkey <- period_key() %>%
+      mutate(Period = as.character(Period)) %>%
+      select(Period, Label)
+    
+    updateCheckboxGroupInput(
+      session,
+      "selected_labels",
+      choices = pkey$Label,
+      selected = pkey$Label
+    )
+    
+  })
+  
+### select year -------
+  output$timeline_yearSelectUI <- renderUI({
+    req(analysisDone())
+    gen_choices <- c(unique(trial_info$Year), "ALL")
+    selectInput(inputId = "timeline_yearSelect", label = "Select Year", 
+                choices = gen_choices, selected = gen_choices[1])
+  })
+  
+  stage_data <- reactive({
+    req(analysisDone())
+      
+    if(input$timeline_yearSelect == "ALL"){rsl_p  <- final_x()} else 
+      {rsl_p  <- filter(final_x(), Year == input$timeline_yearSelect)}
+    
+    rsl_p <- rsl_p %>%
+      mutate(Genetics = factor(Genetics), Planting_genetics = paste(PlantingDate_Sim, Genetics, sep = "_")) %>%
+      select(PlantingDate_Sim, Genetics, HarvestDate_Sim, Planting_genetics,starts_with("Period_Start_Date")) %>%
+      arrange(PlantingDate_Sim, Genetics) %>% unique() %>%
+      pivot_longer(cols = starts_with("Period_Start_Date"), names_to = "Period", values_to = "Date") %>%
+      mutate(Period = gsub("Period_Start_Date_", "", Period )) %>%
+      droplevels()
+    
+    pkey <- period_key() %>% mutate(Period = as.character(Period)) %>% select(Period,Label)
+    
+    left_join(rsl_p,pkey,by = "Period") %>% filter(Label %in% input$selected_labels,!is.na(Date))
+    
+  })
+### render timeline plot -----
+  timeline_plot_obj <- reactive({
+    
+    req(input$timeline_yearSelect)
+    req(input$timeline_cex)
+    
+    rsl_p2 <- stage_data()
+    req(nrow(rsl_p2) > 0)
+    timeline_cex <- input$timeline_cex 
+    
+    # little custom palette copying what sheila did, it's viridis with greys in place of the yellows and scalable
+    gen_levels <- levels(factor(rsl_p2$Genetics))
+    n <- length(gen_levels)
+    vir <- viridisLite::viridis(n, option = "D")[1:floor(0.8 * n)]
+    greys <- gray.colors(n - length(vir), start = 0.2, end = 0.6)
+    cols <- setNames(c(vir, greys), gen_levels)
+    
+    rsl_p2 |>
+      mutate(Planting_genetics = factor(Planting_genetics),
+             Label = factor(Label, levels = unique(Label[order(Period)]))) |> # Turn stage into factor so it shows ordered in plot labels
+      ggplot(aes(x = Date, y = Planting_genetics)) +
+      geom_errorbarh(aes(xmin = PlantingDate_Sim, xmax = HarvestDate_Sim, color = Genetics),
+                     height = 0,
+                     position = position_dodge(width = 1)) +
+      scale_shape_manual(values = 1:length(unique(rsl_p2$Label))) +
+      geom_point(aes(color = Genetics, shape = Label), size = timeline_cex/4) +
+      scale_x_date(date_breaks = "2 weeks", date_labels = if_else(input$timeline_yearSelect == "ALL", "%b %d %Y","%b %d")) +
+      scale_color_manual(values = cols) +
+      theme_bigstatsr(size.rel = 0.6) +
+      theme(axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+      labs(x = "",
+           y = "",
+           title = "Developmental stages by planting time and maturity group",
+           color = "Maturity group")
+    
+  })
+  
+  
+  output$timeline_plot <- renderPlot({
+    timeline_plot_obj()
+  },
+  height = function() {
+    input$timeline_h
+  })
+  
+  ### download timeline plot ---------
+  output$download_timeline_plot <- downloadHandler(
+    filename = function() {
+      paste0("development-timeline-plot", Sys.Date(), ".png")
+    },
+    content = function(file) {
+      png(file, width = 1400, height = input$timeline_h)
+      print(timeline_plot_obj())  
+      dev.off()
+    }
+  )
   
 }
-
-# ## Sheila's Plots -----------
-# 
-# rsl <- final_x()
-# 
-# ## Stages plot -------------------------------------------------------------
-# 
-# # Prepare results for plot
-# rsl_p <- rsl |> 
-#   mutate(Genetics = factor(Genetics),
-#          Planting_genetics = paste(Planting, Genetics, sep = "_")) |> # This will be the plot y axis
-#   select(Planting, Genetics, HarvestDate_Sim, Planting_genetics, all_of(starts_with("Period_Start_Date"))) |>
-#   arrange(Planting, Genetics) |>
-#   unique() |>
-#   pivot_longer(cols = starts_with("Period_Start_Date"), names_to = "Period", values_to = "Date") |> # make longer table with each stage per ID as a row
-#   mutate(Period = gsub("Period_Start_Date_", "", Period)) |> 
-#   droplevels()
-# 
-# pkey <- read_csv("data/soy_input_1loc_1year_allg_allPlanting/results_2026-04-24/period_key.csv") # Stage names
-# 
-# rsl_p2 <- left_join(rsl_p |> filter(Period %in% c(2, 5, 9, 11)), # filter only the most relevant periods:  "Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"  
-#                     pkey |> 
-#                       mutate(Stage = gsub("([a-z])([A-Z])", "\\1 \\2", `APSIM StageName`), # Make period names look nice
-#                              Period = as.character(Period)) |>
-#                       select(Period, Stage),
-#                     by = "Period")
-# 
-# lab <- rsl_p2$Stage # Stage name labels
-# 
-# breaks <- c(
-#   seq(from = as.Date("2024-04-15"), to = as.Date("2024-05-30"), by = "15 days"),
-#   seq(from = as.Date("2024-06-15"), to = as.Date("2024-07-30"), by = "15 days"),
-#   seq(from = as.Date("2024-08-15"), to = as.Date("2024-08-30"), by = "15 days"),
-#   seq(from = as.Date("2024-09-15"), to = as.Date("2024-10-30"), by = "15 days"),
-#   seq(from = as.Date("2024-11-15"), to = as.Date("2024-11-30"), by = "15 days")) # Breaks for x axis
-# 
-# cp <- c(viridis(5)[1:4], "gray60") # Colors for Maturity groups
-# 
-# rsl_p2 |>
-#   mutate(Planting_genetics = factor(Planting_genetics),
-#          Stage = factor(Stage, levels = c("Emerging", "Early Pod Development", "Maturing", "Ready For Harvesting"))) |> # Turn stage into factor so it shows ordered in plot labels
-#   ggplot(aes(x = Date, y = Planting_genetics)) +
-#   geom_errorbarh(aes(xmin = Planting, xmax = HarvestDate_Sim, color = Genetics),
-#                  width = 0,
-#                  position = position_dodge(width = 1)) +
-#   geom_point(aes(color = Genetics, shape = Stage),
-#              size = 3) +
-#   scale_x_date(breaks = breaks, date_labels = "%b %d") +
-#   scale_color_manual(values = cp) +
-#   theme_bigstatsr(size.rel = 0.6) +
-#   theme(axis.text.y = element_blank(),
-#         axis.ticks.y = element_blank(),
-#         axis.text.x = element_text(angle = 45, vjust = 0.5, size = 9)) +
-#   labs(x = "Date",
-#        y = "",
-#        title = "Developmental stages by planting time and maturity group", 
-#        color = "Maturity group")
-# 
-# ggsave("output/Developmental stages by planting time and maturity group.pdf", width = 11.5, height = 8, units = "in")
-
 
 # Run the app ----
 shinyApp(ui = ui, server = server)

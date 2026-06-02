@@ -1,4 +1,18 @@
+- update documentation for these changes
 
+/// added warning about SSURGO not functioning
+/// added timeline plots, which are still a work in progress
+/// added Sheila to the credits
+/// added a more informative label to the first tt/precip section
+/// removed some useless files
+/// users can now return to previous analyses (as long as the files are still there). also, no more flipping between user and debug versions for testing analysis features. 
+
+- change the timeline plots to use maturity group instead of "genetics"
+- maybe add the I lines on the timeline back in, so people can see start and end in planting and harvest?
+
+- what is up with total senesence in maize :[[
+- make it so that if no soils are created the sim fails immediately
+- make it so that the soil module replacement simply does not create a file if the soil profile cannot be found. then fix the pH in those template models. people want to run the template models by themselves sometimes. 
 
 - fix the UI on the latitude and longitude boxes in "create gridded inputs"
 - fix text on the "configure pheno periods" page
@@ -10,8 +24,8 @@
 - sheila's lovely contributions
   - add 3D plotly plots for maturity date, planting date, and genetics
   - add timeline plots
+      - enable text scaling on download plots
   - look into other sheila plots and code
-  - add sheila to application credits
   - the seasonal analogues report should be moved to sheila's tab probably 
 
 - have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables from the tempate files be recognized as summed by default
