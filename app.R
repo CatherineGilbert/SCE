@@ -202,14 +202,17 @@ ui <- dashboardPage(
                     "Select Weather Acquisition:",
                     choices = c(
                       "NASAPOWER" = "NASAPOWER",
-                      "DAYMET" = "DAYMET",
+                      "DAYMET (USA only)" = "DAYMET",
                       "CHIRPS" = "CHIRPS"
                     )
                   ),
                   selectInput(
                     "soilAquis",
                     "Select Soil Acquisition:",
-                    choices = c("ISRIC" = "ISRIC","SSURGO" = "SSURGO")
+                    choices = c("ISRIC" = "ISRIC",
+                                "SSURGO (USA only)" = "SSURGO", 
+                                "SLGA (AUS only)" = "SLGA", 
+                                "World Modeler" = "World Modeler")
                   ),
                   checkboxInput("no_trim", 
                               tagList(
@@ -237,8 +240,7 @@ ui <- dashboardPage(
                 box(
                   h3("Download Results (.zip)"),
                   downloadButton("downloadData", "Download Results")
-                ),
-                tags$span(style = "color: red;","As of 6/2/26 the SSURGO API is not functioning.")
+                )
               ),
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),

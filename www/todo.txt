@@ -1,46 +1,58 @@
+* added two more soil databases as options for soil profile aquisition (as generously provided by the apsimx package functions)
+* fixed the soil aquisition for ISRIC which I broke last time
+* if no soils are created (or if no weather is created, or no sims, or no sim outputs), the analysis script now fails immediately, thanks to stop() functions in the script itself.
+
 - update documentation for these changes
-
-/// added warning about SSURGO not functioning
-/// added timeline plots, which are still a work in progress
-/// added Sheila to the credits
-/// added a more informative label to the first tt/precip section
-/// removed some useless files
-/// users can now return to previous analyses (as long as the files are still there). also, no more flipping between user and debug versions for testing analysis features. 
-
-- change the timeline plots to use maturity group instead of "genetics"
-- maybe add the I lines on the timeline back in, so people can see start and end in planting and harvest?
-
-- what is up with total senesence in maize :[[
-- make it so that if no soils are created the sim fails immediately
-- make it so that the soil module replacement simply does not create a file if the soil profile cannot be found. then fix the pH in those template models. people want to run the template models by themselves sometimes. 
-
-- fix the UI on the latitude and longitude boxes in "create gridded inputs"
-- fix text on the "configure pheno periods" page
-- find where the NaNs in the seasonal_data are coming from and if they are causing problems
-- break the ID_corr function into different functions for computation and plot rendering, so changing text size isn't such a pain. 
-  
-- check that the soy template models match the pheno that's in the recalibration models (they do not)
+- turn things into functions instead of one chunk of code
 
 - sheila's lovely contributions
   - add 3D plotly plots for maturity date, planting date, and genetics
-  - add timeline plots
-      - enable text scaling on download plots
-  - look into other sheila plots and code
-  - the seasonal analogues report should be moved to sheila's tab probably 
+  
+- create gridded inputs page
+  - fix the UI on the latitude and longitude boxes in "create gridded inputs"
 
-- have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables from the tempate files be recognized as summed by default
-- change buffer from two weeks default to something customizable
-- add direct controls for ReaperMan and Sowing scripts
- - toggle for frost date
+- soils
+  - rerun soils with rounded coordinates if they fail a first time?
+  - test Australian soils
+  - make it so that the soil module replacement simply does not create a file if the soil profile cannot be found. then fix the pH in those template models. people want to run the template models by themselves sometimes. 
+  
+- errors / progress log
+  - have error messages from apsimx script, which are captured by future as err$message, save and display directly to the progress log
+  - remove error messages based on active folder counting 
+  - when running trials after another trial is run, the "simulations finished" and "successful simulations" are not cleared out when the sim restarts
 
-- add search bar to seasonal covariates selector
+- advanced controls tab??
+  - change buffer from two weeks default to something customizable
+  - add direct controls for ReaperMan and Sowing scripts
+   - toggle for frost date
+  - have maturity handling autoselect as appropriate when template model is chosen
 
-- turn things into functions instead of one chunk of code
-- have maturity handling autoselect as appropriate when template model is chosen
-- when matrices are downloaded, have them have columns corresponding to the columns of the nametag
-- add loading symbols for graphs
-- add error message when graphs can't load because only a single record is being used
-
-  ??? have the period_key creation read phases from the APSIM model internals directly rather than infer them from the outputs
+- seasonal summation controls
+  - fix text on the "configure pheno periods" page
+    ??? have the period_key creation read phases from the APSIM model internals directly rather than infer them from the outputs
   these values aren't stored in the template simulations unfortunately
+  - have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables from the tempate files be recognized as summed by default
+  
+- seasonal similarity matrix page
+  - please fix the issue where the where the first maturity's seasonal heatmap of the soybean example input doesn't display
+  - add search bar to seasonal covariates selector
+  - add error message when graphs can't load because only a single record is being used
+  - break the ID_corr function into different functions for computation and plot rendering, so changing text size isn't such a pain. 
+  - when matrices are downloaded, have them have columns corresponding to the columns of the nametag (check for both seasonal_heatmaps and seasonal similarity pages)
+  - put a title on that dendrogram
+
+- timeline plots
+  - add text to timeline plots
+  - add loading symbols for graphs
+  - change the timeline plots to use maturity group instead of "genetics"
+  - maybe add the I lines on the timeline back in, so people can see start and end in planting and harvest?
+  - enable text scaling on download plots
+
+- what is up with total senesence in maize :[[
+  
+- check that the soy template models match the pheno that's in the recalibration models (they do not)
+
+
+
+
   

@@ -16,7 +16,7 @@ start_time <- Sys.time() # track running time
 print("Starting ...")
 
 #debug
-if (TRUE){
+if (FALSE){
  output_dir <- "C:/Users/cmg3/Documents/GitHub/SCE/output_files"
  setwd(output_dir) 
  codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCE"
@@ -143,6 +143,9 @@ parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
 
 check_time2 <- Sys.time() 
 
+#stop if no weather
+if (length(list.files(paste0(output_dir,"/met/"), pattern = "\\.met$", recursive = FALSE)) == 0) {stop("No .met files collected successfully.")}
+
 # Get soil, make soil file -----
 print("Get Soil Data ...")
 
@@ -153,12 +156,14 @@ ids_needs_soil <- locs_df[locs_df$got_soil == F | is.na(locs_df$got_soil),]$ID_L
 for (id in ids_needs_soil){
   locs_tmp <- locs_df[locs_df$ID_Loc == id,]
   tryCatch({
-    if (soil_aquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
-    if (soil_aquis == "ISRIC") {soil_profile_tmp <- get_worldmodeler_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y))}
+    if (soil_aquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)[[1]]}
+    if (soil_aquis == "ISRIC") {soil_profile_tmp <- get_isric_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
+    if (soil_aquis == "World Modeler") {soil_profile_tmp <- get_worldmodeler_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y))[["SoilName_1"]]}
+    if (soil_aquis == "SLGA") {soil_profile_tmp <- get_slga_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
     
     #check_apsimx_soil_profile(soil_profile_tmp)   #for debugging
     
-    horizon <- soil_profile_tmp[[1]]$soil 
+    horizon <- soil_profile_tmp$soil 
     
     #create SWCON in SoilWater parameters
     soilwat <- soilwat_parms() 
@@ -166,26 +171,26 @@ for (id in ids_needs_soil){
     soilwat$SWCON <- (PO-horizon$DUL)/PO
     soilwat$SWCON <- ifelse(soilwat$SWCON < 0, 0.001, soilwat$SWCON)
     soilwat$Thickness <- horizon$Thickness 
-    soil_profile_tmp[[1]]$soilwat <- soilwat
+    soil_profile_tmp$soilwat <- soilwat
     
     #set initial water to reasonable values
     initwat <- initialwater_parms() 
     initwat$InitialValues <- horizon$DUL
     initwat$Thickness <- horizon$Thickness
-    soil_profile_tmp[[1]]$initialwater <- initwat
+    soil_profile_tmp$initialwater <- initwat
     
     #provide soil organic matter table if none exists
-    if (is.na(soil_profile_tmp[[1]][["soilorganicmatter"]])) {
-      soil_profile_tmp[[1]][["soilorganicmatter"]] <- soilorganicmatter_parms()
+    if (is.na(soil_profile_tmp[["soilorganicmatter"]])) {
+      soil_profile_tmp[["soilorganicmatter"]] <- soilorganicmatter_parms()
     }
     
     #constrain minimum root weight
-    given_rwt <- soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt
-    soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < 0.001, 0.001, given_rwt) 
+    given_rwt <- soil_profile_tmp[["soilorganicmatter"]]$RootWt
+    soil_profile_tmp[["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < 0.001, 0.001, given_rwt) 
     
     #constrain minimum soil organic carbon content
-    given_oc <- soil_profile_tmp[[1]][["soil"]]$Carbon
-    soil_profile_tmp[[1]][["soil"]]$Carbon <- ifelse(given_oc < 0.001, 0.001, given_oc) 
+    given_oc <- soil_profile_tmp[["soil"]]$Carbon
+    soil_profile_tmp[["soil"]]$Carbon <- ifelse(given_oc < 0.001, 0.001, given_oc) 
     
     write_rds(soil_profile_tmp, paste0(output_dir,"/soils/soil_profile_",id,".rds"))
     
@@ -196,6 +201,9 @@ for (id in ids_needs_soil){
     print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4),"  FAIL"))
   })
 }
+
+#stop if no soils
+if (length(list.files(paste0(output_dir,"/soils/"), pattern = "\\.rds$", recursive = FALSE)) == 0) {stop("No soil profiles collected successfully.")}
 
 check_time3 <- Sys.time() 
 
@@ -249,13 +257,16 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   tryCatch({
     soil_profile_tmp <- readRDS(paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".rds"))
     edit_apsimx_replace_soil_profile(file = filename, src.dir = source_dir, wrt.dir = write_dir, overwrite = T,
-                                     soil.profile = soil_profile_tmp[[1]], 
+                                     soil.profile = soil_profile_tmp, 
                                      verbose = F)
   }, error = function(e){print("Failed to attach soil profile.")})
   #invisible()
 })
 
 check_time4 <- Sys.time() 
+
+#stop if no sims were created
+if (length(list.files(paste0(output_dir,"/apsim/"), pattern = ".apsimx", recursive = TRUE)) == 0) {stop("No simulations created.")}
 
 # Run APSIM files -----
 print("Run APSIM Files ...")
@@ -334,6 +345,8 @@ clusterExport(cl, c("read_csv"))
 
 # Merge Outputs
 outfiles <- list.files("apsim/", pattern = "_out", recursive = T)
+  #stop if no sims ran successfully
+if (length(outfiles) == 0) {stop("No simulations ran successfully.")}
 daily_sim_outputs <- parLapply(cl, outfiles, function(x){read_csv(paste0("apsim/",x),show_col_types = FALSE)}) %>% 
   data.table::rbindlist(.,use.names = T)
 daily_sim_outputs <- select(daily_sim_outputs, -any_of(c("CheckpointID", "SimulationID", "SimulationName", "Zone", "Year"))) %>% arrange(ID)
