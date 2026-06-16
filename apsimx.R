@@ -16,7 +16,7 @@ start_time <- Sys.time() # track running time
 print("Starting ...")
 
 #debug
-if (TRUE){
+if (FALSE{
  output_dir <- "C:/Users/cmg3/Documents/GitHub/SCE/output_files"
  setwd(output_dir) 
  codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCE"
