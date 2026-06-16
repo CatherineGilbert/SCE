@@ -1,5 +1,6 @@
 library(tidyverse)
 library(apsimx)
+library(viridis)
 
 #need to load final_x and period_x
 
@@ -28,7 +29,11 @@ rsl_p2 <- left_join(rsl_p, pkey, by = "Period") %>%
   filter(!is.na(Date)) #remove empty dates
 
 #cp will need to be automatic for how many there are 
-cp <- c(viridis(5)[1:4], "gray60") # Colors for Maturity groups
+gen_levels <- levels(factor(rsl_p2$Genetics))
+n <- length(gen_levels)
+vir <- viridisLite::viridis(n, option = "D")[1:floor(0.8 * n)]
+greys <- gray.colors(n - length(vir), start = 0.2, end = 0.6)
+cols <- setNames(c(vir, greys), gen_levels)
 
 rsl_p2 |>
   mutate(Planting_genetics = factor(Planting_genetics),
@@ -41,7 +46,7 @@ rsl_p2 |>
   geom_point(aes(color = Genetics, shape = Label),
              size = 3) +
   scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d %Y") +
-  scale_color_manual(values = cp) +
+  scale_color_manual(values = cols) +
   theme_bigstatsr(size.rel = 0.6) +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
