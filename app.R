@@ -245,8 +245,8 @@ ui <- dashboardPage(
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
               bsTooltip("tip_tempmodel", "The template model provided here-- its crop module, reporting variables, and management controls-- will be used as the basis for all trial simulations.", "right", options = list(container = "body")),
-              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` are intended to be used with the template models provided. See documentation for more information on these functions.", "right", options = list(container = "body")),
-              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to two weeks before planting and after harvest. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
+              bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` may be used with the template models provided. See documentation for details.", "right", options = list(container = "body")),
+              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to the duration of the crop's development, plus an optional buffer. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
               ),
     ###build gridded input file UI -----------
     tabItem(tabName = "build_input",
@@ -322,10 +322,6 @@ ui <- dashboardPage(
                              max = 180,
                              step = 1
                            ),
-                           uiOutput("totaldates_UI")
-                       ),
-                       box(width = 12,
-                           h4("Years"),
                            p("Enter the range of years to simulate."),
                            fluidRow(
                              column(width = 6,
@@ -335,7 +331,8 @@ ui <- dashboardPage(
                                     numericInput("year_end", "Last Year:", value = 2020, min = 1900, max = 2100, step = 1)
                              )
                            ),
-                           uiOutput("totalyears_UI")
+                           uiOutput("totalyears_UI"),
+                           uiOutput("totaldates_UI")
                        ),
                        box(width = 12, 
                            h4("Summary"),
@@ -527,9 +524,7 @@ ui <- dashboardPage(
           ),
           uiOutput("season_heatmapPlotUI"),
           downloadButton("season_downloadHeatmap", "Download Seasonal Heatmap (.png)"),
-          downloadButton("season_downloadMatrix", "Download Seasonal Matrix (.csv)"),
-          h3("Period Key"),
-          DTOutput("viewKey")
+          downloadButton("season_downloadMatrix", "Download Seasonal Matrix (.csv)")
         )
       ),
       ### timeline plot ----
@@ -863,6 +858,7 @@ ui <- dashboardPage(
 # Define server logic ----
 server <- function(input, output, session) {
   
+  #if (basename(getwd()) == "output_files") {setwd("..")}  #prevents a directory bug when the app is reloaded in some environments.  yes i know it's bad practice. 
   codes_dir <- getwd()
   input_dir <- paste0(codes_dir,"/input")
   unlink(input_dir,recursive = T) ; dir.create(input_dir)
@@ -871,7 +867,7 @@ server <- function(input, output, session) {
   if (
     all(
       file.exists(
-        file.path("codes_dir/output_files/results/", c("final_x.csv","seasonal_data.csv","trial_info.csv","period_key.csv"))
+        file.path(paste0(codes_dir,"/output_files/results/", c("final_x.csv","seasonal_data.csv","trial_info.csv","period_key.csv")))
       )
     )
   ){
@@ -1264,7 +1260,7 @@ server <- function(input, output, session) {
       group_by(Period) %>%
       summarise(
         Label                   = first(PhaseName),
-        `APSIM Phases Included` = paste(PhaseName, collapse = " → "),
+        `APSIM Phases Included` = paste(PhaseName, collapse = " & "),
         `Original Periods`      = paste(Period,    collapse = ", "),
         .groups = "drop"
       ) %>%
@@ -1486,28 +1482,27 @@ server <- function(input, output, session) {
   
   output$totaldates_UI <- renderUI({
     req(input$planting_start, input$planting_end, input$planting_step_days,
-        input$year_start, input$year_end)
+        input$year_start, input$year_end, input$year_start, input$year_end)
     dates <- make_planting_dates(input$planting_start, input$planting_end,
                                  input$planting_step_days,
                                  input$year_start, input$year_end)
-    p(em(paste0(length(dates), " planting dates across ",
-                length(input$year_start:input$year_end), " years")))
+    if (input$year_start > input$year_end) {
+      p(em("First Year must be <= Last Year."), style = "color: red;") } 
+    else {
+      p(em(paste0(length(dates), " planting dates across ",
+                  length(input$year_start:input$year_end), " years")))
+    }
   })
   
   output$totalgenetics_UI <- renderUI({
     req(input$genetics_input)
     genetics <- parse_genetics(input$genetics_input)
-    p(em(paste0(length(genetics), " genetic maturity value(s): ",
-                paste(genetics, collapse = ", "))))
+    p(em(paste0(length(genetics), " genetic maturity value(s)")))
   })
   
   output$totalyears_UI <- renderUI({
-    req(input$year_start, input$year_end)
-    if (input$year_start > input$year_end) {
-      p(em("First Year must be <= Last Year."), style = "color: red;")
-    } else {
-      p(em(paste0(length(input$year_start:input$year_end), " years")))
-    }
+    req()
+    
   })
   
   output$total_trialsUI <- renderUI({
@@ -1577,7 +1572,7 @@ server <- function(input, output, session) {
       group_by(MergeGroup) %>%
       summarise(
         Label                   = first(CustomName),
-        `APSIM Phases Included` = paste(APSIMName, collapse = " → "),
+        `APSIM Phases Included` = paste(APSIMName, collapse = " & "),
         `Original Periods`      = paste(Period,    collapse = ", "),
         .groups = "drop"
       ) %>%
@@ -1891,14 +1886,17 @@ server <- function(input, output, session) {
         
         if (matsel == "ALL") { #if maturity is set to "ALL", include maturity in labels
           var_mat <- left_join(var_mat, select(nametag, ID, mtag), by = join_by(ID)) %>% 
-            select(-ID) %>% column_to_rownames("mtag")
+            select(-ID) %>% column_to_rownames("mtag") %>% as.matrix()
         } else {
           var_mat <- left_join(var_mat, select(nametag, ID, tag), by = join_by(ID)) %>% 
-            select(-ID) %>% column_to_rownames("tag")
+            select(-ID) %>% column_to_rownames("tag") %>% as.matrix()
         }
         paste1 <- "Recorded Values of "
         paste2 <- " by Trial (Maturity: "
       }
+      
+      # Convert NaNs to NAs
+      var_mat[is.nan(var_mat)] <- NA
       
       # Keep the GroupLabel suffixes as axis labels instead of 1..N integers.
       # Extract them from the column names (format: Variable_GroupLabel).
@@ -2060,19 +2058,6 @@ server <- function(input, output, session) {
       write.csv(season_heatmap_matrix(), file)
     }
   )
-  
-  ## show key for periods -----
-  
-  output$viewKey <- renderDT({
-    req(analysisDone(), !is.null(period_key()))
-    datatable(period_key(),
-              rownames = FALSE,
-              class = 'compact stripe',
-              options = list(
-                paging = FALSE,
-                searching = FALSE
-              ))
-  })
   
   # View Map ----
   
@@ -2604,7 +2589,7 @@ server <- function(input, output, session) {
     
     if (is.null(dend)) {
       plot.new()
-      text(0.5, 0.5, "Dendrogram object is NULL")
+      text(0.5, 0.5, "Cannot generate dendrogam.")
       return()
     }
     
@@ -2953,69 +2938,152 @@ output$current_GDD_settings <- renderText({
 ### select year -------
   output$timeline_yearSelectUI <- renderUI({
     req(analysisDone())
-    gen_choices <- c(unique(trial_info$Year), "ALL")
+    gen_choices <- c(sort(unique(trial_info$Year)), "ALL")
     selectInput(inputId = "timeline_yearSelect", label = "Select Year", 
                 choices = gen_choices, selected = gen_choices[1])
   })
-  
+
+### process plot data ----
   stage_data <- reactive({
     req(analysisDone())
-      
-    if(input$timeline_yearSelect == "ALL"){rsl_p  <- final_x()} else 
-      {rsl_p  <- filter(final_x(), Year == input$timeline_yearSelect)}
+    
+    if (input$timeline_yearSelect == "ALL") {
+      rsl_p <- final_x()
+    } else {
+      rsl_p <- filter(final_x(), Year == input$timeline_yearSelect)
+    }
     
     rsl_p <- rsl_p %>%
-      mutate(Genetics = factor(Genetics), Planting_genetics = paste(PlantingDate_Sim, Genetics, sep = "_")) %>%
-      select(PlantingDate_Sim, Genetics, HarvestDate_Sim, Planting_genetics,starts_with("Period_Start_Date")) %>%
-      arrange(PlantingDate_Sim, Genetics) %>% unique() %>%
-      pivot_longer(cols = starts_with("Period_Start_Date"), names_to = "Period", values_to = "Date") %>%
-      mutate(Period = gsub("Period_Start_Date_", "", Period )) %>%
+      mutate(
+        Genetics = factor(Genetics),
+        Planting_genetics = paste(PlantingDate_Sim, Genetics, sep = "_")
+      ) %>%
+      select(
+        ID, Site, Latitude, Year,
+        PlantingDate_Sim, Genetics, HarvestDate_Sim, Planting_genetics,
+        starts_with("Period_Start_Date")
+      ) %>%
+      arrange(Latitude, Site, Year, PlantingDate_Sim, Genetics) %>%
+      unique() %>%
+      pivot_longer(
+        cols = starts_with("Period_Start_Date"),
+        names_to = "Period",
+        values_to = "Date"
+      ) %>%
+      mutate(Period = gsub("Period_Start_Date_", "", Period)) %>%
       droplevels()
     
-    pkey <- period_key() %>% mutate(Period = as.character(Period)) %>% select(Period,Label)
+    pkey <- period_key() %>%
+      mutate(Period = as.character(Period)) %>%
+      select(Period, Label)
     
-    left_join(rsl_p,pkey,by = "Period") %>% filter(Label %in% input$selected_labels,!is.na(Date))
-    
+    left_join(rsl_p, pkey, by = "Period") %>%
+      filter(Label %in% input$selected_labels, !is.na(Date)) %>%
+      mutate(
+        Date_plot = as.Date(paste0("2000-", format(Date, "%m-%d"))),
+        PlantingDate_plot = as.Date(paste0("2000-", format(PlantingDate_Sim, "%m-%d"))),
+        HarvestDate_plot  = as.Date(paste0("2000-", format(HarvestDate_Sim, "%m-%d")))
+      )
   })
-### render timeline plot -----
+  
+  ### render timeline plot -----
   timeline_plot_obj <- reactive({
-    
     req(input$timeline_yearSelect)
     req(input$timeline_cex)
     
     rsl_p2 <- stage_data()
     req(nrow(rsl_p2) > 0)
-    timeline_cex <- input$timeline_cex 
+    timeline_cex <- input$timeline_cex
     
-    # little custom palette copying what sheila did, it's viridis with greys in place of the yellows and scalable
+    # --- Build a y-axis key: one row per unique ID, ordered by Latitude then Site then Year ---
+    id_key <- rsl_p2 %>%
+      select(ID, Site, Latitude, Year, Planting_genetics) %>%
+      distinct() %>%
+      arrange(Latitude, Site, Year, Planting_genetics) %>%
+      mutate(y_pos = row_number())
+    
+    # Attach y positions back to the long data
+    rsl_p2 <- rsl_p2 %>%
+      left_join(id_key, by = c("ID", "Site", "Latitude", "Year", "Planting_genetics"))
+    
+    # --- Dashed separator lines between Sites ---
+    # Place a line at the boundary between each pair of adjacent Sites (by latitude order)
+    site_order <- id_key %>%
+      select(Site, Latitude) %>%
+      distinct() %>%
+      arrange(Latitude)
+    
+    site_boundaries <- id_key %>%
+      group_by(Site) %>%
+      summarise(max_y = max(y_pos), .groups = "drop") %>%
+      # Drop the last site — no line needed after the final band
+      left_join(site_order, by = "Site") %>%
+      arrange(Latitude) %>%
+      slice(-n()) %>%
+      mutate(line_y = max_y + 0.5)
+    
+    # --- Y-axis labels: one label per Site, positioned at the band midpoint ---
+    site_labels <- id_key %>%
+      group_by(Site, Latitude) %>%
+      summarise(mid_y = mean(y_pos), .groups = "drop") %>%
+      arrange(Latitude)
+    
+    # --- Color palette ---
     gen_levels <- levels(factor(rsl_p2$Genetics))
     n <- length(gen_levels)
-    vir <- viridisLite::viridis(n, option = "D")[1:floor(0.8 * n)]
+    vir   <- viridisLite::viridis(n, option = "D")[1:floor(0.8 * n)]
     greys <- gray.colors(n - length(vir), start = 0.2, end = 0.6)
-    cols <- setNames(c(vir, greys), gen_levels)
+    cols  <- setNames(c(vir, greys), gen_levels)
     
-    rsl_p2 |>
-      mutate(Planting_genetics = factor(Planting_genetics),
-             Label = factor(Label, levels = unique(Label[order(Period)]))) |> # Turn stage into factor so it shows ordered in plot labels
-      ggplot(aes(x = Date, y = Planting_genetics)) +
-      geom_errorbarh(aes(xmin = PlantingDate_Sim, xmax = HarvestDate_Sim, color = Genetics),
-                     height = 0,
-                     position = position_dodge(width = 1)) +
-      scale_shape_manual(values = 1:length(unique(rsl_p2$Label))) +
-      geom_point(aes(color = Genetics, shape = Label), size = timeline_cex/4) +
-      scale_x_date(date_breaks = "2 weeks", date_labels = if_else(input$timeline_yearSelect == "ALL", "%b %d %Y","%b %d")) +
+    rsl_p2 <- rsl_p2 %>%
+      mutate(
+        Label = factor(Label, levels = unique(Label[order(Period)]))
+      )
+    
+    ggplot(rsl_p2, aes(x = Date_plot, y = y_pos)) +
+      # Season span bars
+      geom_errorbarh(
+        aes(xmin = PlantingDate_plot, xmax = HarvestDate_plot, color = Genetics),
+        height = 0,
+        position = position_dodge(width = 1)
+      ) +
+      # Stage points
+      geom_point(
+        aes(color = Genetics, shape = Label),
+        size = timeline_cex / 4
+      ) +
+      # Dashed lines between Sites
+      geom_hline(
+        data = site_boundaries,
+        aes(yintercept = line_y),
+        linetype = "dashed",
+        color = "grey40",
+        linewidth = 0.4
+      ) +
+      # Site name labels on y axis
+      scale_y_continuous(
+        breaks = site_labels$mid_y,
+        labels = site_labels$Site,
+        expand = expansion(add = 0.5)
+      ) +
+      scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d") +
       scale_color_manual(values = cols) +
-      theme_bigstatsr(size.rel = 0.6) +
-      theme(axis.text.y = element_blank(),
-            axis.ticks.y = element_blank(),
-            axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-      labs(x = "",
-           y = "",
-           title = "Developmental stages by planting time and maturity group",
-           color = "Maturity group")
-    
+      scale_shape_manual(values = 1:length(unique(rsl_p2$Label))) +
+      theme_bigstatsr() +
+      theme(
+        axis.text.x  = element_text(angle = 45, vjust = 0.5, size = 0.8*timeline_cex),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_text(size = 0.8*timeline_cex), 
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank()
+      ) +
+      labs(
+        x     = "",
+        y     = "",
+        title = "Developmental stages by planting time and maturity group",
+        color = "Maturity group"
+      )
   })
-  
   
   output$timeline_plot <- renderPlot({
     timeline_plot_obj()

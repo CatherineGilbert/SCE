@@ -1,24 +1,32 @@
+* fixed the persistent results / debug switch
+* graphing timelines from multiple years now does comparisons based on week and day
+* removed period key from seasonal heatmaps page
+* timeline plot has horizontal breaks on plot by location. locations are sorted by latitude and year. 
+* added text scaling to the timeline plot. made years sort in the UI dropdown
+* made the gridded inputs page look a little nicer.
+
+- fix date parsing on inputs and make sure they're correctly documented
+
 - update documentation for these changes
 - turn things into functions instead of one chunk of code when you can
 - push changes to online version
+
+
+- fix the issue with working directory in the app. currently reloading it seems to break things
+
+- change TT/precip to display week and day instead of DOY
 
 - sheila's lovely contributions
   - add 3D plotly plots for maturity date, planting date, and genetics
   
 - timeline plots
-
   - sort years in dropdown by all 
   - ability to filter year, maturity group, site
-  - ability to summarize over years (changes date to month day)
-  - ability to summarize over locations
-  
-  - horizontal breaks on plot by location. locations are sorted by latitude
-
   - add text to timeline plots
   - change the timeline plots to use maturity group instead of "genetics"
   - maybe add the I lines on the timeline back in, so people can see start and end in planting and harvest?
-  - enable text scaling on download plots
   - figure out how I want to be aggregating this data
+  - make it so when you mouse over a point it tells you the date. 
   
 - create gridded inputs page
   - fix the UI on the latitude and longitude boxes in "create gridded inputs"
@@ -55,7 +63,11 @@
   - when matrices are downloaded, have them have columns corresponding to the columns of the nametag (check for both seasonal_heatmaps and seasonal similarity pages)
   - put a title on that dendrogram
   - ??? a PCA of some kind?
-
+  - add button to cluster or uncluster heatmap
+  
+- seasonal heatmaps page
+  - fix redundant text
+  - add button to cluster or uncluster heatmap
 
 
 
