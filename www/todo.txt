@@ -1,20 +1,15 @@
-* fixed the persistent results / debug switch
-* graphing timelines from multiple years now does comparisons based on week and day
-* removed period key from seasonal heatmaps page
-* timeline plot has horizontal breaks on plot by location. locations are sorted by latitude and year. 
-* added text scaling to the timeline plot. made years sort in the UI dropdown
-* made the gridded inputs page look a little nicer.
+* changed tt/precip plot 1 to use date instead of DOY
+* added the ability to change the heights of the tt/precip plots
 
+
+- maybe do something with the envirotyping stuff in the testing script?? but who knows how that would be integrated. 
 - fix date parsing on inputs and make sure they're correctly documented
 
 - update documentation for these changes
 - turn things into functions instead of one chunk of code when you can
 - push changes to online version
 
-
 - fix the issue with working directory in the app. currently reloading it seems to break things
-
-- change TT/precip to display week and day instead of DOY
 
 - sheila's lovely contributions
   - add 3D plotly plots for maturity date, planting date, and genetics

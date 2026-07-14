@@ -776,23 +776,34 @@ ui <- dashboardPage(
                   simulations. Thermal time and precipitation values are taken from the last ten years of weather records at that site. 
                   Select the variable to view and sites to compare for the visualization."
                 ),
-                selectInput(
-                  "comparisonType",
-                  "Select Comparison Type",
-                  choices = c(
-                    "Acc. Precip. (Day of Year)" = "precip_doy",
-                    "Acc. Precip. (Days after Sowing)" = "precip_das",
-                    "Acc. Thermal Time (Day of Year)" = "tt_doy",
-                    "Acc. Thermal Time (Days after Sowing)" = "tt_das"
-                  )
+                fluidRow(
+                  column(width = 3, 
+                    selectInput(
+                      "comparisonType",
+                      "Select Comparison Type",
+                      choices = c(
+                        "Acc. Precip. (Date)" = "precip_date",
+                        "Acc. Precip. (Days after Sowing)" = "precip_das",
+                        "Acc. Thermal Time (Date)" = "tt_date",
+                        "Acc. Thermal Time (Days after Sowing)" = "tt_das"
+                      )
+                  )),
+                  column(width = 3,
+                         numericInput(
+                           inputId = "ttp1_h",
+                           label = "Height (px)",
+                           value = 600,        
+                           min = 0,          
+                           max = 10000,          
+                           step = 100        
+                         ))
                 ),
                 fluidRow(
                   column(width = 3,  
-                         uiOutput("siteSelectionUI"))
-                  ,
+                         uiOutput("siteSelectionUI")),
                   column(
                     width = 9,
-                    plotOutput("comparisonPlot", height = "600px"),
+                    plotOutput("comparisonPlot", height = "auto"),
                     downloadButton("downloadComparisonPlot", "Download Plot (.png)")
                   )
                 )
@@ -806,20 +817,33 @@ ui <- dashboardPage(
                   mean total thermal time or precipitation at that site over the last ten years. 
                   Select the sites to compare for the visualization."
                 ),
-                numericInput(
-                  inputId = "ttpr2_cex",
-                  label = "Adjust Label Size",
-                  value = 5,        
-                  min = 0,          
-                  max = 50,          
-                  step = 1        
+                fluidRow(
+                  column(width = 3, 
+                    numericInput(
+                      inputId = "ttpr2_cex",
+                      label = "Adjust Label Size",
+                      value = 5,        
+                      min = 0,          
+                      max = 50,          
+                      step = 1        
+                    )
+                  ),
+                  column(width = 3,
+                         numericInput(
+                           inputId = "ttp2_h",
+                           label = "Height (px)",
+                           value = 600,        
+                           min = 0,          
+                           max = 10000,          
+                           step = 100        
+                         ))
                 ),
                 fluidRow(
                   column(width = 3,
                          uiOutput("siteSelectionUI_faceted")),
                   column(
                     width = 9,
-                    plotOutput("facetedComparisonPlot", height = "600px"),
+                    plotOutput("facetedComparisonPlot", height = "auto"),
                     downloadButton("downloadFacetedComparisonPlot", "Download Plot (.png)")
                   )
                 )
@@ -833,20 +857,33 @@ ui <- dashboardPage(
                   mean total thermal time for all selected sites, while the dashed vertical line represents 
                   the mean total precipitation for all selected sites. Select the sites to compare for the visualization."
                 ),
-                numericInput(
-                  inputId = "ttpr3_cex",
-                  label = "Adjust Label Size",
-                  value = 5,        
-                  min = 0,          
-                  max = 50,          
-                  step = 1        
+                fluidRow(
+                  column(width = 3, 
+                    numericInput(
+                      inputId = "ttpr3_cex",
+                      label = "Adjust Label Size",
+                      value = 5,        
+                      min = 0,          
+                      max = 50,          
+                      step = 1        
+                    )),
+                  column(width = 3,
+                         numericInput(
+                           inputId = "ttp3_h",
+                           label = "Height (px)",
+                           value = 600,        
+                           min = 0,          
+                           max = 10000,          
+                           step = 100        
+                         )
+                  )
                 ),
                 fluidRow(
                   column(width = 3,
                          uiOutput("siteSelectionUI_between")),
                   column(
                     width = 9,
-                    plotOutput("plotBetweenSites", height = "600px"),
+                    plotOutput("plotBetweenSites", height = "auto"),
                     downloadButton("downloadBetweenSitesPlot", "Download Plot (.png)")
                   )
                 )
@@ -2060,7 +2097,6 @@ server <- function(input, output, session) {
   )
   
   # View Map ----
-  
   output$map <- renderLeaflet({
     req(analysisDone())
     locs_df <- select(trial_info, Site, Latitude, Longitude) %>% distinct()
@@ -2073,10 +2109,7 @@ server <- function(input, output, session) {
       )
   })
   
-  
-  
   # Trial Comparisons ----  
-  
   corr_results <- reactiveVal(list())
   
   pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
@@ -2777,6 +2810,7 @@ output$current_GDD_settings <- renderText({
       summarize(acc_precip = mean(acc_precip, na.rm = T), acc_tt = mean(acc_tt, na.rm = T))
     #conversion to days after sowing
     sdbtw_sites <- dbtw_sites %>% mutate(day = day - min(day) + 1)
+    dbtw_sites <- dbtw_sites %>% mutate(day = as.Date(day))
     
     is_precip <- grepl("^precip", input$comparisonType)
     is_das <- grepl("das$", input$comparisonType)
@@ -2784,7 +2818,7 @@ output$current_GDD_settings <- renderText({
     data <- if (is_das) sdbtw_sites else dbtw_sites
     yvar <- if (is_precip) "acc_precip" else "acc_tt"
     
-    xlab <- if (is_das) "Days after Sowing" else "Day of Year"
+    xlab <- if (is_das) "Days after Sowing" else "Date"
     measure <- if (is_precip) "Precipitation" else "Thermal Time"
     units <- if (is_precip) "(mm)" else "(GDD)"
     
@@ -2794,6 +2828,7 @@ output$current_GDD_settings <- renderText({
     ) +
       geom_line() +
       scale_color_hue(direction = 1) +
+      {if(!is_das) scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d")} +
       labs(
         x = xlab,
         y = paste("Daily Mean Accumulated", measure, units),
@@ -2804,7 +2839,11 @@ output$current_GDD_settings <- renderText({
 
     comparison_plot_data(p)  # Store the plot in a reactive value
     print(p)  # Render the plot
+  },
+  height = function() {
+    input$ttp1_h
   })
+
   
   ### download handler for the daily TT/Precip plot ----
   output$downloadComparisonPlot <- downloadHandler(
@@ -2812,7 +2851,7 @@ output$current_GDD_settings <- renderText({
       paste0("comparison-plot_", input$comparisonType, "_", Sys.Date(), ".png")
     },
     content = function(file) {
-      png(file, width = 1400, height = 1000)
+      png(file, width = 1400, height = input$ttp1_h)
       print(comparison_plot_data())  # Print the stored plot
       dev.off()
     }
@@ -2852,6 +2891,9 @@ output$current_GDD_settings <- renderText({
     
     faceted_comparison_plot_data(p)  # Store the plot in a reactive value
     print(p)  # Render the plot
+  },
+  height = function() {
+    input$ttp2_h
   })
   
   ### download handler for TT/precip 2 plot ----
@@ -2860,7 +2902,7 @@ output$current_GDD_settings <- renderText({
       paste0("faceted-comparison-plot_", Sys.Date(), ".png")
     },
     content = function(file) {
-      png(file, width = 1400, height = 1000)
+      png(file, width = 1400, height = input$ttp2_h)
       print(faceted_comparison_plot_data())  # Print the stored plot
       dev.off()
     }
@@ -2900,6 +2942,9 @@ output$current_GDD_settings <- renderText({
     
     between_sites_plot_data(p)  # Store the plot in a reactive value
     print(p)  # Render the plot
+  },
+  height = function() {
+    input$ttp3_h
   })
   
   ### download handler for TT/precip 3 plot -----
@@ -2908,7 +2953,7 @@ output$current_GDD_settings <- renderText({
       paste0("between-sites-plot_", Sys.Date(), ".png")
     },
     content = function(file) {
-      png(file, width = 1400, height = 1000)
+      png(file, width = 1400, height = input$ttp3_h)
       print(between_sites_plot_data())  # Print the stored plot
       dev.off()
     }

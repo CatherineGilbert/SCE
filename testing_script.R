@@ -2,59 +2,93 @@ library(tidyverse)
 library(apsimx)
 library(viridis)
 
-#need to load final_x and period_x
+daily_sim_outputs <- read_csv("output_files/results/daily_sim_outputs.csv")
 
-rsl <- final_x
+dt <- select(daily_sim_outputs, Rain, ID, DOY, Period) 
 
-## Stages plot -------------------------------------------------------------
+dt$Rain <- cut(dt$Rain, breaks = quantile(dt$Rain, probs = c(0, 0.1, 0.25, 0.75, 0.9, 1), na.rm = T),
+               include.lowest = T, right = F)
 
-# Prepare results for plot
-rsl_p <- rsl |>
-  mutate(Genetics = factor(Genetics),
-         Planting_genetics = paste(PlantingDate_Sim, Genetics, sep = "_")) |> # This will be the plot y axis
-  select(PlantingDate_Sim, Genetics, HarvestDate_Sim, Planting_genetics, all_of(starts_with("Period_Start_Date"))) |>
-  arrange(PlantingDate_Sim, Genetics) |>
-  unique() |>
-  pivot_longer(cols = starts_with("Period_Start_Date"), names_to = "Period", values_to = "Date") |> # make longer table with each stage per ID as a row
-  mutate(Period = gsub("Period_Start_Date_", "", Period)) |> droplevels()
-
-pkey <- mutate(period_key, Period = as.character(Period)) %>% select(Period, Label)
+dt <- dt %>% group_by(ID, Period) %>% count(Rain) %>% mutate(sum = sum(n), per = n/sum)
 
 
-#use UI to define selected labels for this filtering
-selected_labels <- pkey$Label
 
-rsl_p2 <- left_join(rsl_p, pkey, by = "Period") %>% 
-  filter(Label %in% selected_labels) %>% # allow people to filter to relevant periods
-  filter(!is.na(Date)) #remove empty dates
+library(dplyr)
+library(purrr)
 
-#cp will need to be automatic for how many there are 
-gen_levels <- levels(factor(rsl_p2$Genetics))
-n <- length(gen_levels)
-vir <- viridisLite::viridis(n, option = "D")[1:floor(0.8 * n)]
-greys <- gray.colors(n - length(vir), start = 0.2, end = 0.6)
-cols <- setNames(c(vir, greys), gen_levels)
+data <- daily_sim_outputs
+vars <- select(daily_sim_outputs, Rain:WaterStress) %>% names()
 
-rsl_p2 |>
-  mutate(Planting_genetics = factor(Planting_genetics),
-         Label = factor(Label, ordered = TRUE)) |> # Turn stage into factor so it shows ordered in plot labels
-  ggplot(aes(x = Date, y = Planting_genetics)) +
-  geom_errorbarh(aes(xmin = PlantingDate_Sim, xmax = HarvestDate_Sim, color = Genetics),
-                 height = 0,
-                 position = position_dodge(width = 1)) +
-  scale_shape_manual(values = 1:length(unique(rsl_p2$Label))) +
-  geom_point(aes(color = Genetics, shape = Label),
-             size = 3) +
-  scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d %Y") +
-  scale_color_manual(values = cols) +
-  theme_bigstatsr(size.rel = 0.6) +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.x = element_text(angle = 45, vjust = 0.5, size = 9)) +
-  labs(x = "Date",
-       y = "",
-       title = "Developmental stages by planting time and maturity group",
-       color = "Maturity group")
 
-#need ability / download buttons to save this chart as png
-#need ability / action buttons to change height in px and cex text size too
+period_freq_multi <- function(data, vars,
+                              probs = c(0, 0.1, 0.25, 0.75, 0.9, 1)) {
+  
+  dt <- purrr::map_dfr(vars, function(v) {
+    
+    dt <- data %>%
+      dplyr::select(ID, DOY, Period, value = all_of(v))
+    
+    # Compute variable-specific breaks
+    breaks <- sort(unique(quantile(dt$value,
+                                   probs = probs,
+                                   na.rm = TRUE)))
+    
+    # Bin the values
+    if (length(breaks) < 2) {
+      dt$Bin <- factor("Constant")
+    } else {
+      dt$Bin <- cut(
+        dt$value,
+        breaks = breaks,
+        include.lowest = TRUE,
+        right = FALSE
+      )
+    }
+    
+    # Save the possible bins for this variable
+    bin_levels <- levels(dt$Bin)
+    
+    dt %>%
+      count(ID, Period, Bin, name = "n") %>%
+      tidyr::complete(
+        ID,
+        Period,
+        Bin = factor(bin_levels, levels = bin_levels),
+        fill = list(n = 0)
+      ) %>%
+      group_by(ID, Period) %>%
+      mutate(
+        total = sum(n),
+        per = if_else(total > 0, n / total, 0), #switch to NA to NA period-ID combos that didn't happen in the sim
+        Variable = v
+      ) %>%
+      ungroup() %>%
+      select(Variable, ID, Period, Bin, per)
+  })
+  
+  dt %>%
+    distinct(Variable, Period, Bin) %>%
+    mutate(EnvMarker = paste0("MK_", row_number())) %>%
+    right_join(dt, by = c("Variable", "Period", "Bin"))
+}
+
+huh <- period_freq_multi(
+  daily_sim_outputs,
+  names(select(daily_sim_outputs, Rain:WaterStress))
+)
+
+huh <- mutate(huh, fID = as.factor(ID))
+
+library(ggplot2)
+ggplot(huh) +
+  aes(x = fID, y = EnvMarker, fill = per) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_minimal()
+
+envmk_key <- select(huh, Variable, Period, Bin, EnvMarker) %>% unique()
+
+
+widehuh <- select(huh, EnvMarker, ID, per) %>% pivot_wider(names_from = EnvMarker, values_from = per)
+
+huhmx <- widehuh %>% column_to_rownames("ID") %>% t() %>% cor()
