@@ -354,12 +354,11 @@ ui <- dashboardPage(
               p(
                 "Here you can rename each APSIM phenological period and optionally merge",
                 "any set of periods into a single combined period.",
-                "Changes take effect when you click ", tags$b("Apply Configuration"), "."
+                "Changes take effect when you click 'Apply Configuration'."
               ),
               p(
-                tags$b("Renaming:"),
-                " Type a custom label in the 'Custom Name' column.",
-                " Leave a cell blank to keep the default APSIM phase name."
+                "Type a custom label in the 'Custom Name' column. Leave a cell blank to 
+                keep the default APSIM phase name."
               ),
               p(
                 tags$b("Merging:"),
@@ -2110,14 +2109,17 @@ server <- function(input, output, session) {
   })
   
   # Trial Comparisons ----  
-  corr_results <- reactiveVal(list())
+  # Trial Comparisons ----
+  corr_data     <- reactiveVal(list())   # heavy stats output (no plotting)
+  heatmap_state <- reactiveVal(list())   # p3 (pheatmap obj) + pdend
+  corr_results  <- reactiveVal(list())
   
-  pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu")) #creates a continuous palette
+  pal_f <- colorRampPalette(brewer.pal(9,"RdYlBu"))
   palette <- rev(pal_f(50)[1:50])
   
   param_overrides <- reactiveValues()
   
-  ## maturity selection UI ---- 
+  ## maturity selection UI ----
   output$trial_matSelectUI <- renderUI({
     req(analysisDone())
     gen_choices <- c(unique(trial_info$Mat),"ALL")
@@ -2128,54 +2130,42 @@ server <- function(input, output, session) {
     selectInput(inputId = "trial_matSelect", label = "Select Maturity", choices = gen_choices, selected = current_val)
   })
   
-  ## generate trial comparisons ------
-  ID_corr <- function(matsel, final_x, seasonal_data, 
-                      min_dur = 1, exclude_startend = TRUE,
-                      nzv_chk = 1e-6, empty_chk = 0.9, var_chk = 0.9,
-                      param_overrides = list()) {
+  ## generate trial comp matrix ------
+  compute_corr_data <- function(matsel, final_x, seasonal_data,
+                                min_dur = 1, exclude_startend = TRUE,
+                                nzv_chk = 1e-6, empty_chk = 0.9, var_chk = 0.9,
+                                param_overrides = list()) {
     
-    #print("Running ID_corr Analysis")
-    #print(paste("matselin ID_corr function:", matsel))
-    trialcex <- input$trial_cex
-
-    #generic remove periods that don't have enough data to be used (remove 6 in this case)
-    #filter to trials that ended successfully
-    full_run_IDs <- select(final_x, ID, MaxStage) %>% 
+    full_run_IDs <- select(final_x, ID, MaxStage) %>%
       filter(!is.na(MaxStage)) %>%
       filter(MaxStage == max(MaxStage)) %>% pull(ID)
-    #find, of successful trials, periods where the mean duration < 1
-    period_durs <- select(seasonal_data, ID, Period, Duration) %>% filter(ID %in% full_run_IDs) %>% 
-      group_by(Period) %>% summarise(Duration = mean(Duration)) 
-    if(any(period_durs$Duration < min_dur)) {
-      badp <- filter(period_durs, Duration < min_dur) %>% pull(Period) #define discarded periods as periods with mean duration < 1
+    
+    period_durs <- select(seasonal_data, ID, Period, Duration) %>% filter(ID %in% full_run_IDs) %>%
+      group_by(Period) %>% summarise(Duration = mean(Duration))
+    
+    if (any(period_durs$Duration < min_dur)) {
+      badp <- filter(period_durs, Duration < min_dur) %>% pull(Period)
     } else {
       badp <- NULL
     }
     
-    #get names of variables to use for comparison
     varn <- seasonal_data %>% ungroup() %>%
       select(where(is.numeric) & !c(ID, Period, Period_Start_DOY, Duration, Period_End_DOY)) %>% names()
     
-    if (matsel == "ALL"){
+    if (matsel == "ALL") {
       final_dt <- final_x
     } else {
       final_dt <- filter(final_x, Mat == matsel)
     }
     
-    final_dt <- select(final_dt, ID, starts_with(varn)) %>% 
-      
-      #grab only numeric variables (no dates)
+    final_dt <- select(final_dt, ID, starts_with(varn)) %>%
       select(where(is.numeric))
     
-    #save a list of all of the parameters now 
     full_varlist <- names(select(final_dt, -ID))
     
-    #remove trials where no data was collected
-    final_dt <- remove_empty(final_dt, which = c("rows"), cutoff = empty_chk) #empty_chk = 0.9
-    
+    final_dt <- remove_empty(final_dt, which = c("rows"), cutoff = empty_chk)
     final_dt_locked <- final_dt
     
-    #remove parameters that intersect with discarded periods
     if (!is.null(badp)) {
       badp_vars <- names(final_dt)[!names(final_dt) %in% names(select(final_dt, !ends_with(paste0("_",badp))))]
       final_dt <- select(final_dt, !ends_with(paste0("_",badp)))
@@ -2183,44 +2173,36 @@ server <- function(input, output, session) {
       badp_vars <- c("")
     }
     
-    #remove parameters that intersect with periods before / after growing season
     if (exclude_startend) {
-      startend_vars <- names(final_dt)[!names(final_dt) %in% 
-            names(select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period))))))]
+      startend_vars <- names(final_dt)[!names(final_dt) %in%
+                                         names(select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period))))))]
       final_dt <- select(final_dt, !ends_with(paste0("_",c(min(period_durs$Period), max(period_durs$Period)))))
     } else {
       startend_vars <- c("")
     }
     
-    #remove parameters with near zero variance
     nzv_data <- sapply(final_dt, function(x){var(x, na.rm = TRUE)})
-    nzv_vars <- names(nzv_data)[nzv_data < nzv_chk] #nzv_chk = 1e-6
+    nzv_vars <- names(nzv_data)[nzv_data < nzv_chk]
     nzv_vars <- nzv_vars[!is.na(nzv_vars)]
     final_dt <- select(final_dt, !any_of(nzv_vars))
     
-    #remove parameters which are autocorrelated, based on the full runs 
-    final_full <- filter(final_dt, ID %in% full_run_IDs) %>% column_to_rownames("ID") #subset the data to successful runs
+    final_full <- filter(final_dt, ID %in% full_run_IDs) %>% column_to_rownames("ID")
     var_cor <- cor(final_full, use = "complete.obs")
     correlated_vars <- caret::findCorrelation(var_cor, cutoff = var_chk, names = T)
-    final_dt <- select(final_dt, !any_of(correlated_vars)) #remove autocorrelated variables
+    final_dt <- select(final_dt, !any_of(correlated_vars))
     
     # === APPLY OVERRIDES ===
-    override_kept <- names(param_overrides)[param_overrides == "Keep"]
+    override_kept     <- names(param_overrides)[param_overrides == "Keep"]
     override_discarded <- names(param_overrides)[param_overrides == "Discard"]
     
-    # Force keep: If it's not already in final_dt, try to add it back (if it exists in full_dt)
     for (p in override_kept) {
       if (!(p %in% names(final_dt)) && (p %in% names(final_dt_locked))) {
         final_dt[[p]] <- final_dt_locked[[p]]
       }
     }
-    
-    # Force discard: remove from final_dt even if not caught by previous rules
     final_dt <- select(final_dt, -any_of(override_discarded))
-    # === END OVERRIDES === 
+    # === END OVERRIDES ===
     
-    
-    #plot removed variables
     param_status <- data.frame(
       Parameter = full_varlist
     ) %>% mutate(Status = case_when(
@@ -2233,30 +2215,14 @@ server <- function(input, output, session) {
       TRUE ~ "Kept"
     ))
     
-    #scale the final parameters used for comparison
     scfinal_dt <- final_dt %>%
       column_to_rownames("ID") %>%
-      scale() %>% as.data.frame() #scale variables
+      scale() %>% as.data.frame()
     
-    #list of IDs
     id_list <- final_dt$ID
     
-    #plot heatmap of correlation of final parameters
-    var_cor2 <- cor(scfinal_dt, use = "pairwise.complete.obs")
+    print(scfinal_dt)
     
-    # if (nrow(var_cor2) > 2 & !any(is.na(var_cor2))){
-    #   p2 <- pheatmap(var_cor2, main = paste("Parameter Correlations for Mat", matsel),
-    #                  fontsize = 16,  legend = F, cex = 0.75,
-    #                  color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
-    #                  silent = T)
-    # } else {
-    #   p2 <- pheatmap(var_cor2, main = paste("Parameter Correlations for Mat", matsel),
-    #                  fontsize = 16, legend = F, cex = 0.75,
-    #                  color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
-    #                  cluster_cols = F, cluster_rows = F, silent = T)
-    # }
-    
-    #plot heatmap of correlation of trials by those parameters
     id_cor <- cor(t(scfinal_dt), use = "pairwise.complete.obs")
     
     if (matsel == "ALL") {
@@ -2265,47 +2231,120 @@ server <- function(input, output, session) {
       tagnames <- filter(nametag, ID %in% id_list) %>% pull(tag)
     }
     
-    if (nrow(id_cor) > 2 & !any(is.na(id_cor))){ #prevent errors when trying to generate small plots
+    # --- precompute clustering once here, so cex-only rebuilds in build_heatmap()
+    hc <- NULL
+    if (nrow(id_cor) > 2 && !any(is.na(id_cor))) {
+      hc <- tryCatch(hclust(dist(id_cor), method = "complete"), error = function(e) NULL)
+    }
+    
+    list(
+      matsel      = matsel,
+      IDs         = colnames(id_cor),
+      nametag     = nametag,
+      used_params = param_status,
+      final_dt    = final_dt,
+      scfinal_dt  = scfinal_dt,
+      id_cor      = id_cor,
+      tagnames    = tagnames,
+      hc          = hc
+    )
+  }
+  
+  run_corr_data <- function() {
+    req(analysisDone())
+    req(input$trial_matSelect)
+    tryCatch({
+      new_data <- compute_corr_data(
+        matsel          = input$trial_matSelect,
+        final_x         = final_x(),
+        seasonal_data   = seasonal_data(),
+        min_dur         = input$min_dur,
+        exclude_startend = input$exclude_startend,
+        nzv_chk         = input$nzv_chk,
+        empty_chk       = input$empty_chk,
+        var_chk         = input$var_chk,
+        param_overrides = reactiveValuesToList(param_overrides)
+      )
+      corr_data(new_data)
       
-      if (nrow(id_cor) < 100){
-        p3 <- pheatmap(id_cor, 
+      corr_results(list(
+        #matsel      = new_data$matsel,
+        IDs         = new_data$IDs,
+        #nametag     = new_data$nametag,
+        used_params = new_data$used_params,
+        #final_dt    = new_data$final_dt,
+        #scfinal_dt  = new_data$scfinal_dt,
+        id_cor      = new_data$id_cor
+        #tagnames    = new_data$tagnames
+      ))
+    }, error = function(e) {
+      message("Error when computing corr_data: ", e$message)
+    })
+  }
+  
+  observeEvent({
+    input$trial_matSelect
+    input$min_dur
+    input$exclude_startend
+    input$nzv_chk
+    input$empty_chk
+    input$var_chk
+  }, {
+    run_corr_data()
+  })
+  
+  ## build trial comp heatmap plot -------
+  
+  build_heatmap <- function(data, trialcex) {
+    req(data$id_cor)
+    id_cor   <- data$id_cor
+    tagnames <- data$tagnames
+    matsel   <- data$matsel
+    hc       <- data$hc   # precomputed clustering (NULL if too few rows / has NAs)
+    
+    if (nrow(id_cor) > 2 & !any(is.na(id_cor))) {
+
+      cluster_arg <- if (!is.null(hc)) hc else TRUE
+      
+      if (nrow(id_cor) < 100) {
+        p3 <- pheatmap(id_cor,
                        main = paste0("Seasonal Correlations (Maturity: ", matsel, ")"),
-                       labels_row = tagnames, 
-                       cex = 1, 
+                       labels_row = tagnames,
+                       cex = 1,
                        legend = F,
                        fontsize = 16,
                        fontsize_col = trialcex,
                        fontsize_row = trialcex,
                        fontsize_number = 0.75 * trialcex,
-                       display_numbers = round(id_cor, 2), 
-                       number_color = "grey10", 
-                       number_format = "%.2f", 
-                       color = palette, 
+                       display_numbers = round(id_cor, 2),
+                       number_color = "grey10",
+                       number_format = "%.2f",
+                       color = palette,
                        breaks = seq(from = -1, to = 1, length.out = 50),
                        angle_col = 0,
+                       cluster_rows = cluster_arg,
+                       cluster_cols = cluster_arg,
                        silent = T)
         
-        #dendrograms
-        pdend <- as.dendrogram(p3$tree_col)
-        
       } else {
-        p3 <- pheatmap(id_cor, 
+        p3 <- pheatmap(id_cor,
                        main = paste0("Seasonal Correlations (Maturity: ", matsel, ")"),
-                       labels_row = tagnames, 
-                       cex = 1, 
+                       labels_row = tagnames,
+                       cex = 1,
                        legend = F,
-                       fontsize = 16, 
+                       fontsize = 16,
                        fontsize_col = trialcex,
                        fontsize_row = trialcex,
                        fontsize_number = 0.75 * trialcex,
-                       color = palette, 
+                       color = palette,
                        breaks = seq(from = -1, to = 1, length.out = 50),
                        angle_col = 0,
+                       cluster_rows = cluster_arg,
+                       cluster_cols = cluster_arg,
                        silent = T)
-        
-        #dendrograms
-        pdend <- as.dendrogram(p3$tree_row)
       }
+      
+      pdend <- if (!is.null(hc)) as.dendrogram(hc) else NULL
       
     } else {
       p3 <- pheatmap(id_cor, main = paste0("Seasonal Correlations (Maturity: ", matsel, ")"),
@@ -2314,29 +2353,30 @@ server <- function(input, output, session) {
                      fontsize_col = trialcex,
                      fontsize_row = trialcex,
                      fontsize_number = 0.75 * trialcex,
-                     display_numbers = round(id_cor, 2), 
-                     number_color = "grey10", 
+                     display_numbers = round(id_cor, 2),
+                     number_color = "grey10",
                      legend = F,
-                     number_format = "%.2f", 
+                     number_format = "%.2f",
                      color = palette, breaks = seq(from = -1, to = 1, length.out = 50),
                      cluster_cols = F, cluster_rows = F, angle_col = 0,
                      silent = T)
       pdend <- NULL
     }
     
-    trial_sim_heatmap_hack <<- p3
-    
-    corr_results(list(IDs = colnames(id_cor), #trial IDs
-                      nametag = nametag, #used for labels. it's ID/Site/Planting DOY/Year
-                      used_params = param_status, 
-                      final_dt = final_dt, #unscaled parameters used for seasonal correlations
-                      scfinal_dt = scfinal_dt, #scaled parameters used for seasonal correlations
-                      id_cor = id_cor,
-                      id_corr_pheatmap = p3$gtable,
-                      id_dend_obj = pdend
-                      ))
+    list(p3 = p3, pdend = pdend)
   }
   
+  observeEvent({
+    corr_data()
+    input$trial_cex
+  }, {
+    req(length(corr_data()) > 0)
+    tryCatch({
+      heatmap_state(build_heatmap(corr_data(), input$trial_cex))
+    }, error = function(e) {
+      message("Error when building heatmap: ", e$message)
+    })
+  })
   
   ## render trial comp heatmap ----
   observe({
@@ -2346,17 +2386,15 @@ server <- function(input, output, session) {
     })
   })
   
-  output$comp_heatmapPlot <- renderPlot(
-    {
-      req(analysisDone())
-      
-      if (is.null(corr_results()$id_corr_pheatmap)) {
-        print("Heatmap object is NULL")}
-      else {
-        #print("Plotting heatmap")
-        plot(corr_results()$id_corr_pheatmap)
-      }
-    })
+  output$comp_heatmapPlot <- renderPlot({
+    req(analysisDone())
+    p3 <- heatmap_state()$p3
+    if (is.null(p3)) {
+      print("Heatmap object is NULL")
+    } else {
+      plot(p3$gtable)
+    }
+  })
   
   ## trial comp heatmap / matrix downloads ----
   output$trial_downloadHeatmap <- downloadHandler(
@@ -2364,9 +2402,8 @@ server <- function(input, output, session) {
       paste0("sim-heatmap-", input$trial_matSelect, "-", Sys.Date(), ".png")
     },
     content = function(file) {
-      # Use the stored heatmap for the download
       png(file, width = 1400, height = input$trial_h)
-      grid::grid.draw(trial_sim_heatmap_hack$gtable)  # Draw the stored heatmap
+      grid::grid.draw(heatmap_state()$p3$gtable)
       dev.off()
     }
   )
@@ -2380,47 +2417,10 @@ server <- function(input, output, session) {
     }
   )
   
-  
-  ## function to run ID_corr -----
-  run_ID_corr <- function() {
-    req(analysisDone())
-    req(input$trial_matSelect)
-    tryCatch({
-      ID_corr(
-        matsel = input$trial_matSelect,
-        final_x = final_x(),
-        seasonal_data = seasonal_data(),
-        min_dur = input$min_dur,
-        exclude_startend = input$exclude_startend,
-        nzv_chk = input$nzv_chk,
-        empty_chk = input$empty_chk,
-        var_chk = input$var_chk,
-        param_overrides = reactiveValuesToList(param_overrides)
-      )
-    }, error = function(e) {
-      message("Error when running ID_corr: ", e$message)
-    })
-  }
-  
-  ## run ID_corr if inputs change ----
-  observeEvent({
-    input$trial_matSelect
-    input$min_dur
-    input$exclude_startend
-    input$nzv_chk
-    input$empty_chk
-    input$var_chk
-    input$trial_cex
-  }, {
-    run_ID_corr()
-  })
-  
-  
   ## param table container ----
   output$customParamTableUI <- renderUI({
     req(corr_results()$used_params)
     
-    # dynamically create uiOutput placeholders for each row
     row_outputs <- lapply(corr_results()$used_params$Parameter, function(param_name) {
       uiOutput(outputId = paste0("param_row_", param_name))
     })
@@ -2438,11 +2438,11 @@ server <- function(input, output, session) {
       div(
         id = "scroll-container",
         style = "height:500px; overflow-y:auto; overflow-x:hidden;
-               border:1px solid #ccc; padding:0px; white-space:normal;",
+             border:1px solid #ccc; padding:0px; white-space:normal;",
         row_outputs
       )
     )
-
+    
   })
   
   ## render param table rows -----
@@ -2506,7 +2506,6 @@ server <- function(input, output, session) {
       btn_id <- paste0("override_", param)
       val <- input[[btn_id]]
       
-      # skip if input value is missing or override is not yet defined
       if (!is.null(val) && !is.na(val)) {
         current_val <- param_overrides[[param]] %||% "None"
         if (!identical(val, current_val)) {
@@ -2524,11 +2523,11 @@ server <- function(input, output, session) {
       param_overrides[[param]] <- "None"
       updateRadioGroupButtons(session, inputId = paste0("override_", param), selected = "None")
     }
-    run_ID_corr()
+    run_corr_data()
   })
   
   observeEvent(input$apply_overrides, {
-    run_ID_corr()
+    run_corr_data()
   })
   
   ## download param table ----
@@ -2536,15 +2535,12 @@ server <- function(input, output, session) {
   get_current_param_table <- function() {
     req(corr_results()$used_params)
     
-    # Pull the original table
     base_table <- corr_results()$used_params
     
-    # Add override column
     base_table$Override <- sapply(base_table$Parameter, function(param) {
       param_overrides[[param]] %||% "None"
     })
     
-    # Compute current effective status
     base_table$EffectiveStatus <- mapply(function(status, override) {
       if (override == "Keep") {
         "Kept (Override)"
@@ -2563,14 +2559,9 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       param_out <- as_tibble(get_current_param_table())
-      #print(param_out)
       write.csv(param_out, file)
     }
   )
-  
-
-  
-  
   
   ## render dendrograms -----
   
@@ -2618,7 +2609,7 @@ server <- function(input, output, session) {
   }
   
   output$dendroPlot <- renderPlot({
-    dend <- corr_results()$id_dend_obj
+    dend <- heatmap_state()$pdend   
     
     if (is.null(dend)) {
       plot.new()
@@ -2643,7 +2634,7 @@ server <- function(input, output, session) {
     )
   })
   
-## dendrogram downloads ------
+  ## dendrogram downloads ------
   output$trial_downloadDendro <- downloadHandler(
     filename = function() {
       paste0(
@@ -2661,7 +2652,7 @@ server <- function(input, output, session) {
       )
       
       draw_dendrogram(
-        dend             = corr_results()$id_dend_obj,
+        dend             = heatmap_state()$pdend,  
         nametag          = nametag,
         trial_matSelect  = input$trial_matSelect,
         k_val            = input$k_val,
@@ -2677,11 +2668,10 @@ server <- function(input, output, session) {
       paste0("dendrogram-obj_", input$trial_matSelect, "_", Sys.Date(),".rds")
     },
     content = function(file) {
-      placeholder <- corr_results()$id_dend_obj
+      placeholder <- heatmap_state()$pdend  
       write_rds(placeholder, file)
     }
   )
-  
 
 ## function to create seasonal comparison report ----------
 
