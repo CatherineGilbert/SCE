@@ -1,4 +1,3 @@
-
 - maybe do something with the envirotyping stuff in the testing script?? but who knows how that would be integrated. 
 !! fix date parsing on inputs and make sure they're correctly documented
 
@@ -51,9 +50,7 @@
   - add search bar to seasonal covariates selector
   - add loading symbols for graphs
   - add error message when graphs can't load because only a single record is being used
-  - break the ID_corr function into different functions for computation and plot rendering, so changing text size isn't such a pain. 
   - when matrices are downloaded, have them have columns corresponding to the columns of the nametag (check for both seasonal_heatmaps and seasonal similarity pages)
-  - put a title on that dendrogram
   - ??? a PCA of some kind?
   - add button to cluster or uncluster heatmap
   
