@@ -2594,7 +2594,7 @@ server <- function(input, output, session) {
       dendextend::set("labels_cex", dendro_cex)
     
     ## Draw
-    plot(dend_styled, horiz = TRUE)
+    plot(dend_styled, horiz = TRUE, main = paste0("Dendrogram of Seasonal Similarity (Maturity: ", trial_matSelect,")"))
     
     dendextend::rect.dendrogram(
       dend_styled,
