@@ -213,13 +213,7 @@ ui <- dashboardPage(
                                 "SSURGO (USA only)" = "SSURGO", 
                                 "SLGA (AUS only)" = "SLGA", 
                                 "World Modeler" = "World Modeler")
-                  ),
-                  checkboxInput("no_trim", 
-                              tagList(
-                                "Advanced: Do Not Trim Sim Outputs", 
-                                shiny::span(icon("info-circle"), id = "tip_no_trim")
-                              ), 
-                              value = FALSE),
+                  )
                 ),
                 box(
                   background = "green",
@@ -242,11 +236,32 @@ ui <- dashboardPage(
                   downloadButton("downloadData", "Download Results")
                 )
               ),
+              bsCollapse(
+                id = "advanced_controls_panel",
+                open = NULL,
+                bsCollapsePanel(
+                  title = "Advanced Controls",
+                  
+                  numericInput("buffer_val",
+                               tagList(
+                                 "Include Buffer Period Before and After Crop Development (days)", 
+                                 shiny::span(icon("info-circle"), id = "tip_buffer")
+                               ), 
+                               value = 0, min = 0, max = 30, width = '50%'),
+                  checkboxInput("no_trim", 
+                                tagList(
+                                  "Do Not Trim Sim Outputs", 
+                                  shiny::span(icon("info-circle"), id = "tip_no_trim")
+                                ), 
+                                value = FALSE)
+                )
+              )
               ),
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
               bsTooltip("tip_tempmodel", "The template model provided here-- its crop module, reporting variables, and management controls-- will be used as the basis for all trial simulations.", "right", options = list(container = "body")),
               bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` may be used with the template models provided. See documentation for details.", "right", options = list(container = "body")),
-              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to the duration of the crop's development, plus an optional buffer. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body"))
+              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to the duration of the crop's development, plus the optional buffer. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body")),
+              bsTooltip("tip_buffer", "Here you can set an optional buffer which will extend the first and last seasonal periods to capture environmental conditions before planting and after harvest respectively. In most APSIM developmental models, the first and last periods of development will otherwise last a single day.", "right", options = list(container = "body"))
               ),
     ###build gridded input file UI -----------
     tabItem(tabName = "build_input",
@@ -259,18 +274,18 @@ ui <- dashboardPage(
                            p("Enter the coordinates of two opposite corners of the rectangular area to cover."),
                            fluidRow(
                              column(width = 6,
-                                    numericInput("cornerA_lat",  "Corner A Latitude (WGS84):",  value = 40.0, min = -90,  max = 90,  step = 0.1)
+                                    numericInput("cornerA_lat",  "Corner A Latitude",  value = 40.0, min = -90,  max = 90,  step = 0.1)
                              ),
                              column(width = 6,
-                                    numericInput("cornerA_long",  "Corner A Longitude (WGS84):",  value = -88.0, min = -180,  max = 180,  step = 0.1)
+                                    numericInput("cornerA_long",  "/ Longitude (WGS84):",  value = -88.0, min = -180,  max = 180,  step = 0.1)
                              )
                            ),
                            fluidRow(
                              column(width = 6,
-                                    numericInput("cornerB_lat", "Corner B Latitude (WGS84):", value = 42.0, min = -90, max = 90, step = 0.1)
+                                    numericInput("cornerB_lat", "Corner B Latitude", value = 42.0, min = -90, max = 90, step = 0.1)
                              ),
                              column(width = 6,
-                                    numericInput("cornerB_long", "Corner B Longitude (WGS84):", value = -90.0, min = -180, max = 180, step = 0.1)
+                                    numericInput("cornerB_long", "/ Longitude (WGS84):", value = -90.0, min = -180, max = 180, step = 0.1)
                              )
                            ),
                            numericInput("grid_spacing_km", "Grid Spacing (km):", value = 50, min = 1, max = 1000, step = 1),
@@ -361,12 +376,10 @@ ui <- dashboardPage(
                 keep the default APSIM phase name."
               ),
               p(
-                tags$b("Merging:"),
                 " Assign the same 'Merge Group' number to all periods you want to combine.",
                 " Periods with unique or blank merge group values are kept as-is.",
                 " Accumulation variables (AccRain, AccTT, AccEmTT, Duration)",
-                " are", tags$em("summed"), "within a merge group; all other variables are",
-                tags$em("averaged"), "."
+                " are summed within a merge group; all other variables are averaged."
               ),
               
               # ── Action buttons ──────────────────────────────────────────────────────
@@ -671,10 +684,10 @@ ui <- dashboardPage(
             column(width = 4,
                    checkboxInput("exclude_startend", 
                                  tagList(
-                                   "Exclude start and end periods before sowing / after harvest", 
+                                   "Exclude first and last periods of development", 
                                    shiny::span(icon("info-circle"), id = "tip_exclude_startend")
                                  ), 
-                                 value = TRUE),
+                                 value = FALSE),
                    
                    numericInput("min_dur", 
                                 label = tagList(
@@ -723,7 +736,7 @@ ui <- dashboardPage(
           )
         ),
         bsTooltip("tip_report", "Report comparing seasonal conditions for different site and planting date combinations. Gives the similarity and stability of that similarity over the simulated years. See documentation for specifics.", "below", options = list(container = "body")),
-        bsTooltip("tip_exclude_startend", "Remove seasonal covariates outside the strict duration of crop development. Drops seasonal covariates associated with the first and last phenological periods, which contain the periods before sowing and after harvest.", "right", options = list(container = "body")),
+        bsTooltip("tip_exclude_startend", "Drops seasonal covariates associated with the first and last phenological periods, which, when a buffer is used, contain conditions before sowing and after harvest (i.e. outside the strict duration of crop development).", "right", options = list(container = "body")),
         bsTooltip("tip_min_dur", "Drop seasonal covariates associated with periods that have a mean duration shorter than this value (in days). Useful for removing shortened periods (such as those a day or less in length) which may be part of the APSIM model definition but may not be relevant to the seasonal profile.", "right", options = list(container = "body")),
         bsTooltip("tip_nzv_chk", "Drop seasonal covariates with a variance lower than this value. Used to remove variables with near-zero variance, which are likely uninformative.", "right", options = list(container = "body")),
         bsTooltip("tip_empty_chk", "Drop trials with too much missing data (less than this proportion of their seasonal data is available). In the case that a simulation fails or is cut short, this can be used to remove suspicious trial data.", "right", options = list(container = "body")),
@@ -1006,12 +1019,13 @@ server <- function(input, output, session) {
   soil_aquis <- reactiveVal("SSURGO")
   mat_handling <- reactiveVal("Soy")
   no_trim <- reactiveVal("FALSE")
+  buffer_val <- reactiveVal(0)
   
-  for (par in c("matType","soilAquis","weatherAquis","no_trim")) {
+  for (par in c("matType","soilAquis","weatherAquis","no_trim","buffer_val")) {
     local({
       p <- par
       rv <- switch(p, matType=mat_handling, soilAquis=soil_aquis,
-                   weatherAquis=weather_aquis, no_trim=no_trim)
+                   weatherAquis=weather_aquis, no_trim=no_trim, buffer_val=buffer_val)
       observeEvent(input[[p]], rv(input[[p]]))
     })
   }
@@ -1091,7 +1105,8 @@ server <- function(input, output, session) {
     parms <- tibble(mat_handling = mat_handling(), 
                     weather_aquis = weather_aquis(), 
                     soil_aquis = soil_aquis(),
-                    no_trim = no_trim())
+                    no_trim = no_trim(), 
+                    buffer_val = buffer_val())
     write_csv(parms, paste0(codes_dir,"/output_files/parameters.csv"))
     
     ### upload template model -----

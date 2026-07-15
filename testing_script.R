@@ -72,23 +72,24 @@ period_freq_multi <- function(data, vars,
     right_join(dt, by = c("Variable", "Period", "Bin"))
 }
 
-huh <- period_freq_multi(
+long_envt <- period_freq_multi(
   daily_sim_outputs,
   names(select(daily_sim_outputs, Rain:WaterStress))
 )
 
-huh <- mutate(huh, fID = as.factor(ID))
+long_envt <- mutate(long_envt, fID = as.factor(ID))
+
+envmk_key <- select(long_envt, Variable, Period, Bin, EnvMarker) %>% unique()
 
 library(ggplot2)
-ggplot(huh) +
+ggplot(long_envt) +
   aes(x = fID, y = EnvMarker, fill = per) +
   geom_tile() +
   scale_fill_viridis_c() +
   theme_minimal()
 
-envmk_key <- select(huh, Variable, Period, Bin, EnvMarker) %>% unique()
+wide_envt <- select(long_envt, EnvMarker, ID, per) %>% pivot_wider(names_from = EnvMarker, values_from = per)
 
-
-widehuh <- select(huh, EnvMarker, ID, per) %>% pivot_wider(names_from = EnvMarker, values_from = per)
+write.csv(wide_envt, "W_matrix.csv")
 
 huhmx <- widehuh %>% column_to_rownames("ID") %>% t() %>% cor()

@@ -37,6 +37,7 @@ mat_handling <- pull(parms, mat_handling)
 weather_aquis <- pull(parms, weather_aquis)
 soil_aquis <- pull(parms, soil_aquis)
 no_trim <- pull(parms, no_trim)
+buffer_val <- pull(parms, buffer_val)
 
 templ_model_path <- list.files(paste0(codes_dir,"/input"), pattern = ".apsimx", full.names = TRUE)[1]
 templ_model <- file_path_sans_ext(basename(templ_model_path))
@@ -369,12 +370,12 @@ simharvs <- select(daily_sim_outputs, ID, SimHarvestDate) %>% filter(!is.na(SimH
 simdates <- left_join(simsows, simmats, by = join_by(ID)) %>% left_join(simharvs, by = join_by(ID))
 daily_sim_outputs <- select(daily_sim_outputs, -SimSowDate, -SimMatDate, -SimHarvestDate)
 
-# Trim season (daily_sim_outputs) to two weeks before planting and two weeks after death / harvest
-if(no_trim){ #if you don't want to trim to two weeks
+# Trim season (daily_sim_outputs) to buffer duration before planting and after death / harvest
+if(no_trim){ #if you don't want to trim outputs
   simstartend <- select(daily_sim_outputs, ID, Date) %>% group_by(ID) %>% summarize(StartDate = min(Date), EndDate = max(Date)) 
   simdates <- left_join(simstartend, simdates) %>% select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
-} else { # trim outputs to two weeks either side of planting and harvest
-  simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% weeks(2), EndDate = date(SimHarvestDate) %m+% weeks(2)) %>%
+} else { # trim outputs to buffer duration on either side of planting and harvest
+  simdates <- simdates %>% mutate(StartDate = date(SimSowDate) %m-% days(buffer_val), EndDate = date(SimHarvestDate) %m+% days(buffer_val)) %>%
     select(ID, StartDate, SimSowDate, SimMatDate, SimHarvestDate, EndDate)
 }
 daily_sim_outputs <- group_by(daily_sim_outputs, ID) %>% left_join(select(simdates,ID, StartDate, EndDate), by = join_by(ID)) %>%
@@ -417,18 +418,12 @@ period_key <- daily_sim_outputs %>% ungroup() %>%
   group_by(Period) %>%
   summarise(
     Label                   = first(PhaseName),
-    `APSIM Phases Included` = paste(PhaseName, collapse = " → "),
+    `APSIM Phases Included` = paste(PhaseName, collapse = " & "),
     `Original Periods`      = paste(Period,    collapse = ", "),
     .groups = "drop"
   ) %>% ungroup() %>%
   mutate(
     Period = as.character(Period)
-    # Notes = case_match(
-    #   Period,
-    #   min(Period) ~ ifelse(no_trim, "pre-planting period", "includes two weeks pre-planting"),
-    #   max(Period) ~ ifelse(no_trim, "post-harvest period", "includes two weeks post-harvest"),
-    #   .default = NA_character_
-    # )
   ) %>%
   select(Period, Label, `APSIM Phases Included`, `Original Periods`) %>%
   arrange(as.numeric(Period))
