@@ -236,24 +236,28 @@ ui <- dashboardPage(
                   downloadButton("downloadData", "Download Results")
                 )
               ),
-              bsCollapse(
-                id = "advanced_controls_panel",
-                open = NULL,
-                bsCollapsePanel(
-                  title = "Advanced Controls",
-                  
-                  numericInput("buffer_val",
-                               tagList(
-                                 "Include Buffer Period Before and After Crop Development (days)", 
-                                 shiny::span(icon("info-circle"), id = "tip_buffer")
-                               ), 
-                               value = 0, min = 0, max = 30, width = '50%'),
-                  checkboxInput("no_trim", 
-                                tagList(
-                                  "Do Not Trim Sim Outputs", 
-                                  shiny::span(icon("info-circle"), id = "tip_no_trim")
-                                ), 
-                                value = FALSE)
+              fluidRow(
+                box(
+                  bsCollapse(
+                    id = "advanced_controls_panel",
+                    open = NULL,
+                    bsCollapsePanel(
+                      title = "Advanced Controls",
+                      
+                      numericInput("buffer_val",
+                                   tagList(
+                                     "Include Buffer Period Before and After Crop Development (days)", 
+                                     shiny::span(icon("info-circle"), id = "tip_buffer")
+                                   ), 
+                                   value = 0, min = 0, max = 30),
+                      checkboxInput("no_trim", 
+                                    tagList(
+                                      "Do Not Trim Sim Outputs", 
+                                      shiny::span(icon("info-circle"), id = "tip_no_trim")
+                                    ), 
+                                    value = FALSE)
+                    )
+                  )
                 )
               )
               ),
@@ -263,7 +267,7 @@ ui <- dashboardPage(
               bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to the duration of the crop's development, plus the optional buffer. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body")),
               bsTooltip("tip_buffer", "Here you can set an optional buffer which will extend the first and last seasonal periods to capture environmental conditions before planting and after harvest respectively. In most APSIM developmental models, the first and last periods of development will otherwise last a single day.", "right", options = list(container = "body"))
               ),
-    ###build gridded input file UI -----------
+    ### build gridded input file UI -----------
     tabItem(tabName = "build_input",
             fluidPage(
               h3("Build a Gridded Input File"),
@@ -362,24 +366,25 @@ ui <- dashboardPage(
               DTOutput("grid_input_preview")
             )
     ),
-    ###config periods UI -----
+    ### config periods UI -----
     tabItem(tabName = "config_periods",
             fluidPage(
               h3("Configure Phenological Periods"),
               p(
-                "Here you can rename each APSIM phenological period and optionally merge",
-                "any set of periods into a single combined period.",
-                "Changes take effect when you click 'Apply Configuration'."
+                "Here you can choose to rename or merge phenological periods. When one or 
+                more periods are merged their durations are combined and associated seasonal covariates
+                are recalculated. Changes take effect when you click 'Apply Configuration'."
               ),
               p(
-                "Type a custom label in the 'Custom Name' column. Leave a cell blank to 
-                keep the default APSIM phase name."
+                "On a fresh analysis, the 'Periods' of the crop's development will correspond directly with the
+                'Phases' of development given by the APSIM crop model. You may use the 'Custom Label' 
+                column to relabel any of these Periods, or leave a cell blank to keep the default APSIM phase name."
               ),
               p(
-                " Assign the same 'Merge Group' number to all periods you want to combine.",
-                " Periods with unique or blank merge group values are kept as-is.",
-                " Accumulation variables (AccRain, AccTT, AccEmTT, Duration)",
-                " are summed within a merge group; all other variables are averaged."
+                "Assign the same 'Merge Group' number to all periods you want to combine. Periods with 
+                unique or blank merge group values are kept as-is. Accumulation variables 
+                (AccRain, AccTT, AccEmTT, Duration) are summed within a merge group; all other 
+                variables are averaged."
               ),
               
               # ── Action buttons ──────────────────────────────────────────────────────
@@ -1390,7 +1395,7 @@ server <- function(input, output, session) {
     )
   }
 
-  ### recalculate GDD ------
+    ### recalculate GDD ------
   observeEvent({
     input$recalc_GDD
   }, {
@@ -1441,9 +1446,9 @@ server <- function(input, output, session) {
     }
   })
   
-  # Build Gridded Input File --------
+# Build Gridded Input File --------
   
-  ## helper: generate grid points from two corners and spacing in km ----
+  ## generate grid points from two corners and spacing in km ----
   make_grid <- function(lat_a, lon_a, lat_b, lon_b, spacing_km) {
     lat_min <- min(lat_a, lat_b)
     lat_max <- max(lat_a, lat_b)
@@ -1460,7 +1465,7 @@ server <- function(input, output, session) {
     expand.grid(Latitude = round(lats, 4), Longitude = round(lons, 4))
   }
   
-  ## helper: generate planting dates from range and interval ----
+  ## generate planting dates from range and interval ----
   make_planting_dates <- function(start_date, end_date,
                                   step_days,
                                   year_start, year_end) {
@@ -1479,14 +1484,14 @@ server <- function(input, output, session) {
     )
   }
   
-  ## helper: parse genetics input string ----
+  ## parse genetics input string ----
   parse_genetics <- function(genetics_str) {
     vals <- trimws(strsplit(genetics_str, ",")[[1]])
     vals <- vals[nchar(vals) > 0]
     vals
   }
   
-  ## reactive: build the full grid input tibble ----
+  ## build the full grid input tibble ----
   grid_input_data <- reactive({
     req(input$cornerA_lat, input$cornerA_long,
         input$cornerB_lat, input$cornerB_long,
@@ -1587,9 +1592,9 @@ server <- function(input, output, session) {
   )
   
   
-  # Configure Periods ------
+# Configure Periods ------
   
-  ## helper: read current UI inputs into a config tibble ----
+  ## read current UI inputs into a config tibble ----
   read_period_config <- function(pk, input) {
     tibble(
       Period     = as.character(pk$Period),
@@ -1607,7 +1612,7 @@ server <- function(input, output, session) {
     )
   }
   
-  ## helper: build a default config from raw_period_key ----
+  ## build a default config from raw_period_key ----
   default_config <- function(pk) {
     tibble(
       Period     = as.character(pk$Period),
@@ -1617,7 +1622,7 @@ server <- function(input, output, session) {
     )
   }
   
-  ## helper: build period_key table from a config tibble ----
+  ## build period_key table from a config tibble ----
   build_period_key <- function(new_config) {
     new_config %>%
       group_by(MergeGroup) %>%
@@ -1632,7 +1637,7 @@ server <- function(input, output, session) {
       arrange(as.numeric(Period))
   }
   
-  ## helper: build seasonal_data, final_x, and period_key from daily_sim_outputs ----
+  ## build seasonal_data, final_x, and period_key from daily_sim_outputs ----
   build_period_outputs <- function(daily_sim_outputs, new_config, trial_info) {
     
     RESERVE_VARS <- c("AccRain", "AccTT", "AccEmTT", "Duration", "Period_Start_Date", 
@@ -1813,7 +1818,7 @@ server <- function(input, output, session) {
      datatable(rdata,
                escape  = FALSE,
                class   = "compact stripe",
-               options = list(scrollX = TRUE))
+               options = list(scrollX = TRUE, paging = FALSE, searching = FALSE))
    })
   
   
@@ -1886,7 +1891,7 @@ server <- function(input, output, session) {
   )
   
   
-  # Seasonal Heatmaps ----  
+# Seasonal Heatmaps ----  
   
   season_heatmap_plot <- reactiveVal(NULL)
   season_heatmap_matrix <- reactiveVal(NULL)
@@ -2110,7 +2115,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # View Map ----
+# View Map ----
   output$map <- renderLeaflet({
     req(analysisDone())
     locs_df <- select(trial_info, Site, Latitude, Longitude) %>% distinct()
@@ -2123,8 +2128,7 @@ server <- function(input, output, session) {
       )
   })
   
-  # Trial Comparisons ----  
-  # Trial Comparisons ----
+# Trial Comparisons ----
   corr_data     <- reactiveVal(list())   # heavy stats output (no plotting)
   heatmap_state <- reactiveVal(list())   # p3 (pheatmap obj) + pdend
   corr_results  <- reactiveVal(list())
@@ -2688,7 +2692,7 @@ server <- function(input, output, session) {
     }
   )
 
-## function to create seasonal comparison report ----------
+  ## function to create seasonal comparison report ----------
 
   make_vardates <- function(){
     
@@ -2739,7 +2743,7 @@ server <- function(input, output, session) {
   }
   
 
-## download comp report -------
+  ## download comp report -------
   output$download_vardates <- downloadHandler(
     filename = function() {
       paste0("trial-comp_", input$trial_matSelect, "_", Sys.Date(),".csv")
@@ -2753,7 +2757,7 @@ server <- function(input, output, session) {
   
   
   
-  # TT / Precip Charts ----
+# TT / Precip Charts ----
   
   ## say current GDD values ----
 output$current_GDD_settings <- renderText({
@@ -2761,7 +2765,7 @@ output$current_GDD_settings <- renderText({
 })
   
   ## Site selections -------
-  ### site selection UIs ----
+    ### site selection UIs ----
   make_site_selector <- function(suffix) {
     renderUI({
       id_group   <- paste0("selectedSites", suffix)
@@ -2785,7 +2789,7 @@ output$current_GDD_settings <- renderText({
   output$siteSelectionUI_faceted <- make_site_selector("_faceted")
   output$siteSelectionUI_between <- make_site_selector("_between")
   
-  ### select all / unselect all ----  
+    ### select all / unselect all ----  
   for (suffix in c("", "_faceted", "_between")) {
     local({
       sfx <- suffix
@@ -2799,7 +2803,7 @@ output$current_GDD_settings <- renderText({
   }
   
   ## TT/precip1 (comparison) ---- 
-  ### store the generated daily TT/precip plot for download ----
+    ### store the generated daily TT/precip plot for download ----
   comparison_plot_data <- reactiveVal()
   
   output$comparisonPlot <- renderPlot({
@@ -2850,7 +2854,7 @@ output$current_GDD_settings <- renderText({
   })
 
   
-  ### download handler for the daily TT/Precip plot ----
+    ### download handler for the daily TT/Precip plot ----
   output$downloadComparisonPlot <- downloadHandler(
     filename = function() {
       paste0("comparison-plot_", input$comparisonType, "_", Sys.Date(), ".png")
@@ -2863,7 +2867,7 @@ output$current_GDD_settings <- renderText({
   )
   
   ## TT/precip2 (faceted) ---- 
-  ### store the generated TT/precip 2 plot (faceted) for download ----
+    ### store the generated TT/precip 2 plot (faceted) for download ----
   faceted_comparison_plot_data <- reactiveVal()
   
   output$facetedComparisonPlot <- renderPlot({
@@ -2901,7 +2905,7 @@ output$current_GDD_settings <- renderText({
     input$ttp2_h
   })
   
-  ### download handler for TT/precip 2 plot ----
+    ### download handler for TT/precip 2 plot ----
   output$downloadFacetedComparisonPlot <- downloadHandler(
     filename = function() {
       paste0("faceted-comparison-plot_", Sys.Date(), ".png")
@@ -2914,7 +2918,7 @@ output$current_GDD_settings <- renderText({
   )  
   
   ## TT/precip3 (between) ---- 
-  ### store the generated TT/precip 3 plot (between) for download ----
+    ### store the generated TT/precip 3 plot (between) for download ----
   between_sites_plot_data <- reactiveVal()
   
   output$plotBetweenSites <- renderPlot({
@@ -2952,7 +2956,7 @@ output$current_GDD_settings <- renderText({
     input$ttp3_h
   })
   
-  ### download handler for TT/precip 3 plot -----
+    ### download handler for TT/precip 3 plot -----
   output$downloadBetweenSitesPlot <- downloadHandler(
     filename = function() {
       paste0("between-sites-plot_", Sys.Date(), ".png")
@@ -2964,9 +2968,7 @@ output$current_GDD_settings <- renderText({
     }
   )
 
-# Sheila's Plots -----------
-
-## Timeline Plot -----------
+# Timeline Plot -----------
 
   observe({
     req(analysisDone())
@@ -2985,7 +2987,7 @@ output$current_GDD_settings <- renderText({
     
   })
   
-### select year -------
+  ## select year -------
   output$timeline_yearSelectUI <- renderUI({
     req(analysisDone())
     gen_choices <- c(sort(unique(trial_info$Year)), "ALL")
@@ -2993,7 +2995,7 @@ output$current_GDD_settings <- renderText({
                 choices = gen_choices, selected = gen_choices[1])
   })
 
-### process plot data ----
+  ## process plot data ----
   stage_data <- reactive({
     req(analysisDone())
     
@@ -3036,7 +3038,7 @@ output$current_GDD_settings <- renderText({
       )
   })
   
-  ### render timeline plot -----
+    ### render timeline plot -----
   timeline_plot_obj <- reactive({
     req(input$timeline_yearSelect)
     req(input$timeline_cex)
@@ -3142,7 +3144,7 @@ output$current_GDD_settings <- renderText({
     input$timeline_h
   })
   
-  ### download timeline plot ---------
+    ### download timeline plot ---------
   output$download_timeline_plot <- downloadHandler(
     filename = function() {
       paste0("development-timeline-plot", Sys.Date(), ".png")

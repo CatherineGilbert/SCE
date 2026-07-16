@@ -1,7 +1,3 @@
-* fixed the UI on the latitude and longitude boxes in "create gridded inputs"
-* added advanced controls tab, which is a work in progress
-* changed buffer from two weeks default to something customizable
-
 - maybe do something with the envirotyping stuff in the testing script?? but who knows how that would be integrated. 
   - create a section that says "season", move current season sim tab and season heatmap tab there
   - move dendro, PCA, and PCA-colored map into new page that tabs out from under the seasonal similarity matrix tab
@@ -22,9 +18,6 @@
   - maybe add the I lines on the timeline back in, so people can see start and end in planting and harvest?
   - figure out how I want to be aggregating this data
   - make it so when you mouse over a point it tells you the date. 
-  
-- create gridded inputs page
-  - add explanatory text to this page
 
 - soils
   - rerun soils with rounded coordinates if they fail a first time?
@@ -47,13 +40,13 @@
   - fix text on the "configure pheno periods" page
     ??? have the period_key creation read phases from the APSIM model internals directly rather than infer them from the outputs ??? these values aren't stored in the template simulations unfortunately
   - have the choice of what variables are (mean / sum / max / min) be something that can be changed in the interface, have the summed variables from the tempate files be recognized as summed by default
+  - period should be number-sorted on table
   
 - seasonal similarity matrix page
   - ???? please fix the issue where the where the first maturity's seasonal heatmap of the soybean example input doesn't display
   - add search bar to seasonal covariates selector
   - add loading symbols for graphs
   - add error message when graphs can't load because only a single record is being used
-  - when matrices are downloaded, have them have columns corresponding to the columns of the nametag (check for both seasonal_heatmaps and seasonal similarity pages)
   - ??? a PCA of some kind?
   - add button to cluster or uncluster heatmap
   

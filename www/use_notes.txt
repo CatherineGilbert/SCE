@@ -75,3 +75,8 @@ docker run -p 3838:3838 your_image_name
 # 3. Starting the app from SSH into the instance.  
   ssh -i  SCEKeyPair.pem ubuntu@141.142.219.133
   ./start-shiny-app.sh
+
+
+
+(contents of start-shiny-app.sh)
+
