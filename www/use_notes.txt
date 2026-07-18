@@ -52,7 +52,11 @@ get_pkgs_sysreqs(c("shiny",
 "here", 
 "tools", 
 "parallel",
-"leaflet"), "ubuntu", 24.04) %>% print(n = 100)
+"leaflet",
+"CFtime",
+"RNetCDF",
+"gifski",
+"arrow"), "ubuntu", 24.04) %>% print(n = 100)
 
 # Build the docker image from the docker hub terminal by navigating to the directory and using 
 docker build -t sce:update .

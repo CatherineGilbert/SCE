@@ -1,7 +1,13 @@
+* simplified the way that the parameter files are written and read
+* added ability to get data from future years
+* added clustering on seasonal heatmap and trial similarity matrix
+* changed the wording on the adjust label size ui
+
+!!! where the hell did 'result' go?
+
 - maybe do something with the envirotyping stuff in the testing script?? but who knows how that would be integrated. 
   - create a section that says "season", move current season sim tab and season heatmap tab there
   - move dendro, PCA, and PCA-colored map into new page that tabs out from under the seasonal similarity matrix tab
-
 
 !! fix date parsing on inputs and make sure they're correctly documented
 
@@ -12,6 +18,10 @@
 - fix the issue with working directory in the app. currently reloading it seems to break things
   
 - timeline plots
+  - add extra layer of y labels on side for year when more than one year is selected. 
+  
+  - separate into faceted plots on same axis, use horizontal lines for year
+  
   - ability to filter year, maturity group, site
   - add text to timeline plots
   - change the timeline plots to use maturity group instead of "genetics"
@@ -48,9 +58,7 @@
   - add loading symbols for graphs
   - add error message when graphs can't load because only a single record is being used
   - ??? a PCA of some kind?
-  - add button to cluster or uncluster heatmap
   
 - seasonal heatmaps page
   - fix redundant text
-  - add button to cluster or uncluster heatmap
   

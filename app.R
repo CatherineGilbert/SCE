@@ -198,7 +198,7 @@ ui <- dashboardPage(
                     )
                   ),
                   selectInput(
-                    "weatherAquis",
+                    "weatherAcquis",
                     "Select Weather Acquisition:",
                     choices = c(
                       "NASAPOWER" = "NASAPOWER",
@@ -207,7 +207,7 @@ ui <- dashboardPage(
                     )
                   ),
                   selectInput(
-                    "soilAquis",
+                    "soilAcquis",
                     "Select Soil Acquisition:",
                     choices = c("ISRIC" = "ISRIC",
                                 "SSURGO (USA only)" = "SSURGO", 
@@ -505,7 +505,7 @@ ui <- dashboardPage(
             and trial. If sites are chosen this will be the means of the same values for each site."
           ),
           p("The X axis of the plot is the developmental period and the Y axis of the plot is the trial/site. 
-            Trials are labeled in the format '[Trial ID]: [Site Name] [Date Planted]'. [Genetic Maturity] is appended 
+            Trials are labeled in the format 'TrialID: [SiteName DatePlanted]'. Genetic maturity is appended 
             if you are viewing all maturities at once. Trials/sites are ordered on the Y axis according to hierarchical
             clustering of the chosen variable, as indicated by the dendrogram on the plot's left margin. 
             Cells are colored by value, red/high to blue/low. The coloring is scaled relative to the other
@@ -522,7 +522,7 @@ ui <- dashboardPage(
             column(width = 2,
                    numericInput(
                      inputId = "season_cex",
-                     label = "Adjust Label Size",
+                     label = "Label Size",
                      value = 16,        
                      min = 0,          
                      max = 50,          
@@ -537,7 +537,10 @@ ui <- dashboardPage(
                      min = 0,          
                      max = 10000,          
                      step = 100        
-                   ))
+                   )),
+            column(width = 1,
+                   checkboxInput(inputId = "season_clust", label = "Cluster Rows", value = TRUE)
+            )
           ),
           uiOutput("season_heatmapPlotUI"),
           downloadButton("season_downloadHeatmap", "Download Seasonal Heatmap (.png)"),
@@ -556,7 +559,7 @@ ui <- dashboardPage(
           column(width = 3,
             numericInput(
               inputId = "timeline_cex",
-              label = "Adjust Label Size",
+              label = "Label Size",
               value = 16,        
               min = 0,          
               max = 50,          
@@ -609,7 +612,7 @@ ui <- dashboardPage(
             column(width = 3,
                    numericInput(
                      inputId = "trial_cex",
-                     label = "Adjust Label Size",
+                     label = "Label Size",
                      value = 16,        
                      min = 0,          
                      max = 50,          
@@ -624,7 +627,10 @@ ui <- dashboardPage(
                      min = 0,          
                      max = 10000,          
                      step = 100        
-                   ))
+                   )),
+            column(width = 2,
+                   checkboxInput(inputId = "trial_clust", label = "Cluster Cols/Rows", value = TRUE)
+            )
           ),
           withSpinner(uiOutput("comp_heatmapPlotUI"), type = 4),
           downloadButton(
@@ -640,7 +646,7 @@ ui <- dashboardPage(
           p("
             Above is a heatmap showing a similarity matrix created from the correlation of trial seasonal profiles. 
             The matrix is symmetrical: the columns are labeled below with the trial ID, and the rows are labeled to the 
-            right in the format '[Trial ID:] [Site Name] [Date Planted]', followed by '[Genetic Maturity]' 
+            right in the format 'TrialID: [SiteName DatePlanted]', followed by genetic maturity 
             if more than one maturity is being viewed at once. 
           "),
           h3("Dendrogram of Seasonal Similarities"),
@@ -651,7 +657,7 @@ ui <- dashboardPage(
             column(width = 3,
                    numericInput(
                      inputId = "dendro_cex",
-                     label = "Adjust Label Size",
+                     label = "Label Size",
                      value = 1,        
                      min = 0,          
                      max = 2,          
@@ -838,7 +844,7 @@ ui <- dashboardPage(
                   column(width = 3, 
                     numericInput(
                       inputId = "ttpr2_cex",
-                      label = "Adjust Label Size",
+                      label = "Label Size",
                       value = 5,        
                       min = 0,          
                       max = 50,          
@@ -878,7 +884,7 @@ ui <- dashboardPage(
                   column(width = 3, 
                     numericInput(
                       inputId = "ttpr3_cex",
-                      label = "Adjust Label Size",
+                      label = "Label Size",
                       value = 5,        
                       min = 0,          
                       max = 50,          
@@ -1020,20 +1026,16 @@ server <- function(input, output, session) {
   })
   
   ## set parameters -------
-  weather_aquis <- reactiveVal("NASAPOWER")
-  soil_aquis <- reactiveVal("SSURGO")
-  mat_handling <- reactiveVal("Soy")
-  no_trim <- reactiveVal("FALSE")
-  buffer_val <- reactiveVal(0)
   
-  for (par in c("matType","soilAquis","weatherAquis","no_trim","buffer_val")) {
-    local({
-      p <- par
-      rv <- switch(p, matType=mat_handling, soilAquis=soil_aquis,
-                   weatherAquis=weather_aquis, no_trim=no_trim, buffer_val=buffer_val)
-      observeEvent(input[[p]], rv(input[[p]]))
-    })
-  }
+  params <- reactive({
+    list(
+      mat_handling = input$matType,
+      soil_acquis = input$soilAcquis,
+      weather_acquis = input$weatherAcquis,
+      no_trim = input$no_trim,
+      buffer_val = input$buffer_val
+    )
+  })
   
   ## set progress counters -------
   nloc <- reactiveVal(0)
@@ -1107,12 +1109,7 @@ server <- function(input, output, session) {
     }
     
     #set parameters
-    parms <- tibble(mat_handling = mat_handling(), 
-                    weather_aquis = weather_aquis(), 
-                    soil_aquis = soil_aquis(),
-                    no_trim = no_trim(), 
-                    buffer_val = buffer_val())
-    write_csv(parms, paste0(codes_dir,"/output_files/parameters.csv"))
+    write_rds(params(), paste0(codes_dir,"/output_files/parameters.rds"))
     
     ### upload template model -----
     
@@ -1327,8 +1324,8 @@ server <- function(input, output, session) {
     
         
     nametag <<- select(final_x(), ID, Site, PlantingDate_Sim, Mat) %>% 
-      mutate(tag = paste0(ID,": ", Site, " ", PlantingDate_Sim),
-             mtag = paste0(ID,": ", Site, " ", PlantingDate_Sim, " ", Mat))
+      mutate(tag = paste0(ID," [", Site, " ", PlantingDate_Sim,"]"),
+             mtag = paste0(ID," [", Site, " ", PlantingDate_Sim, " ", Mat,"]"))
     
     ### refresh progress counters again ----
     nloc(nrow(distinct(select(trial_info, Latitude, Longitude))))
@@ -1922,6 +1919,7 @@ server <- function(input, output, session) {
       matsel <- input$season_matSelect 
       var <- input$season_varSelect
       heatcex <- input$season_cex
+      heatclust <- input$season_clust
       
       #create base matrix from final_x, filter to maturity selection if necessary
       if(matsel == "ALL"){var_mat <- final_x()} else {var_mat <- filter(final_x(), Mat == matsel)}
@@ -1966,6 +1964,7 @@ server <- function(input, output, session) {
       colnames(var_mat) <- col_labels
       
       #print(var_mat)
+      print(heatclust)
       
       if (all(var_mat == var_mat[1,1], na.rm = T)){  #check if matrix is constant
         heatmap <- pheatmap(var_mat, angle_col = 45,
@@ -1980,7 +1979,7 @@ server <- function(input, output, session) {
                             number_format = "%.2f", 
                             legend = F,
                             cluster_cols = F,
-                            cluster_rows = T,
+                            cluster_rows = heatclust,
                             main = paste0(paste1,var,paste2,matsel,")"),
                             silent = TRUE)
       } else {
@@ -1996,7 +1995,7 @@ server <- function(input, output, session) {
                             number_format = "%.2f", 
                             legend = F,
                             cluster_cols = F,
-                            cluster_rows = T,
+                            cluster_rows = heatclust,
                             main = paste0(paste1,var,paste2,matsel,")"),
                             silent = TRUE)
       }
@@ -2239,9 +2238,6 @@ server <- function(input, output, session) {
       scale() %>% as.data.frame()
     
     id_list <- final_dt$ID
-    
-    print(scfinal_dt)
-    
     id_cor <- cor(t(scfinal_dt), use = "pairwise.complete.obs")
     
     if (matsel == "ALL") {
@@ -2314,7 +2310,7 @@ server <- function(input, output, session) {
   
   ## build trial comp heatmap plot -------
   
-  build_heatmap <- function(data, trialcex) {
+  build_heatmap <- function(data, trialcex, trialclust) {
     req(data$id_cor)
     id_cor   <- data$id_cor
     tagnames <- data$tagnames
@@ -2323,7 +2319,7 @@ server <- function(input, output, session) {
     
     if (nrow(id_cor) > 2 & !any(is.na(id_cor))) {
 
-      cluster_arg <- if (!is.null(hc)) hc else TRUE
+      cluster_arg <- (!is.null(hc) & trialclust)
       
       if (nrow(id_cor) < 100) {
         p3 <- pheatmap(id_cor,
@@ -2388,10 +2384,11 @@ server <- function(input, output, session) {
   observeEvent({
     corr_data()
     input$trial_cex
+    input$trial_clust
   }, {
     req(length(corr_data()) > 0)
     tryCatch({
-      heatmap_state(build_heatmap(corr_data(), input$trial_cex))
+      heatmap_state(build_heatmap(corr_data(), input$trial_cex, input$trial_clust))
     }, error = function(e) {
       message("Error when building heatmap: ", e$message)
     })
@@ -3094,10 +3091,11 @@ output$current_GDD_settings <- renderText({
     
     ggplot(rsl_p2, aes(x = Date_plot, y = y_pos)) +
       # Season span bars
-      geom_errorbarh(
+      geom_errorbar(
         aes(xmin = PlantingDate_plot, xmax = HarvestDate_plot, color = Genetics),
         height = 0,
-        position = position_dodge(width = 1)
+        position = position_dodge(width = 1),
+        orientation = "y", 
       ) +
       # Stage points
       geom_point(

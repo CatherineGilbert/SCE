@@ -10,7 +10,9 @@ library(spData)
 library(xml2)
 library(here)
 library(tools)
-library(parallel)  # For parallel computing
+library(parallel) 
+library(climateR)
+library(terra)
 Sys.setlocale("LC_ALL", "English_United States")
 start_time <- Sys.time() # track running time
 print("Starting ...")
@@ -21,23 +23,21 @@ if (FALSE){
  setwd(output_dir) 
  codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCE"
  mat_handling <- "Soy" 
- weather_aquis <- "NASAPOWER"
- soil_aquis <- "ISRIC"
+ weather_acquis <- "NASAPOWER"
+ soil_acquis <- "ISRIC"
  templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCE/template_models/Soy_Template.apsimx"
  templ_model <- file_path_sans_ext(basename(templ_model_path))
- trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/abc_test.csv") 
+ trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/future_test.csv") 
+ no_trim <- F
+ buffer_val <- 0
 }
 
 codes_dir <- here() #where the folder with the codes is
 output_dir <- paste0(codes_dir,"/output_files") #folder where the output goes
 setwd(output_dir) 
 
-parms <- read_csv("parameters.csv", progress = F, show_col_types = F) #pull trial parameters set in app, then set here
-mat_handling <- pull(parms, mat_handling)
-weather_aquis <- pull(parms, weather_aquis)
-soil_aquis <- pull(parms, soil_aquis)
-no_trim <- pull(parms, no_trim)
-buffer_val <- pull(parms, buffer_val)
+parms <- readRDS("parameters.rds") #pull trial parameters set in app, then set here
+list2env(parms, envir = environment())
 
 templ_model_path <- list.files(paste0(codes_dir,"/input"), pattern = ".apsimx", full.names = TRUE)[1]
 templ_model <- file_path_sans_ext(basename(templ_model_path))
@@ -50,19 +50,15 @@ trials_df <- mutate(trials_df, ID = row_number()) %>% rename(X = Longitude, Y = 
 locs_df <- select(trials_df, X, Y) %>% distinct() %>% mutate(ID_Loc = row_number())
 trials_df <- left_join(trials_df, locs_df, by = join_by(X,Y))
 
-#require year as part of the input
-prev_year <- as.numeric(substr(Sys.time(),1,4)) - 1
-yesterday <- as.character(today() - days(1))
-
+#date handling
 trials_df <- suppressWarnings(mutate(trials_df, Year = as.numeric(str_extract(Planting, "\\b\\d{4}\\b"))))
 trials_df <- suppressWarnings(mutate(trials_df, PlantingDate = as_date(as.character(trials_df$Planting), format = "%Y-%m-%d")))
 trials_df <- mutate(trials_df, 
   Year = ifelse(is.na(PlantingDate), Year, format(PlantingDate,"%Y")), 
-  Year = ifelse(is.na(Year), prev_year, Year), #if no year, use last year with full data
+  Year = ifelse(is.na(Year), year(today()) - 1, Year), #if no year, use last year with full data
   # if no planting date, use beginning and end of year as boundaries
   sim_start = if_else(is.na(PlantingDate), as_date(paste0(as.character(Year),"-01-01")), as_date(PlantingDate %m-% months(1))), 
   sim_end = if_else(is.na(PlantingDate), as_date(paste0(as.character(as.numeric(Year)+1),"-12-31")), as_date(PlantingDate %m+% months(24))))
-trials_df <- trials_df %>% group_by(ID) %>% mutate(sim_end = min(sim_end, as_date(yesterday))) %>% ungroup()
 
 print("Handle Crop Maturities ...")
 # Get what maturities of cultivar we'll use
@@ -104,43 +100,144 @@ check_time1 <- Sys.time()
 
 print("Get Weather Data ...")
 # For each location, collect weather data for years from minimum (first requested year, ten years before now) to most recent full year
-locyear_df <- trials_df %>% select(X,Y,ID_Loc, sim_start) %>% 
-  mutate(first_year = year(sim_start)) %>% 
-  select(-sim_start) %>% unique() %>% group_by(ID_Loc,X,Y) %>%
-  summarize(first_year = min(first_year)) %>%
-  mutate(first_year = min(first_year, prev_year - 10)) 
+
+locyear_df <- trials_df %>% select(X,Y, ID_Loc, sim_start, sim_end) %>% unique() %>% 
+  # set bounds for past and future date collection ranges. these are separated. 
+  mutate(historical_met_start = if_else(sim_start < today(), sim_start, NA), historical_met_end = if_else(sim_end < today(), sim_end, NA), 
+         future_met_start = if_else(sim_start > today(), sim_start, NA), future_met_end = if_else(sim_end > today(), sim_end, NA)) %>%
+  # close bounds in case the ranges overlap the present day
+  mutate(historical_met_end = if_else(!is.na(historical_met_start) & is.na(historical_met_end), today() - days(1), historical_met_end),
+         future_met_start = if_else(!is.na(future_met_end) & is.na(future_met_start), today(), future_met_start)) %>%
+  # summarize these for the ranges per loc_ID we'll collect
+  select(-sim_start, -sim_end) %>% unique() %>% group_by(ID_Loc,X,Y) %>%
+  summarize(historical_met_start = min(historical_met_start, na.rm = T), 
+            historical_met_end = max(historical_met_end, na.rm = T), 
+            future_met_start = min(future_met_start, na.rm = T), 
+            future_met_end = max(future_met_end, na.rm = T), .groups = "drop_last") %>%
+  # and make sure we have at least ten years of history that the "typical season" stuff for the TT/precip plots can be created
+  mutate(historical_met_start = min(historical_met_start, today() %m-% years(10), na.rm = T), 
+         historical_met_end = max(historical_met_end, today() - days(1), na.rm = T)) %>%
+  mutate(collection_span = case_when(
+    !is.na(historical_met_start) & is.na(future_met_start)  ~ "historical",
+    !is.na(historical_met_start) & !is.na(future_met_start)  ~ "both",
+    #this one shouldn't actually be possible, given that ten years historical data is generated for each loc_id, but i'm leaving it here
+    is.na(historical_met_start) & !is.na(future_met_start)  ~ "future" 
+  ))
+
+
+#clim_model_catalog <- climateR::catalog
+#huh <- climater_filter(model = "CCSM4", scenario = "rcp85", ensemble = "r2i1p1")
+
+#future weather data acquisition function
+get_maca_apsim_met <- function(locyear_tmp, locyear_sv_tmp, startDate, endDate, model, scenario) {
+  out <- getMACA(AOI = locyear_sv_tmp, varname = c("rsds","tasmax","tasmin","pr"), startDate = startDate,
+                 endDate = endDate, model = model, timeRes = "day",  scenario = scenario, verbose = FALSE)
+  names(out) <- sub("^(pr|rsds|tasmin|tasmax).*", "\\1", names(out)) #flexible rename since the names change and also aren't returned in a set order
+  out <- dplyr::rename(out, rain = pr, maxt = tasmax, mint = tasmin, radn = rsds)
+  new_df <- dplyr::mutate(out, year = year(date), #convert date to year and yday
+                   day = lubridate::yday(date), 
+                   maxt = round(maxt - 273.15, 2), #convert kelvin to celsius
+                   mint = round(mint - 273.15, 2), 
+                   radn = round(radn * 0.0036, 2),
+                   rain = round(rain, 2)) #convert watt-hours to megajoules / m2
+  new_df <- as.data.frame(dplyr::select(new_df, c("year", "day", "radn", "maxt", "mint", "rain")))
+  fmet <- as_apsim_met(
+    data.frame(new_df),
+    filename = paste0("loc_", locyear_tmp$ID_Loc,".met"),
+    site = locyear_tmp$ID_Loc,
+    latitude = locyear_tmp$Y,
+    longitude = locyear_tmp$X,
+    colnames = c("year", "day", "radn", "maxt", "mint", "rain"),
+    units = c("()", "()", "(MJ/m2/day)", "(oC)", "(oC)", "(mm)"),
+    check = TRUE
+  )
+  return(fmet)
+}
+
+# merge_ranges <- function(df) {
+#   df %>%
+#     arrange(ID, start_date, end_date) %>%
+#     group_by(ID) %>%
+#     group_modify(~{
+#       x <- .x
+#       starts <- x$start_date
+#       ends   <- x$end_date
+#       out_start <- starts[1]
+#       out_end   <- ends[1]
+#       for(i in 2:nrow(x)){
+#         if(starts[i] <= out_end[length(out_end)]){
+#           # overlap
+#           out_end[length(out_end)] <- max(out_end[length(out_end)], ends[i])
+#         } else {
+#           # new interval
+#           out_start <- c(out_start, starts[i])
+#           out_end   <- c(out_end, ends[i])
+#           
+#         }
+#       }
+#       tibble(start_date = out_start,end_date = out_end)
+#     }) %>%
+#     ungroup()
+# }
 
 # Setup for parallel processing
 no_cores <- detectCores() - 2  # Reserve 2 cores for the system
 print(paste("Cores available:",no_cores))
 cl <- makeCluster(no_cores)
-clusterExport(cl, varlist = c("locyear_df","yesterday","get_daymet2_apsim_met",
-                              "get_power_apsim_met","get_chirps_apsim_met",
-                              "napad_apsim_met", "impute_apsim_met", "write_apsim_met",
-                              "prev_year","weather_aquis"), envir = environment())
-
+clusterExport(cl, varlist = c("locyear_df", "weather_acquis", "vect", 
+                              "get_daymet2_apsim_met", "get_power_apsim_met","get_chirps_apsim_met",
+                              "as_apsim_met", "napad_apsim_met", "impute_apsim_met", "write_apsim_met",
+                              "getMACA","get_maca_apsim_met","year","today"
+                              ), envir = environment())
 
 # Ensure the directory exists for weather data
-
 unlink("met",recursive = T) ; dir.create("met")
 
 parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
   locyear_tmp <- locyear_df[idx, ]
-  try({ #no it doesn't work as a case statement, and no I don't know why. 
-    if (weather_aquis == "DAYMET"){met_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
-                                     years = c(as.integer(locyear_tmp$first_year), as.integer(prev_year)))}
-    if (weather_aquis == "NASAPOWER"){met_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
-                        dates = c(paste0(locyear_tmp$first_year,"-01-01"), yesterday))}
-    if (weather_aquis == "CHIRPS"){met_tmp <- get_chirps_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
-                            dates = c(paste0(locyear_tmp$first_year,"-01-01"), yesterday))}
-    na_met_tmp <- tryCatch(napad_apsim_met(met_tmp), error = function(e) met_tmp)
-    imp_met_tmp <- tryCatch(impute_apsim_met(na_met_tmp), warning = function(w) na_met_tmp)
-    attr(imp_met_tmp, "site") <- attr(met_tmp, "site")
-    attr(imp_met_tmp, "latitude") <- attr(met_tmp, "latitude")
-    attr(imp_met_tmp, "longitude") <- attr(met_tmp, "longitude")
-    write_apsim_met(imp_met_tmp, wrt.dir = "met", paste0("loc_", locyear_tmp$ID_Loc, ".met"))
+  locyear_sv_tmp <- terra::vect(locyear_df[idx, ], geom = c("X", "Y"), crs = "EPSG:4326")
+  hmet_tmp <- NA
+  fmet_tmp <- NA
+  
+  if (locyear_tmp$collection_span %in% c("historical","both")){
+    tryCatch({ #no it doesn't work as a switch statement, and no I don't know why. 
+      if (weather_acquis == "DAYMET"){hmet_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
+                                          years = c(year(locyear_tmp$historical_met_start),    # prevent DAYMET from failing on the current year
+                                                min(year(locyear_tmp$historical_met_end), year(today()) - 1)))
+      }
+      if (weather_acquis == "NASAPOWER"){hmet_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+                          dates = as.character(c(max(locyear_tmp$historical_met_start, lubridate::as_date("1984-01-01")), 
+                                    locyear_tmp$historical_met_end)))
+      }
+      if (weather_acquis == "CHIRPS"){hmet_tmp <- get_chirps_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+                              # constrain CHIRPS dates to prevent errors
+                              dates = as.character(c(max(locyear_tmp$historical_met_start, lubridate::as_date("1981-01-01")),
+                                        min(locyear_tmp$historical_met_end, lubridate::floor_date(today(), unit = "years")))))
+      } 
+    })
+  }
+  
+  if (locyear_tmp$collection_span %in% c("future","both")) {
+    fmet_tmp <- get_maca_apsim_met(locyear_tmp, locyear_sv_tmp, 
+                                   startDate = locyear_tmp$future_met_start, 
+                                   endDate = locyear_tmp$future_met_end,
+                                   model = "CCSM4", scenario = "rcp45")
+  }
+  
+  switch(locyear_tmp$collection_span,
+         "historical" = met_tmp <- hmet_tmp,
+         "future" = met_tmp <- fmet_tmp,
+         "both" = met_tmp <- dplyr::bind_rows(hmet_tmp, fmet_tmp)
+  )
+  
+  na_met_tmp <- tryCatch(napad_apsim_met(met_tmp), error = function(e) met_tmp)
+  imp_met_tmp <- impute_apsim_met(na_met_tmp)
+  attr(imp_met_tmp, "site") <- attr(met_tmp, "site")
+  attr(imp_met_tmp, "latitude") <- attr(met_tmp, "latitude")
+  attr(imp_met_tmp, "longitude") <- attr(met_tmp, "longitude")
+  write_apsim_met(imp_met_tmp, wrt.dir = "met", paste0("loc_", locyear_tmp$ID_Loc, ".met"))
+
   })
-})
 
 check_time2 <- Sys.time() 
 
@@ -157,10 +254,10 @@ ids_needs_soil <- locs_df[locs_df$got_soil == F | is.na(locs_df$got_soil),]$ID_L
 for (id in ids_needs_soil){
   locs_tmp <- locs_df[locs_df$ID_Loc == id,]
   tryCatch({
-    if (soil_aquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)[[1]]}
-    if (soil_aquis == "ISRIC") {soil_profile_tmp <- get_isric_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
-    if (soil_aquis == "World Modeler") {soil_profile_tmp <- get_worldmodeler_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y))[["SoilName_1"]]}
-    if (soil_aquis == "SLGA") {soil_profile_tmp <- get_slga_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
+    if (soil_acquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)[[1]]}
+    if (soil_acquis == "ISRIC") {soil_profile_tmp <- get_isric_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
+    if (soil_acquis == "World Modeler") {soil_profile_tmp <- get_worldmodeler_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y))[["SoilName_1"]]}
+    if (soil_acquis == "SLGA") {soil_profile_tmp <- get_slga_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
     
     #check_apsimx_soil_profile(soil_profile_tmp)   #for debugging
     
@@ -427,7 +524,6 @@ period_key <- daily_sim_outputs %>% ungroup() %>%
   ) %>%
   select(Period, Label, `APSIM Phases Included`, `Original Periods`) %>%
   arrange(as.numeric(Period))
-
 
 # daily_sim_outputs <- daily_sim_outputs %>% left_join(select(trial_info, ID, MatDate_Sim, Planting)) %>% 
 #   mutate(Stage = case_match(
