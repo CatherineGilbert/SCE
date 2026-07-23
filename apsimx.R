@@ -27,7 +27,7 @@ if (FALSE){
  soil_acquis <- "ISRIC"
  templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCE/template_models/Soy_Template.apsimx"
  templ_model <- file_path_sans_ext(basename(templ_model_path))
- trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/future_test.csv") 
+ trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/abc_test.csv") 
  no_trim <- F
  buffer_val <- 0
 }
@@ -101,7 +101,7 @@ check_time1 <- Sys.time()
 print("Get Weather Data ...")
 # For each location, collect weather data for years from minimum (first requested year, ten years before now) to most recent full year
 
-locyear_df <- trials_df %>% select(X,Y, ID_Loc, sim_start, sim_end) %>% unique() %>% 
+locyear_df <- trials_df %>% select(X,Y, ID_Loc, sim_start, sim_end) %>% distinct() %>% 
   # set bounds for past and future date collection ranges. these are separated. 
   mutate(historical_met_start = if_else(sim_start < today(), sim_start, NA), historical_met_end = if_else(sim_end < today(), sim_end, NA), 
          future_met_start = if_else(sim_start > today(), sim_start, NA), future_met_end = if_else(sim_end > today(), sim_end, NA)) %>%
@@ -113,7 +113,8 @@ locyear_df <- trials_df %>% select(X,Y, ID_Loc, sim_start, sim_end) %>% unique()
   summarize(historical_met_start = min(historical_met_start, na.rm = T), 
             historical_met_end = max(historical_met_end, na.rm = T), 
             future_met_start = min(future_met_start, na.rm = T), 
-            future_met_end = max(future_met_end, na.rm = T), .groups = "drop_last") %>%
+            future_met_end = max(future_met_end, na.rm = T)) %>%
+  mutate(across(where(is.Date), ~replace_when(.x, is.infinite(.x) ~ NA))) %>% 
   # and make sure we have at least ten years of history that the "typical season" stuff for the TT/precip plots can be created
   mutate(historical_met_start = min(historical_met_start, today() %m-% years(10), na.rm = T), 
          historical_met_end = max(historical_met_end, today() - days(1), na.rm = T)) %>%
@@ -126,7 +127,7 @@ locyear_df <- trials_df %>% select(X,Y, ID_Loc, sim_start, sim_end) %>% unique()
 
 
 #clim_model_catalog <- climateR::catalog
-#huh <- climater_filter(model = "CCSM4", scenario = "rcp85", ensemble = "r2i1p1")
+#catalog_filtered <- climater_filter(model = "CCSM4", scenario = "rcp85", ensemble = "r2i1p1")
 
 #future weather data acquisition function
 get_maca_apsim_met <- function(locyear_tmp, locyear_sv_tmp, startDate, endDate, model, scenario) {
@@ -263,32 +264,41 @@ for (id in ids_needs_soil){
     
     horizon <- soil_profile_tmp$soil 
     
-    #create SWCON in SoilWater parameters
-    soilwat <- soilwat_parms() 
-    PO <- 1-horizon$BD/2.65
-    soilwat$SWCON <- (PO-horizon$DUL)/PO
-    soilwat$SWCON <- ifelse(soilwat$SWCON < 0, 0.001, soilwat$SWCON)
-    soilwat$Thickness <- horizon$Thickness 
-    soil_profile_tmp$soilwat <- soilwat
-    
-    #set initial water to reasonable values
-    initwat <- initialwater_parms() 
-    initwat$InitialValues <- horizon$DUL
-    initwat$Thickness <- horizon$Thickness
-    soil_profile_tmp$initialwater <- initwat
-    
-    #provide soil organic matter table if none exists
-    if (is.na(soil_profile_tmp[["soilorganicmatter"]])) {
-      soil_profile_tmp[["soilorganicmatter"]] <- soilorganicmatter_parms()
+    #create and fill soil water parameters table
+    soilwat_tmp <- soilwat_parms() 
+    if (!is.null(soil_profile_tmp$soilwat) & !all(is.na(soil_profile_tmp$soilwat))) {
+      soilwat_tmp[names(soil_profile_tmp$soilwat)] <- soil_profile_tmp$soilwat
     }
+    PO <- 1-horizon$BD/2.65 #generic soil bulk density constant
+    soilwat_tmp$SWCON <- (PO-horizon$DUL)/PO
+    soilwat_tmp$SWCON <- ifelse(soilwat_tmp$SWCON < 0, 0.001, soilwat_tmp$SWCON)
+    soilwat_tmp$Thickness <- horizon$Thickness 
+    soil_profile_tmp$soilwat <- soilwat_tmp
+    
+    #create and fill initial water parameters table
+    initwat_tmp <- initialwater_parms() 
+    if (!is.null(soil_profile_tmp$initialwater) & !all(is.na(soil_profile_tmp$initialwater))) {
+      initwat_tmp[names(soil_profile_tmp$initialwater)] <- soil_profile_tmp$initialwater
+    }
+    initwat_tmp$InitialValues <- horizon$DUL
+    initwat_tmp$Thickness <- horizon$Thickness
+    soil_profile_tmp$initialwater <- initwat_tmp
+    
+    #create and fill soil organic matter table
+    soilorganicmatter_tmp <- soilorganicmatter_parms()
+    if (!is.null(soil_profile_tmp$soilorganicmatter) & 
+        !all(is.na(soil_profile_tmp$soilorganicmatter))) {
+      soilorganicmatter_tmp[names(soil_profile_tmp$soilorganicmatter)] <- soil_profile_tmp$soilwat
+    }
+    soil_profile_tmp$soilorganicmatter <- soilorganicmatter_tmp
     
     #constrain minimum root weight
     given_rwt <- soil_profile_tmp[["soilorganicmatter"]]$RootWt
-    soil_profile_tmp[["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < 0.001, 0.001, given_rwt) 
+    soil_profile_tmp[["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < 0.001 | is.na(given_rwt), 0.001, given_rwt) 
     
     #constrain minimum soil organic carbon content
     given_oc <- soil_profile_tmp[["soil"]]$Carbon
-    soil_profile_tmp[["soil"]]$Carbon <- ifelse(given_oc < 0.001, 0.001, given_oc) 
+    soil_profile_tmp[["soil"]]$Carbon <- ifelse(given_oc < 0.001  | is.na(given_oc), 0.001, given_oc) 
     
     write_rds(soil_profile_tmp, paste0(output_dir,"/soils/soil_profile_",id,".rds"))
     
@@ -467,6 +477,9 @@ simharvs <- select(daily_sim_outputs, ID, SimHarvestDate) %>% filter(!is.na(SimH
 simdates <- left_join(simsows, simmats, by = join_by(ID)) %>% left_join(simharvs, by = join_by(ID))
 daily_sim_outputs <- select(daily_sim_outputs, -SimSowDate, -SimMatDate, -SimHarvestDate)
 
+# Get trial result
+res <- group_by(daily_sim_outputs, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
+
 # Trim season (daily_sim_outputs) to buffer duration before planting and after death / harvest
 if(no_trim){ #if you don't want to trim outputs
   simstartend <- select(daily_sim_outputs, ID, Date) %>% group_by(ID) %>% summarize(StartDate = min(Date), EndDate = max(Date)) 
@@ -481,7 +494,6 @@ daily_sim_outputs <- mutate(daily_sim_outputs, Date = as_date(Date))
 
 # Create trial_info from trial-specific information
 maxstage <- group_by(daily_sim_outputs, ID) %>% summarize(MaxStage = max(Stage)) #summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
-res <- group_by(daily_sim_outputs, ID) %>% filter(!is.na(Result)) %>% select(ID, Result)
 trial_info <- rename(trials_df, Latitude = Y, Longitude = X)
 trial_info <- trial_info %>% select(-sim_start, -sim_end) %>% 
   left_join(maxstage, by = join_by(ID)) %>% 
@@ -541,22 +553,6 @@ period_key <- daily_sim_outputs %>% ungroup() %>%
 #     "11" ~ "R8 & Post-harvest", #harvestripe + germinating
 #   )) %>% select(-MatDate_Sim) %>% 
 #   mutate(Period = factor(Period, ordered = T, levels = as.character(1:11)))
-
-# seasonal_data <- daily_sim_outputs %>% 
-#   group_by(Period, ID) %>% select(-any_of(c("Stage"))) %>% 
-#   summarize(across(where(is.numeric) & !c(DOY,AccEmTT), function(x){mean(x,na.omit=T)}), 
-#             AccRain = sum(Rain), 
-#             AccTT = sum(ThermalTime), 
-#             AccEmTT = max(AccEmTT),
-#             Period_Start_Date = min(Date), 
-#             Period_End_Date = max(Date)) %>% 
-#   mutate(Duration = as.numeric(as.period(Period_End_Date - Period_Start_Date, "days"))/86400 + 1, 
-#          Period_Start_DOY = yday(Period_Start_Date), 
-#          Period_End_DOY = yday(Period_End_Date)) %>%
-#   relocate(ID, Period, Rain) %>% 
-#   relocate(AccRain, .after = Rain) %>% relocate(AccTT, AccEmTT, .after = ThermalTime) %>%
-#   relocate(Period_Start_DOY, Duration, Period_End_DOY, .after = last_col()) %>%
-#   arrange(ID) 
 
 RESERVE_VARS <- c("AccRain", "AccTT", "AccEmTT", "Duration", "Period_Start_Date", 
                   "Period_End_Date", "Period_Start_DOY", "Period_End_DOY", "Duration", "DOY", "Stage")

@@ -93,3 +93,10 @@ wide_envt <- select(long_envt, EnvMarker, ID, per) %>% pivot_wider(names_from = 
 write.csv(wide_envt, "W_matrix.csv")
 
 huhmx <- widehuh %>% column_to_rownames("ID") %>% t() %>% cor()
+
+
+
+huh <- filter(catalog, scenario %in% c("rcp45","rcp85","rcp26","rcp60")) %>% select(variable, model, ensemble, scenario, units) %>% 
+  unique() %>% filter(variable %in% c("tasmax","tasmin","pr","rsds","vpd")) %>% arrange(model, ensemble, scenario, variable)
+
+

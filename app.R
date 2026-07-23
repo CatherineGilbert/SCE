@@ -4,7 +4,7 @@ pkg <- c("shiny", "shinydashboard", "shinycssloaders", "shinyWidgets", "shinyBS"
 "RColorBrewer", "janitor", "zip", "here", "future", "promises", "viridisLite", 
 "dendextend", "scales", "grid", "leaflet", "apsimx", "tidyverse", 
 "daymetr", "chirps", "nasapower", "soilDB", "spData", "tools", "parallel",
-"beepr", "plotly", "bigstatsr")
+"beepr", "plotly", "bigstatsr","ggiraph","ggh4x")
 p_load(char = pkg)
 
 plan(multisession, workers = 2)
@@ -41,9 +41,9 @@ ui <- dashboardPage(
             menuItem("View Results",            tabName = "results",          icon = icon("table-list")),
             menuItem("Configure Pheno Periods",       tabName = "config_periods",   icon = icon("sliders")),
             menuItem("View Map",                tabName = "view_map",         icon = icon("map")),
+            menuItem("View Timelines",   tabName = "timelines",            icon = icon("chart-gantt")),
             menuItem("View Seasonal Heatmaps",  tabName = "heatmap",          icon = icon("fire")),
-            menuItem("View Trial Similarities", tabName = "trial_comp",       icon = icon("seedling")),
-            menuItem("View Timelines",   tabName = "timelines",            icon = icon("chart-gantt"))
+            menuItem("View Trial Similarities", tabName = "trial_comp",       icon = icon("seedling"))
           )
       )
     ),
@@ -344,10 +344,10 @@ ui <- dashboardPage(
                            p("Enter the range of years to simulate."),
                            fluidRow(
                              column(width = 6,
-                                    numericInput("year_start", "First Year:", value = 2015, min = 1900, max = 2100, step = 1)
+                                    numericInput("year_start", "First Year:", value = 2015, min = 1900, max = 3000, step = 1)
                              ),
                              column(width = 6,
-                                    numericInput("year_end", "Last Year:", value = 2020, min = 1900, max = 2100, step = 1)
+                                    numericInput("year_end", "Last Year:", value = 2020, min = 1900, max = 3000, step = 1)
                              )
                            ),
                            uiOutput("totalyears_UI"),
@@ -356,7 +356,12 @@ ui <- dashboardPage(
                        box(width = 12, 
                            h4("Summary"),
                            uiOutput("total_trialsUI"),
-                           br(),
+                           div(
+                             style = "display: flex; align-items: flex-end; gap: 6px;",
+                             div(style = "flex-grow: 0;", textInput("grid_file_name", label = "File name", value = "", placeholder = "test_input")
+                             ),
+                             div(style = "padding-bottom: 20px;",".csv")
+                           ),
                            downloadButton("download_grid_input", "Download Input File")
                        )
                 )
@@ -591,7 +596,7 @@ ui <- dashboardPage(
           ),
           column(
             width = 9,
-            plotOutput("timeline_plot", height = "auto"),
+            girafeOutput("timeline_plot", width = "100%", height = "auto"),
             downloadButton( "download_timeline_plot","Download Developmental Timeline (.png)")
           )
         )
@@ -1574,14 +1579,14 @@ server <- function(input, output, session) {
       grid_input_data(),
       rownames = FALSE,
       class    = "compact stripe",
-      options  = list(scrollX = TRUE, paging = TRUE, searching = FALSE)
+      options  = list(scrollX = TRUE, paging = TRUE, searching = FALSE, scrollY = FALSE)
     )
   })
   
   ## download handler ----
   output$download_grid_input <- downloadHandler(
     filename = function() {
-      paste0("grid_input_", Sys.Date(), ".csv")
+      paste0(input$grid_file_name,".csv")
     },
     content = function(file) {
       write_csv(grid_input_data(), file)
@@ -1815,7 +1820,7 @@ server <- function(input, output, session) {
      datatable(rdata,
                escape  = FALSE,
                class   = "compact stripe",
-               options = list(scrollX = TRUE, paging = FALSE, searching = FALSE))
+               options = list(scrollX = TRUE, paging = TRUE, searching = FALSE, scrollY = FALSE))
    })
   
   
@@ -1926,7 +1931,7 @@ server <- function(input, output, session) {
       
       #if by site, aggregate by site
       if (input$season_heatBy == "By Site") {
-        var_mat <- select(var_mat, ID, Site, starts_with(var)) %>% select(-ID) %>%
+        var_mat <- select(var_mat, ID, Site, starts_with(paste0(var,"_"))) %>% select(-ID) %>%  #change starts_with() to an actual grep
           group_by(Site) %>% summarize(across(where(is.numeric), function(x){mean(x,na.rm=T)})) %>%
           column_to_rownames("Site") %>%
           remove_empty(which = "rows") %>%
@@ -3036,6 +3041,7 @@ output$current_GDD_settings <- renderText({
   })
   
     ### render timeline plot -----
+  
   timeline_plot_obj <- reactive({
     req(input$timeline_yearSelect)
     req(input$timeline_cex)
@@ -3043,6 +3049,8 @@ output$current_GDD_settings <- renderText({
     rsl_p2 <- stage_data()
     req(nrow(rsl_p2) > 0)
     timeline_cex <- input$timeline_cex
+    
+    multi_year <- length(unique(rsl_p2$Year)) > 1
     
     # --- Build a y-axis key: one row per unique ID, ordered by Latitude then Site then Year ---
     id_key <- rsl_p2 %>%
@@ -3055,8 +3063,7 @@ output$current_GDD_settings <- renderText({
     rsl_p2 <- rsl_p2 %>%
       left_join(id_key, by = c("ID", "Site", "Latitude", "Year", "Planting_genetics"))
     
-    # --- Dashed separator lines between Sites ---
-    # Place a line at the boundary between each pair of adjacent Sites (by latitude order)
+    # --- Dashed separator lines between Sites (outer groups) ---
     site_order <- id_key %>%
       select(Site, Latitude) %>%
       distinct() %>%
@@ -3065,17 +3072,44 @@ output$current_GDD_settings <- renderText({
     site_boundaries <- id_key %>%
       group_by(Site) %>%
       summarise(max_y = max(y_pos), .groups = "drop") %>%
-      # Drop the last site — no line needed after the final band
       left_join(site_order, by = "Site") %>%
       arrange(Latitude) %>%
       slice(-n()) %>%
       mutate(line_y = max_y + 0.5)
     
-    # --- Y-axis labels: one label per Site, positioned at the band midpoint ---
-    site_labels <- id_key %>%
-      group_by(Site, Latitude) %>%
-      summarise(mid_y = mean(y_pos), .groups = "drop") %>%
-      arrange(Latitude)
+    # --- Y-axis labels & guide: nested (Site > Year) if multiple years selected ---
+    if (multi_year) {
+      
+      axis_key <- id_key %>%
+        group_by(Site, Latitude, Year) %>%
+        summarise(mid_y = mean(y_pos), .groups = "drop") %>%
+        arrange(Latitude, Year)
+      
+      y_breaks <- axis_key$mid_y
+      y_labels <- paste(axis_key$Site, axis_key$Year, sep = "  ")
+      y_guide  <- guide_axis_nested(delim = "  ")
+      
+      # Lighter/dotted sub-boundaries between Year groups within each Site
+      year_boundaries <- id_key %>%
+        group_by(Site, Year) %>%
+        summarise(max_y = max(y_pos), .groups = "drop") %>%
+        group_by(Site) %>%
+        arrange(Year, .by_group = TRUE) %>%
+        slice(-n()) %>%       # drop the last year in each site (that's a Site boundary, not a sub-boundary)
+        ungroup() %>%
+        mutate(line_y = max_y + 0.5)
+      
+    } else {
+      site_labels <- id_key %>%
+        group_by(Site, Latitude) %>%
+        summarise(mid_y = mean(y_pos), .groups = "drop") %>%
+        arrange(Latitude)
+      
+      y_breaks <- site_labels$mid_y
+      y_labels <- site_labels$Site
+      y_guide  <- guide_axis()
+      year_boundaries <- NULL
+    }
     
     # --- Color palette ---
     gen_levels <- levels(factor(rsl_p2$Genetics))
@@ -3086,20 +3120,33 @@ output$current_GDD_settings <- renderText({
     
     rsl_p2 <- rsl_p2 %>%
       mutate(
-        Label = factor(Label, levels = unique(Label[order(Period)]))
+        Label = factor(Label, levels = unique(Label[order(Period)])),
+        tooltip_pt = paste0(
+          "<b>", Site, if (multi_year) paste0(" (", Year, ")") else "", "</b><br/>",
+          "Stage: ", Label, "<br/>",
+          "Date: ", format(Date_plot, "%b %d, %Y"), "<br/>",
+          "Maturity group: ", Genetics
+        ),
+        tooltip_span = paste0(
+          "<b>", Site, if (multi_year) paste0(" (", Year, ")") else "", "</b><br/>",
+          "Planting: ", format(PlantingDate_plot, "%b %d, %Y"), "<br/>",
+          "Harvest: ", format(HarvestDate_plot, "%b %d, %Y")
+        )
       )
     
-    ggplot(rsl_p2, aes(x = Date_plot, y = y_pos)) +
-      # Season span bars
-      geom_errorbar(
-        aes(xmin = PlantingDate_plot, xmax = HarvestDate_plot, color = Genetics),
-        height = 0,
-        position = position_dodge(width = 1),
-        orientation = "y", 
+    p <- ggplot(rsl_p2, aes(x = Date_plot, y = y_pos)) +
+      # Season span bars (hoverable)
+      geom_segment_interactive(
+        aes(x = PlantingDate_plot, xend = HarvestDate_plot,
+            y = y_pos, yend = y_pos,
+            color = Genetics,
+            tooltip = tooltip_span, data_id = ID),
+        position = position_dodge(width = 1, orientation = "y"),
+        linewidth = 0.5
       ) +
-      # Stage points
-      geom_point(
-        aes(color = Genetics, shape = Label),
+      # Stage points (hoverable)
+      geom_point_interactive(
+        aes(color = Genetics, shape = Label, tooltip = tooltip_pt, data_id = ID),
         size = timeline_cex / 4
       ) +
       # Dashed lines between Sites
@@ -3109,12 +3156,25 @@ output$current_GDD_settings <- renderText({
         linetype = "dashed",
         color = "grey40",
         linewidth = 0.4
-      ) +
-      # Site name labels on y axis
+      )
+    
+    # Lighter sub-boundaries between Years within a Site
+    if (multi_year && nrow(year_boundaries) > 0) {
+      p <- p + geom_hline(
+        data = year_boundaries,
+        aes(yintercept = line_y),
+        linetype = "dotted",
+        color = "grey70",
+        linewidth = 0.3
+      )
+    }
+    
+    p +
       scale_y_continuous(
-        breaks = site_labels$mid_y,
-        labels = site_labels$Site,
-        expand = expansion(add = 0.5)
+        breaks = y_breaks,
+        labels = y_labels,
+        expand = expansion(add = 0.5),
+        guide  = y_guide
       ) +
       scale_x_date(date_breaks = "2 weeks", date_labels = "%b %d") +
       scale_color_manual(values = cols) +
@@ -3135,11 +3195,16 @@ output$current_GDD_settings <- renderText({
       )
   })
   
-  output$timeline_plot <- renderPlot({
-    timeline_plot_obj()
-  },
-  height = function() {
-    input$timeline_h
+  output$timeline_plot <- renderGirafe({
+    girafe(
+      ggobj = timeline_plot_obj(),
+      width_svg = 12, height_svg = round(input$timeline_h/96,0),
+      options = list(
+        opts_tooltip(css = "background-color:white;color:black;padding:6px;border-radius:4px;font-size:12px;"),
+        opts_hover(css = "stroke-width:2px;"),
+        opts_sizing(rescale = TRUE)
+      )
+    )
   })
   
     ### download timeline plot ---------

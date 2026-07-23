@@ -1,10 +1,10 @@
-* simplified the way that the parameter files are written and read
-* added ability to get data from future years
-* added clustering on seasonal heatmap and trial similarity matrix
-* changed the wording on the adjust label size ui
+* better timeline plot, separated into faceted plots on same axis, use horizontal lines for year
+* when you mouse over a point on the timeline plot, it gives you the date
+* ability to name the files you download from gridded inputs
+* fixed the issue with 'result' not appearing in outputs when season buffer was set to 0
+* soil profiles now keep more information from the API
 
-!!! where the hell did 'result' go?
-
+- to trial_info, add columns for if weather was successful and if soils was successful
 - maybe do something with the envirotyping stuff in the testing script?? but who knows how that would be integrated. 
   - create a section that says "season", move current season sim tab and season heatmap tab there
   - move dendro, PCA, and PCA-colored map into new page that tabs out from under the seasonal similarity matrix tab
@@ -18,16 +18,8 @@
 - fix the issue with working directory in the app. currently reloading it seems to break things
   
 - timeline plots
-  - add extra layer of y labels on side for year when more than one year is selected. 
-  
-  - separate into faceted plots on same axis, use horizontal lines for year
-  
   - ability to filter year, maturity group, site
   - add text to timeline plots
-  - change the timeline plots to use maturity group instead of "genetics"
-  - maybe add the I lines on the timeline back in, so people can see start and end in planting and harvest?
-  - figure out how I want to be aggregating this data
-  - make it so when you mouse over a point it tells you the date. 
 
 - soils
   - rerun soils with rounded coordinates if they fail a first time?
@@ -44,7 +36,12 @@
   - make it look nice
   - add direct controls for ReaperMan and Sowing scripts
    - toggle for frost date
+   - in script, add controls for the reaperman scripts before the apsim file is created
   - have maturity handling autoselect as appropriate when template model is chosen
+
+- future data collection
+  -  add controls for model, scenario, and ensemble to advanced controls tab
+  - in gridded inputs, add years interval control
 
 - seasonal summation controls
   - fix text on the "configure pheno periods" page
