@@ -118,6 +118,7 @@ locyear_df <- trials_df %>% select(X,Y, ID_Loc, sim_start, sim_end) %>% distinct
   # and make sure we have at least ten years of history that the "typical season" stuff for the TT/precip plots can be created
   mutate(historical_met_start = min(historical_met_start, today() %m-% years(10), na.rm = T), 
          historical_met_end = max(historical_met_end, today() - days(1), na.rm = T)) %>%
+  mutate(across(where(is.Date), ~replace_when(.x, is.infinite(.x) ~ NA))) %>% 
   mutate(collection_span = case_when(
     !is.na(historical_met_start) & is.na(future_met_start)  ~ "historical",
     !is.na(historical_met_start) & !is.na(future_met_start)  ~ "both",
@@ -194,51 +195,61 @@ clusterExport(cl, varlist = c("locyear_df", "weather_acquis", "vect",
 # Ensure the directory exists for weather data
 unlink("met",recursive = T) ; dir.create("met")
 
-parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
-  locyear_tmp <- locyear_df[idx, ]
-  locyear_sv_tmp <- terra::vect(locyear_df[idx, ], geom = c("X", "Y"), crs = "EPSG:4326")
+met_results <- parLapply(cl, seq_len(nrow(locyear_df)), function(id) {
+  locyear_tmp <- locyear_df[id, ]
+  locyear_sv_tmp <- terra::vect(locyear_df[id, ], geom = c("X", "Y"), crs = "EPSG:4326")
   hmet_tmp <- NA
   fmet_tmp <- NA
   
-  if (locyear_tmp$collection_span %in% c("historical","both")){
-    tryCatch({ #no it doesn't work as a switch statement, and no I don't know why. 
-      if (weather_acquis == "DAYMET"){hmet_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
-                                          years = c(year(locyear_tmp$historical_met_start),    # prevent DAYMET from failing on the current year
-                                                min(year(locyear_tmp$historical_met_end), year(today()) - 1)))
-      }
-      if (weather_acquis == "NASAPOWER"){hmet_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
-                          dates = as.character(c(max(locyear_tmp$historical_met_start, lubridate::as_date("1984-01-01")), 
-                                    locyear_tmp$historical_met_end)))
-      }
-      if (weather_acquis == "CHIRPS"){hmet_tmp <- get_chirps_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
-                              # constrain CHIRPS dates to prevent errors
-                              dates = as.character(c(max(locyear_tmp$historical_met_start, lubridate::as_date("1981-01-01")),
-                                        min(locyear_tmp$historical_met_end, lubridate::floor_date(today(), unit = "years")))))
-      } 
-    })
-  }
+  tryCatch({
+    if (locyear_tmp$collection_span %in% c("historical","both")){
+         #no it doesn't work as a switch statement, and no I don't know why. 
+        if (weather_acquis == "DAYMET"){hmet_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
+                                            years = c(year(locyear_tmp$historical_met_start),    # prevent DAYMET from failing on the current year
+                                                  min(year(locyear_tmp$historical_met_end), year(today()) - 1)))
+        }
+        if (weather_acquis == "NASAPOWER"){hmet_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+                            dates = as.character(c(max(locyear_tmp$historical_met_start, lubridate::as_date("1984-01-01")), 
+                                      locyear_tmp$historical_met_end)))
+        }
+        if (weather_acquis == "CHIRPS"){hmet_tmp <- get_chirps_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+                                # constrain CHIRPS dates to prevent errors
+                                dates = as.character(c(max(locyear_tmp$historical_met_start, lubridate::as_date("1981-01-01")),
+                                          min(locyear_tmp$historical_met_end, lubridate::floor_date(today(), unit = "years")))))
+        } 
+    }
   
-  if (locyear_tmp$collection_span %in% c("future","both")) {
-    fmet_tmp <- get_maca_apsim_met(locyear_tmp, locyear_sv_tmp, 
-                                   startDate = locyear_tmp$future_met_start, 
-                                   endDate = locyear_tmp$future_met_end,
-                                   model = "CCSM4", scenario = "rcp45")
-  }
-  
-  switch(locyear_tmp$collection_span,
-         "historical" = met_tmp <- hmet_tmp,
-         "future" = met_tmp <- fmet_tmp,
-         "both" = met_tmp <- dplyr::bind_rows(hmet_tmp, fmet_tmp)
-  )
-  
-  na_met_tmp <- tryCatch(napad_apsim_met(met_tmp), error = function(e) met_tmp)
-  imp_met_tmp <- impute_apsim_met(na_met_tmp)
-  attr(imp_met_tmp, "site") <- attr(met_tmp, "site")
-  attr(imp_met_tmp, "latitude") <- attr(met_tmp, "latitude")
-  attr(imp_met_tmp, "longitude") <- attr(met_tmp, "longitude")
-  write_apsim_met(imp_met_tmp, wrt.dir = "met", paste0("loc_", locyear_tmp$ID_Loc, ".met"))
+    if (locyear_tmp$collection_span %in% c("future","both")) {
+        fmet_tmp <- get_maca_apsim_met(locyear_tmp, locyear_sv_tmp, 
+                                       startDate = locyear_tmp$future_met_start, 
+                                       endDate = locyear_tmp$future_met_end,
+                                       model = "CCSM4", scenario = "rcp45")
+    }
+    
+    switch(locyear_tmp$collection_span,
+           "historical" = met_tmp <- hmet_tmp,
+           "future" = met_tmp <- fmet_tmp,
+           "both" = met_tmp <- dplyr::bind_rows(hmet_tmp, fmet_tmp)
+    )
+      
+    na_met_tmp <- tryCatch(napad_apsim_met(met_tmp), error = function(e) met_tmp)
+    imp_met_tmp <- impute_apsim_met(na_met_tmp)
+    attr(imp_met_tmp, "site") <- attr(met_tmp, "site")
+    attr(imp_met_tmp, "latitude") <- attr(met_tmp, "latitude")
+    attr(imp_met_tmp, "longitude") <- attr(met_tmp, "longitude")
+    write_apsim_met(imp_met_tmp, wrt.dir = "met", paste0("loc_", locyear_tmp$ID_Loc, ".met"))
+    
+    NULL
+  },
+  error = function(e){
+    print(paste0("Weather collection failed for location ", id, ": ", e$message))
+    list(Loc_ID = id)
+  })  
 
   })
+
+failed_mets <- unlist(Filter(Negate(is.null), met_results))
+trials_df <- mutate(trials_df, WeatherAcquis = weather_acquis, WeatherCollected = if_else(ID_Loc %in% failed_mets, FALSE, TRUE))
 
 check_time2 <- Sys.time() 
 
@@ -249,10 +260,10 @@ if (length(list.files(paste0(output_dir,"/met/"), pattern = "\\.met$", recursive
 print("Get Soil Data ...")
 
 unlink("soils",recursive = T) ; dir.create("soils")
-locs_df$got_soil <- NA
 
-ids_needs_soil <- locs_df[locs_df$got_soil == F | is.na(locs_df$got_soil),]$ID_Loc
-for (id in ids_needs_soil){
+soil_results <- list()
+
+for (id in locs_df$ID_Loc){
   locs_tmp <- locs_df[locs_df$ID_Loc == id,]
   tryCatch({
     if (soil_acquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)[[1]]}
@@ -302,13 +313,16 @@ for (id in ids_needs_soil){
     
     write_rds(soil_profile_tmp, paste0(output_dir,"/soils/soil_profile_",id,".rds"))
     
-    locs_df[locs_df$ID_Loc == id,"got_soil"] <- T
-    print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4)))
+    NULL
+    
   }, error = function(e){
-    locs_df[locs_df$ID_Loc == id,"got_soil"] <<- F
-    print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4),"  FAIL"))
+    print(paste0("Soil collection failed for loc ",id,": ", e$message))
+    soil_results <<- append(soil_results, list(Loc_ID = id))
   })
 }
+
+failed_soils <- unlist(Filter(Negate(is.null), soil_results))
+trials_df <- mutate(trials_df, SoilAcquis = soil_acquis, SoilCollected = if_else(ID_Loc %in% failed_soils, FALSE, TRUE))
 
 #stop if no soils
 if (length(list.files(paste0(output_dir,"/soils/"), pattern = "\\.rds$", recursive = FALSE)) == 0) {stop("No soil profiles collected successfully.")}
@@ -409,7 +423,6 @@ for (batch in 1:num_batches) {
   # Split trials for parallel execution
   trial_list <- split(batch_trials, seq(nrow(batch_trials)))
   
-  # Run APSIM simulations in parallel for the current batch
   # Run APSIM simulations in parallel
   results <- parLapply(cl, trial_list, function(trial) {
     trial_n <- trial$ID  # Assuming 'ID' is the identifier
@@ -421,21 +434,14 @@ for (batch in 1:num_batches) {
     tryCatch({
       output_tmp <- apsimx(filename, src.dir = source_dir, silent = TRUE)
       output_tmp <- mutate(output_tmp, "ID" = trial_n) 
-      # Append the output of this trial to the overall results
-      # output <- rbind(output, output_tmp)
       # Save individual trial results
       write_csv(output_tmp, file = paste0(source_dir, "/", templ_model, "_", trial_n, "_out.csv"))
-      #return(output)
       return()  
     }, error = function(e){
       errlog <- paste0(errlog, "Simulation for trial ", trial_n, " failed with error: ", e$message)
       return(errlog)  # Return NULL if there was an error
     })
   })
-  
-  # Combine the results from this batch and add to the all_results list
-  #batch_results <- do.call(rbind, results)
-  #all_results[[batch]] <- batch_results
   
   # Print errors for failed trials
   errlog <<- do.call(rbind, results)
@@ -493,7 +499,7 @@ daily_sim_outputs <- group_by(daily_sim_outputs, ID) %>% left_join(select(simdat
 daily_sim_outputs <- mutate(daily_sim_outputs, Date = as_date(Date))
 
 # Create trial_info from trial-specific information
-maxstage <- group_by(daily_sim_outputs, ID) %>% summarize(MaxStage = max(Stage)) #summarize(Yield_Sim = max(Yieldkgha),  MaxStage = max(Stage))
+maxstage <- group_by(daily_sim_outputs, ID) %>% summarize(MaxStage = max(Stage)) 
 trial_info <- rename(trials_df, Latitude = Y, Longitude = X)
 trial_info <- trial_info %>% select(-sim_start, -sim_end) %>% 
   left_join(maxstage, by = join_by(ID)) %>% 

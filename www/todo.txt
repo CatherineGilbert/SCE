@@ -1,22 +1,17 @@
-* better timeline plot, separated into faceted plots on same axis, use horizontal lines for year
-* when you mouse over a point on the timeline plot, it gives you the date
-* ability to name the files you download from gridded inputs
-* fixed the issue with 'result' not appearing in outputs when season buffer was set to 0
-* soil profiles now keep more information from the API
+* to trial_info, add columns for if weather was successful and if soils was successful
 
-- to trial_info, add columns for if weather was successful and if soils was successful
 - maybe do something with the envirotyping stuff in the testing script?? but who knows how that would be integrated. 
   - create a section that says "season", move current season sim tab and season heatmap tab there
   - move dendro, PCA, and PCA-colored map into new page that tabs out from under the seasonal similarity matrix tab
 
 !! fix date parsing on inputs and make sure they're correctly documented
-
 - update documentation for these changes
 - turn things into functions instead of one chunk of code when you can
 !! push changes to online version
-
 - fix the issue with working directory in the app. currently reloading it seems to break things
-  
+
+- covert tt/precip plots to plotly
+
 - timeline plots
   - ability to filter year, maturity group, site
   - add text to timeline plots
@@ -28,8 +23,6 @@
          - attach an empty soil profile to the template model the first time it is loaded for copying
   
 - errors / progress log
-  - have error messages from apsimx script, which are captured by future as err$message, save and display directly to the progress log
-  - remove error messages based on active folder counting 
   - ???? when running trials after another trial is run, the "simulations finished" and "successful simulations" are not cleared out when the sim restarts
 
 - advanced controls tab
@@ -42,6 +35,7 @@
 - future data collection
   -  add controls for model, scenario, and ensemble to advanced controls tab
   - in gridded inputs, add years interval control
+  - prevent failed future weather collection from ending the analysis
 
 - seasonal summation controls
   - fix text on the "configure pheno periods" page

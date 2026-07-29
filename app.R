@@ -1801,6 +1801,7 @@ server <- function(input, output, session) {
       build_period_key(cfg),
       rownames = FALSE,
       class    = "compact stripe",
+      filter = "none",
       options  = list(paging = FALSE, searching = FALSE, scrollX = TRUE)
     )
   })
