@@ -1,4 +1,5 @@
-* to trial_info, add columns for if weather was successful and if soils was successful
+
+
 
 - maybe do something with the envirotyping stuff in the testing script?? but who knows how that would be integrated. 
   - create a section that says "season", move current season sim tab and season heatmap tab there
@@ -26,7 +27,6 @@
   - ???? when running trials after another trial is run, the "simulations finished" and "successful simulations" are not cleared out when the sim restarts
 
 - advanced controls tab
-  - make it look nice
   - add direct controls for ReaperMan and Sowing scripts
    - toggle for frost date
    - in script, add controls for the reaperman scripts before the apsim file is created

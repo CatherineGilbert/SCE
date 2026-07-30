@@ -238,6 +238,7 @@ ui <- dashboardPage(
               ),
               fluidRow(
                 box(
+                  width = 12, 
                   bsCollapse(
                     id = "advanced_controls_panel",
                     open = NULL,
@@ -264,8 +265,8 @@ ui <- dashboardPage(
               bsTooltip("tip_input", "A trial dataset with the columns Site, Planting, Genetics, Latitude, and Longitude. Example input data is available in project files; see documentation for more information about formatting.", "right", options = list(container = "body")),
               bsTooltip("tip_tempmodel", "The template model provided here-- its crop module, reporting variables, and management controls-- will be used as the basis for all trial simulations.", "right", options = list(container = "body")),
               bsTooltip("tip_mat_hndl", "How the Genetics column of the input should be translated into the generic cultivars that APSIM uses to define the crop phenology. `Soybean RM` and `Maize RM` may be used with the template models provided. See documentation for details.", "right", options = list(container = "body")),
-              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to the duration of the crop's development, plus the optional buffer. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "right", options = list(container = "body")),
-              bsTooltip("tip_buffer", "Here you can set an optional buffer which will extend the first and last seasonal periods to capture environmental conditions before planting and after harvest respectively. In most APSIM developmental models, the first and last periods of development will otherwise last a single day.", "right", options = list(container = "body"))
+              bsTooltip("tip_no_trim", "By default, the daily simulation records are trimmed to the duration of the crop's development, plus the optional buffer. Selecting this option keeps the full simulation records, including empty time. WARNING: This will increase output file size.", "top", options = list(container = "body")),
+              bsTooltip("tip_buffer", "Here you can set an optional buffer which will extend the first and last seasonal periods to capture environmental conditions before planting and after harvest respectively. In most APSIM developmental models, the first and last periods of development will otherwise last a single day.", "top", options = list(container = "body"))
               ),
     ### build gridded input file UI -----------
     tabItem(tabName = "build_input",
