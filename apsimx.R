@@ -21,8 +21,8 @@ if (FALSE){
  setwd(output_dir) 
  codes_dir <- "C:/Users/cmg3/Documents/GitHub/SCE"
  mat_handling <- "Soy" 
- weather_aquis <- "NASAPOWER"
- soil_aquis <- "ISRIC"
+ weather_acquis <- "NASAPOWER"
+ soil_acquis <- "ISRIC"
  templ_model_path <- "C:/Users/cmg3/Documents/GitHub/SCE/template_models/Soy_Template.apsimx"
  templ_model <- file_path_sans_ext(basename(templ_model_path))
  trials_df <- read_csv("C:/Users/cmg3/Documents/GitHub/SCE/example_input_files/abc_test.csv") 
@@ -34,8 +34,8 @@ setwd(output_dir)
 
 parms <- read_csv("parameters.csv", progress = F, show_col_types = F) #pull trial parameters set in app, then set here
 mat_handling <- pull(parms, mat_handling)
-weather_aquis <- pull(parms, weather_aquis)
-soil_aquis <- pull(parms, soil_aquis)
+weather_acquis <- pull(parms, weather_acquis)
+soil_acquis <- pull(parms, soil_acquis)
 no_trim <- pull(parms, no_trim)
 
 templ_model_path <- list.files(paste0(codes_dir,"/input"), pattern = ".apsimx", full.names = TRUE)[1]
@@ -116,7 +116,7 @@ cl <- makeCluster(no_cores)
 clusterExport(cl, varlist = c("locyear_df","yesterday","get_daymet2_apsim_met",
                               "get_power_apsim_met","get_chirps_apsim_met",
                               "napad_apsim_met", "impute_apsim_met", "write_apsim_met",
-                              "prev_year","weather_aquis"), envir = environment())
+                              "prev_year","weather_acquis"), envir = environment())
 
 
 # Ensure the directory exists for weather data
@@ -126,11 +126,11 @@ unlink("met",recursive = T) ; dir.create("met")
 parLapply(cl, seq_len(nrow(locyear_df)), function(idx) {
   locyear_tmp <- locyear_df[idx, ]
   try({ #no it doesn't work as a case statement, and no I don't know why. 
-    if (weather_aquis == "DAYMET"){met_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
+    if (weather_acquis == "DAYMET"){met_tmp <- get_daymet2_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y), 
                                      years = c(as.integer(locyear_tmp$first_year), as.integer(prev_year)))}
-    if (weather_aquis == "NASAPOWER"){met_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+    if (weather_acquis == "NASAPOWER"){met_tmp <- get_power_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
                         dates = c(paste0(locyear_tmp$first_year,"-01-01"), yesterday))}
-    if (weather_aquis == "CHIRPS"){met_tmp <- get_chirps_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
+    if (weather_acquis == "CHIRPS"){met_tmp <- get_chirps_apsim_met(lonlat = c(locyear_tmp$X, locyear_tmp$Y),
                             dates = c(paste0(locyear_tmp$first_year,"-01-01"), yesterday))}
     na_met_tmp <- tryCatch(napad_apsim_met(met_tmp), error = function(e) met_tmp)
     imp_met_tmp <- tryCatch(impute_apsim_met(na_met_tmp), warning = function(w) na_met_tmp)

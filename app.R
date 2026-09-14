@@ -195,7 +195,7 @@ ui <- dashboardPage(
                     )
                   ),
                   selectInput(
-                    "weatherAquis",
+                    "weatherAcquis",
                     "Select Weather Acquisition:",
                     choices = c(
                       "NASAPOWER" = "NASAPOWER",
@@ -204,7 +204,7 @@ ui <- dashboardPage(
                     )
                   ),
                   selectInput(
-                    "soilAquis",
+                    "soilAcquis",
                     "Select Soil Acquisition:",
                     choices = c("ISRIC" = "ISRIC","SSURGO" = "SSURGO")
                   ),
@@ -744,19 +744,19 @@ server <- function(input, output, session) {
   })
   
   ## set parameters -------
-  weather_aquis <- reactiveVal("NASAPOWER")
-  soil_aquis <- reactiveVal("SSURGO")
+  weather_acquis <- reactiveVal("NASAPOWER")
+  soil_acquis <- reactiveVal("SSURGO")
   mat_handling <- reactiveVal("Soy")
   no_trim <- reactiveVal("FALSE")
   
   observeEvent(input$matType, {
     mat_handling(input$matType)
   })
-  observeEvent(input$soilAquis,{
-    soil_aquis(input$soilAquis)
+  observeEvent(input$soilAcquis,{
+    soil_acquis(input$soilAcquis)
   })
-  observeEvent(input$weatherAquis,{
-    weather_aquis(input$weatherAquis)
+  observeEvent(input$weatherAcquis,{
+    weather_acquis(input$weatherAcquis)
   })
   observeEvent(input$no_trim,{
     no_trim(input$no_trim)
@@ -836,8 +836,8 @@ server <- function(input, output, session) {
     
     #set parameters
     parms <- tibble(mat_handling = mat_handling(), 
-                    weather_aquis = weather_aquis(), 
-                    soil_aquis = soil_aquis(),
+                    weather_acquis = weather_acquis(), 
+                    soil_acquis = soil_acquis(),
                     no_trim = no_trim())
     write_csv(parms, paste0(codes_dir,"/output_files/parameters.csv"))
     
