@@ -147,55 +147,71 @@ check_time2 <- Sys.time()
 print("Get Soil Data ...")
 
 unlink("soils",recursive = T) ; dir.create("soils")
-locs_df$got_soil <- NA
+soil_results <- list()
 
-ids_needs_soil <- locs_df[locs_df$got_soil == F | is.na(locs_df$got_soil),]$ID_Loc
-for (id in ids_needs_soil){
+for (id in locs_df$ID_Loc){
   locs_tmp <- locs_df[locs_df$ID_Loc == id,]
   tryCatch({
-    if (soil_aquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
-    if (soil_aquis == "ISRIC") {soil_profile_tmp <- get_worldmodeler_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y))}
+    if (soil_acquis == "SSURGO") {soil_profile_tmp <- get_ssurgo_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)[[1]]}
+    if (soil_acquis == "ISRIC") {soil_profile_tmp <- get_isric_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
+    if (soil_acquis == "World Modeler") {soil_profile_tmp <- get_worldmodeler_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y))[["SoilName_1"]]}
+    if (soil_acquis == "SLGA") {soil_profile_tmp <- get_slga_soil_profile(lonlat = c(locs_tmp$X,locs_tmp$Y), fix = T, check = FALSE)}
     
     #check_apsimx_soil_profile(soil_profile_tmp)   #for debugging
     
-    horizon <- soil_profile_tmp[[1]]$soil 
+    horizon <- soil_profile_tmp$soil 
     
-    #create SWCON in SoilWater parameters
-    soilwat <- soilwat_parms() 
-    PO <- 1-horizon$BD/2.65
-    soilwat$SWCON <- (PO-horizon$DUL)/PO
-    soilwat$SWCON <- ifelse(soilwat$SWCON < 0, 0.001, soilwat$SWCON)
-    soilwat$Thickness <- horizon$Thickness 
-    soil_profile_tmp[[1]]$soilwat <- soilwat
-    
-    #set initial water to reasonable values
-    initwat <- initialwater_parms() 
-    initwat$InitialValues <- horizon$DUL
-    initwat$Thickness <- horizon$Thickness
-    soil_profile_tmp[[1]]$initialwater <- initwat
-    
-    #provide soil organic matter table if none exists
-    if (is.na(soil_profile_tmp[[1]][["soilorganicmatter"]])) {
-      soil_profile_tmp[[1]][["soilorganicmatter"]] <- soilorganicmatter_parms()
+    #create and fill soil water parameters table
+    soilwat_tmp <- soilwat_parms() 
+    if (!is.null(soil_profile_tmp$soilwat) & !all(is.na(soil_profile_tmp$soilwat))) {
+      soilwat_tmp[names(soil_profile_tmp$soilwat)] <- soil_profile_tmp$soilwat
     }
+    PO <- 1-horizon$BD/2.65 #generic soil bulk density constant
+    soilwat_tmp$SWCON <- (PO-horizon$DUL)/PO
+    soilwat_tmp$SWCON <- ifelse(soilwat_tmp$SWCON < 0, 0.001, soilwat_tmp$SWCON)
+    soilwat_tmp$Thickness <- horizon$Thickness 
+    soil_profile_tmp$soilwat <- soilwat_tmp
+    
+    #create and fill initial water parameters table
+    initwat_tmp <- initialwater_parms() 
+    if (!is.null(soil_profile_tmp$initialwater) & !all(is.na(soil_profile_tmp$initialwater))) {
+      initwat_tmp[names(soil_profile_tmp$initialwater)] <- soil_profile_tmp$initialwater
+    }
+    initwat_tmp$InitialValues <- horizon$DUL
+    initwat_tmp$Thickness <- horizon$Thickness
+    soil_profile_tmp$initialwater <- initwat_tmp
+    
+    #create and fill soil organic matter table
+    soilorganicmatter_tmp <- soilorganicmatter_parms()
+    if (!is.null(soil_profile_tmp$soilorganicmatter) & 
+        !all(is.na(soil_profile_tmp$soilorganicmatter))) {
+      soilorganicmatter_tmp[names(soil_profile_tmp$soilorganicmatter)] <- soil_profile_tmp$soilwat
+    }
+    soil_profile_tmp$soilorganicmatter <- soilorganicmatter_tmp
     
     #constrain minimum root weight
-    given_rwt <- soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt
-    soil_profile_tmp[[1]][["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < 0.001, 0.001, given_rwt) 
+    given_rwt <- soil_profile_tmp[["soilorganicmatter"]]$RootWt
+    soil_profile_tmp[["soilorganicmatter"]]$RootWt <- ifelse(given_rwt < 0.001 | is.na(given_rwt), 0.001, given_rwt) 
     
     #constrain minimum soil organic carbon content
-    given_oc <- soil_profile_tmp[[1]][["soil"]]$Carbon
-    soil_profile_tmp[[1]][["soil"]]$Carbon <- ifelse(given_oc < 0.001, 0.001, given_oc) 
+    given_oc <- soil_profile_tmp[["soil"]]$Carbon
+    soil_profile_tmp[["soil"]]$Carbon <- ifelse(given_oc < 0.001  | is.na(given_oc), 0.001, given_oc) 
     
     write_rds(soil_profile_tmp, paste0(output_dir,"/soils/soil_profile_",id,".rds"))
     
-    locs_df[locs_df$ID_Loc == id,"got_soil"] <- T
-    print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4)))
+    NULL
+    
   }, error = function(e){
-    locs_df[locs_df$ID_Loc == id,"got_soil"] <<- F
-    print(paste0("loc: ",id,"   ",round(which(ids_needs_soil == id)/length(ids_needs_soil),4),"  FAIL"))
+    print(paste0("Soil collection failed for loc ",id,": ", e$message))
+    soil_results <<- append(soil_results, list(Loc_ID = id))
   })
 }
+
+failed_soils <- unlist(Filter(Negate(is.null), soil_results))
+trials_df <- mutate(trials_df, SoilAcquis = soil_acquis, SoilCollected = if_else(ID_Loc %in% failed_soils, FALSE, TRUE))
+
+#stop if no soils
+if (length(list.files(paste0(output_dir,"/soils/"), pattern = "\\.rds$", recursive = FALSE)) == 0) {stop("No soil profiles collected successfully.")}
 
 check_time3 <- Sys.time() 
 
@@ -249,7 +265,7 @@ apsimxfilecreate <- parLapply(cl, 1:nrow(trials_df), function(trial_n) {
   tryCatch({
     soil_profile_tmp <- readRDS(paste0(output_dir,"/soils/soil_profile_",as.character(trial_tmp$ID_Loc),".rds"))
     edit_apsimx_replace_soil_profile(file = filename, src.dir = source_dir, wrt.dir = write_dir, overwrite = T,
-                                     soil.profile = soil_profile_tmp[[1]], 
+                                     soil.profile = soil_profile_tmp, 
                                      verbose = F)
   }, error = function(e){print("Failed to attach soil profile.")})
   #invisible()
