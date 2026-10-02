@@ -1,3 +1,5 @@
+**New Update Coming Soon-- I'm looking things over this weekend to address a package versioning issue.**
+
 Uses APSIM + the R apsimx package to produce seasonal covariates for simulated trial conditions. 
 
 The full documentation is [available in the project files](https://github.com/CatherineGilbert/SCE/blob/main/www/SCE_Documentation.html). The first page of the app provides a button to view this documentation in-browser. 
