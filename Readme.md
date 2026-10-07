@@ -1,4 +1,4 @@
-**New Update Coming Soon-- I'm looking things over this weekend to address a package versioning issue.**
+**New Update Coming Soon-- I'm looking things over ~~this weekend~~ Wednesday (sorry John) to address a package versioning issue.**
 
 Uses APSIM + the R apsimx package to produce seasonal covariates for simulated trial conditions. 
 
